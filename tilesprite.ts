@@ -1,7 +1,7 @@
 namespace tilesprite {
-    
+
     // which direction is the sprite moving
-    enum MoveDirection { None,Left, Right, Up, Down }
+    enum MoveDirection { None, Left, Right, Up, Down }
 
     // a sprite that moves by tiles
     export class TileSprite {
@@ -21,8 +21,7 @@ namespace tilesprite {
         // next request
         private queue: MoveDirection;
         private queue_moving: boolean;
-        // notifcations
-        private onExit:  (x: number, y: number) => void
+        // notifications
         private onEnter: (x: number, y: number) => void
 
         constructor(s: Sprite, size: number = 16) {
@@ -32,7 +31,6 @@ namespace tilesprite {
             this.target = MoveDirection.None
             this.old_x = this.old_y = -1
             this.queue = MoveDirection.None
-            this.onExit = undefined
             this.onEnter = undefined
         }
         // request sprite to move in specified direction
@@ -42,6 +40,9 @@ namespace tilesprite {
             else if (dir == MoveDirection.Up || dir == MoveDirection.Down)
                 this.moveInY(dir)
         }
+        deadStop() {
+            this.spriteStopped()
+        }
         // request sprite to stop moving
         stop(dir: MoveDirection) {
             if (dir == this.queue) {
@@ -49,9 +50,6 @@ namespace tilesprite {
             } else {
                 this.moving = false;
             }
-        }
-        onTileExit(handler: (col:number, row:number)=>void) {
-            this.onExit = handler;
         }
         onTileEnter(handler: (col: number, row: number) => void) {
             this.onEnter = handler
@@ -122,13 +120,9 @@ namespace tilesprite {
             this.moving = true
             this.sprite.vy = sign * 100
         }
-
         private reachedTargetX(x: number, step: number = 0) {
             // notify
-            if (this.onExit) {
-                this.onExit((x-step)/this.tileSize, this.sprite.y/this.tileSize)
-            }
-            if (this.onEnter) {
+            if (step != 0 && this.onEnter) {
                 this.onEnter(x / this.tileSize, this.sprite.y / this.tileSize)
             }
             // determine what comes next
@@ -147,10 +141,7 @@ namespace tilesprite {
         }
         private reachedTargetY(y: number, step: number = 0) {
             // notify
-            if (this.onExit) {
-                this.onExit( this.sprite.x / this.tileSize, (y - step) / this.tileSize)
-            }
-            if (this.onEnter) {
+            if (step != 0 && this.onEnter) {
                 this.onEnter(this.sprite.x / this.tileSize, y / this.tileSize)
             }
             if (this.moving) {
@@ -169,6 +160,8 @@ namespace tilesprite {
         // we detected the sprite stopped moving (barrier)
         private spriteStopped() {
             this.moving = false
+            this.queue_moving = false
+            this.queue = MoveDirection.None
             if (this.target == MoveDirection.Left) {
                 this.reachedTargetX(this.next_x + this.tileSize)
             } else if (this.target == MoveDirection.Right) {

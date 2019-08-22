@@ -194,7 +194,7 @@ namespace levels {
 }
 
 // TODO: store the sprites
-function setScene(tileMap: Image) {
+function setScene(tileMap: Image): number {
     // convert image to tile map
     scene.setTileMap(tileMap)
     scene.setTile(codes.Dirt, art.Dirt)
@@ -213,7 +213,7 @@ function setScene(tileMap: Image) {
     }
     let rocks = scene.getTilesByType(codes.Rock)
     for (let value of rocks) {
-        let rock = sprites.create(art.Rock, SpriteKind.Enemy)
+        let rock = sprites.create(art.Rock, SpriteKind.Projectile)
         value.place(rock)
     }
     let enemies = scene.getTilesByType(codes.Enemy)
@@ -221,33 +221,63 @@ function setScene(tileMap: Image) {
         let enemy = sprites.create(art.Enemy, SpriteKind.Enemy)
         value.place(enemy)
     }
+    return diamonds.length
 }
 
 namespace player {
     let mapArt = levels.level1
     // copy it, as it will be updated
     let copyMap = mapArt.clone()
-    setScene(copyMap)
+    let numDiamonds = setScene(copyMap)
     let players = scene.getTilesByType(codes.Player)
     control.assert(players.length == 1, 0)
-    let player = sprites.create(art.Player, SpriteKind.Enemy)
+    let player = sprites.create(art.Player, SpriteKind.Player)
     scene.cameraFollowSprite(player)
     players[0].place(player)
 
     // make the player sprite snap to tile grid
     let tilePlayer = new tilesprite.TileSprite(player)
+    // bind it to L,R,U,D buttons
     tilesprite.bindToController(tilePlayer)
-    tilePlayer.onTileExit(function (col: number, row: number) {
-        copyMap.setPixel(col, row, codes.Space)
-    })
-    tilePlayer.onTileEnter(function (col: number, row: number) {
-        copyMap.setPixel(col, row, codes.Space)
-    })
+    // can this be done automagically?
     game.onUpdate(function () { tilePlayer.update() })
 
-    // TODO
-    // - leave space behind us
-    // - when we run into a rock, we stop
+    // whereever player goes, replace with space
+    tilePlayer.onTileEnter(function (col: number, row: number) {
+        copyMap.setPixel(col, row, codes.Space)
+        // TODO: look for things to start falling
+    })
+
+    // BUG: neither of these is firing
+    scene.onHitTile(codes.Wall, SpriteKind.Player, function (sprite: Sprite) {
+        tilePlayer.deadStop()
+    })
+    scene.onHitTile(codes.StrongWall, SpriteKind.Player, function (sprite: Sprite) {
+        tilePlayer.deadStop()
+    })
+
+    sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+        // when we run into a (non-moving) diamond, we eat it
+        if (otherSprite.vx == 0 && otherSprite.vy == 0) {
+            otherSprite.destroy()
+            numDiamonds--
+            if (numDiamonds == 0) {
+                game.showDialog("Got All Diamonds!", "")
+            }
+        } else {
+            // otherwise, we die
+        }
+    })
+
+    sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
+        // when we run into a (non-moving) rock we stop
+        if (otherSprite.vx == 0 && otherSprite.vy == 0) {
+            // unless there is an opportunity to push the rock
+            tilePlayer.deadStop()
+        } else {
+            // otherwise, we die
+        }
+    })
 
 }
 
