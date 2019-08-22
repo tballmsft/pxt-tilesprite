@@ -1,4 +1,4 @@
-namespace tilesnap {
+namespace tilesprite {
     
     enum MoveDirection {
         None,
@@ -6,7 +6,7 @@ namespace tilesnap {
     }
     // a sprite that moves by tiles
     // TODO: notifications on leaving a tile, landing on a tile
-    class TileSprite {
+    export class TileSprite {
         tileSize: number;
         sprite: Sprite;
         // true iff the user is requesting motion and nothing has stopped
@@ -156,7 +156,7 @@ namespace tilesnap {
         }
     }
 
-    function registerTileSprite(sprite: TileSprite) {
+    export function registerTileSprite(sprite: TileSprite) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
             sprite.move(MoveDirection.Left)
         })
