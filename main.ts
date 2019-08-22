@@ -224,17 +224,30 @@ function setScene(tileMap: Image) {
 }
 
 namespace player {
-    setScene(levels.level1)
+    let mapArt = levels.level1
+    // copy it, as it will be updated
+    let copyMap = mapArt.clone()
+    setScene(copyMap)
     let players = scene.getTilesByType(codes.Player)
     control.assert(players.length == 1, 0)
     let player = sprites.create(art.Player, SpriteKind.Enemy)
     scene.cameraFollowSprite(player)
     players[0].place(player)
 
+    // make the player sprite snap to tile grid
     let tilePlayer = new tilesprite.TileSprite(player)
-    tilesprite.registerTileSprite(tilePlayer)
-    game.onUpdate(function () {
-        tilePlayer.update()
+    tilesprite.bindToController(tilePlayer)
+    tilePlayer.onTileExit(function (col: number, row: number) {
+        copyMap.setPixel(col, row, codes.Space)
     })
+    tilePlayer.onTileEnter(function (col: number, row: number) {
+        copyMap.setPixel(col, row, codes.Space)
+    })
+    game.onUpdate(function () { tilePlayer.update() })
+
+    // TODO
+    // - leave space behind us
+    // - when we run into a rock, we stop
+
 }
 
