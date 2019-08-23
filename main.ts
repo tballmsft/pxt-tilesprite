@@ -1,17 +1,17 @@
 // Rules of the game:
 
 // BASIC
-// - Player removes Dirt on tile it occupies (dirt->space)
-// - Dirt/Wall are non-movable items (NMI) - they never move
+// X Player removes Dirt on tile it occupies (dirt->space)
+// X Dirt/Wall are non-movable items (NMI) - they never move
 // - Player/Rocks/Diamonds/Enemies/Pets are MI
 // - MI (except Player) can only move in space (blocked by NMI)
 // - Strong Walls can never be destroyed 
-// - Diamonds can be collected by player (collect them all to win level)
-// - a diamond is a rock (follows rules of rocks)
-// - Rocks fall down if space below
+// X Diamonds can be collected by player (collect them all to win level)
+// X a diamond is a rock (follows rules of rocks)
+// X Rocks fall down if space below
 // - player/enemy dies if MI moves onto its tile
-// - rock (on rock) will move LD or RD (if space permits)
-// - player can push a (single) rock L or R (space permitting)
+// X rock (on rock) will move LD or RD (if space permits)
+// X player can push a (single) rock L or R (space permitting)
 
 // ADVANCED
 // - Tough enemy don't get killed by explosion
@@ -323,7 +323,6 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, 
     }
 })
 
-// TODO: pushing rocks
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sprite, rock: Sprite) {
     // when we run into a (non-moving) rock we stop
     if (rock.vx == 0 && rock.vy == 0) {
@@ -343,9 +342,13 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
     }
 })
 
+
+
 function findRock(sprite: Sprite) {
     return gameState.rocks.find(ts => ts.sprite == sprite)
 }
+
+// TODO: rocks get stopped by dirt!
 
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     findRock(sprite).deadStop()
