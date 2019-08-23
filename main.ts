@@ -329,10 +329,14 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
     if (rock.vx == 0 && rock.vy == 0) {
         // unless there is an opportunity to push the rock
         // which depends on direction that the player is moving!
-        //if (gameState.spritesMap.getPixel((rock.x >> 4)+1, rock.y>>4) == codes.Space) {
-        //    findRock(rock).move(tilesprite.MoveDirection)
-        //} else {
-        gameState.player.deadStop()
+        if (gameState.player.getDirection() == tilesprite.MoveDirection.Right &&
+            gameState.spritesMap.getPixel((rock.x >> 4) + 1, rock.y >> 4) == codes.Space)
+            findRock(rock).move(tilesprite.MoveDirection.Right, true)
+        else if (gameState.player.getDirection() == tilesprite.MoveDirection.Left &&
+            gameState.spritesMap.getPixel((rock.x >> 4) - 1, rock.y >> 4) == codes.Space)
+            findRock(rock).move(tilesprite.MoveDirection.Left, true)
+        else
+            gameState.player.deadStop()
         //}
     } else {
         // TODO: otherwise, we die

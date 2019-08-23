@@ -11,7 +11,7 @@ namespace tilesprite {
         // the sprite from moving
         private moving: boolean = false
         // which direction is the target 
-        private target: MoveDirection;
+        private dir: MoveDirection;
         // the target
         private next_x: number
         private next_y: number
@@ -28,18 +28,20 @@ namespace tilesprite {
             this.tileSize = size
             this.sprite = s;
             this.moving = false
-            this.target = MoveDirection.None
+            this.dir = MoveDirection.None
             this.old_x = this.old_y = -1
             this.queue = MoveDirection.None
             this.onEnter = undefined
         }
+
         // request sprite to move in specified direction
-        move(dir: MoveDirection) {
+        move(dir: MoveDirection, onlyOne: boolean = false) {
             if (dir == MoveDirection.Left || dir == MoveDirection.Right)
-                this.moveInX(dir)
+                this.moveInX(dir, onlyOne)
             else if (dir == MoveDirection.Up || dir == MoveDirection.Down)
-                this.moveInY(dir)
+                this.moveInY(dir, onlyOne)
         }
+        getDirection() { return this.dir; }
         deadStop() {
             this.spriteStopped()
         }
@@ -72,23 +74,23 @@ namespace tilesprite {
                 return;
             }
             // have we reached the target?
-            if (this.target == MoveDirection.Left && this.sprite.x <= this.next_x) {
+            if (this.dir == MoveDirection.Left && this.sprite.x <= this.next_x) {
                 this.reachedTargetX(this.next_x, -this.tileSize)
-            } else if (this.target == MoveDirection.Right && this.sprite.x >= this.next_x) {
+            } else if (this.dir == MoveDirection.Right && this.sprite.x >= this.next_x) {
                 this.reachedTargetX(this.next_x, this.tileSize)
-            } else if (this.target == MoveDirection.Up && this.sprite.y <= this.next_y) {
+            } else if (this.dir == MoveDirection.Up && this.sprite.y <= this.next_y) {
                 this.reachedTargetY(this.next_y, -this.tileSize)
-            } else if (this.target == MoveDirection.Down && this.sprite.y >= this.next_y) {
+            } else if (this.dir == MoveDirection.Down && this.sprite.y >= this.next_y) {
                 this.reachedTargetY(this.next_y, this.tileSize)
             }
         }
-        private moveInX(dir: MoveDirection) {
+        private moveInX(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
             let sign = dir == MoveDirection.Left ? -1 : 1
-            if (this.target == opDir) {
+            if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_x += sign * this.tileSize
-            } else if (this.target == MoveDirection.None) {
+            } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next_x = this.sprite.x + sign * this.tileSize;
             } else {
@@ -97,17 +99,17 @@ namespace tilesprite {
                 this.queue_moving = true;
                 return;
             }
-            this.target = dir
-            this.moving = true
+            this.dir = dir
+            this.moving = !onlyOne
             this.sprite.vx = sign * 100
         }
-        private moveInY(dir: MoveDirection) {
+        private moveInY(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
             let sign = dir == MoveDirection.Up ? -1 : 1
-            if (this.target == opDir) {
+            if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_y += sign * this.tileSize
-            } else if (this.target == MoveDirection.None) {
+            } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next_y = this.sprite.y + sign * this.tileSize;
             } else {
@@ -116,8 +118,8 @@ namespace tilesprite {
                 this.queue_moving = true;
                 return;
             }
-            this.target = dir
-            this.moving = true
+            this.dir = dir
+            this.moving = !onlyOne
             this.sprite.vy = sign * 100
         }
         private reachedTargetX(x: number, step: number = 0) {
@@ -129,7 +131,7 @@ namespace tilesprite {
             if (this.moving) {
                 this.next_x += step
             } else {
-                this.target = MoveDirection.None
+                this.dir = MoveDirection.None
                 this.sprite.x = x
                 this.sprite.vx = 0
                 if (this.queue != MoveDirection.None) {
@@ -147,7 +149,7 @@ namespace tilesprite {
             if (this.moving) {
                 this.next_y += step
             } else {
-                this.target = MoveDirection.None
+                this.dir = MoveDirection.None
                 this.sprite.y = y
                 this.sprite.vy = 0
                 if (this.queue != MoveDirection.None) {
@@ -162,13 +164,13 @@ namespace tilesprite {
             this.moving = false
             this.queue_moving = false
             this.queue = MoveDirection.None
-            if (this.target == MoveDirection.Left) {
+            if (this.dir == MoveDirection.Left) {
                 this.reachedTargetX(this.next_x + this.tileSize)
-            } else if (this.target == MoveDirection.Right) {
+            } else if (this.dir == MoveDirection.Right) {
                 this.reachedTargetX(this.next_x - this.tileSize)
-            } else if (this.target == MoveDirection.Up) {
+            } else if (this.dir == MoveDirection.Up) {
                 this.reachedTargetY(this.next_y + this.tileSize)
-            } else if (this.target == MoveDirection.Down) {
+            } else if (this.dir == MoveDirection.Down) {
                 this.reachedTargetY(this.next_y - this.tileSize)
             }
         }
