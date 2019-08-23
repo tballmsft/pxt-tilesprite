@@ -22,7 +22,7 @@ namespace tilesprite {
         private queue: MoveDirection;
         private queue_moving: boolean;
         // notifications
-        private onEnter: (x: number, y: number) => void
+        private onEnter: (x: number, y: number) => boolean
 
         constructor(s: Sprite, size: number = 16) {
             this.tileSize = size
@@ -53,7 +53,7 @@ namespace tilesprite {
                 this.moving = false;
             }
         }
-        onTileEnter(handler: (col: number, row: number) => void) {
+        onTileEnter(handler: (col: number, row: number) => boolean) {
             this.onEnter = handler
         }
         // call from game update loop
@@ -125,7 +125,11 @@ namespace tilesprite {
         private reachedTargetX(x: number, step: number = 0) {
             // notify
             if (step != 0 && this.onEnter) {
-                this.onEnter(x / this.tileSize, this.sprite.y / this.tileSize)
+                let stop = this.onEnter(x / this.tileSize, this.sprite.y / this.tileSize)
+                if (stop) {
+                    this.deadStop()
+                    return;
+                }
             }
             // determine what comes next
             if (this.moving) {
@@ -144,7 +148,11 @@ namespace tilesprite {
         private reachedTargetY(y: number, step: number = 0) {
             // notify
             if (step != 0 && this.onEnter) {
-                this.onEnter(this.sprite.x / this.tileSize, y / this.tileSize)
+                let stop = this.onEnter(this.sprite.x / this.tileSize, y / this.tileSize)
+                if (stop) {
+                    this.deadStop()
+                    return;
+                }
             }
             if (this.moving) {
                 this.next_y += step

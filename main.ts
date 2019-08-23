@@ -290,6 +290,14 @@ function startFalling(gameState: GameState) {
 
 let gameState = setScene(levels.level1)
 
+// add handlers for rock to stop when falling onto dirt
+for (let rock of gameState.rocks) {
+    rock.onTileEnter(function (col: number, row: number) {
+        // if we are above dirt, then stop
+        return gameState.spritesMap.getPixel(col, row + 1) == codes.Dirt;
+    })
+}
+
 game.onUpdate(function () {
     placeSprites(gameState);
     gameState.player.update()
@@ -299,7 +307,8 @@ game.onUpdate(function () {
 
 // whereever player goes, replace with space
 gameState.player.onTileEnter(function (col: number, row: number) {
-    gameState.tileMap.setPixel(col, row, codes.Space)
+    gameState.tileMap.setPixel(col, row, codes.Space);
+    return false
 })
 
 // BUG: neither of these is firing
@@ -349,6 +358,9 @@ function findRock(sprite: Sprite) {
 }
 
 // TODO: rocks get stopped by dirt!
+scene.onHitTile(codes.Dirt, SpriteKind.Projectile, function (sprite: Sprite) {
+    findRock(sprite).deadStop()
+})
 
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     findRock(sprite).deadStop()
