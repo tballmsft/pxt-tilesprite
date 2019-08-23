@@ -28,6 +28,7 @@ enum codes {
     Enemy = 0x2,
     Diamond = 0x6,
     Rock = 0xb,
+    SpriteHere = 0
 }
 // others to follow:
 // Dynamite
@@ -193,8 +194,13 @@ namespace levels {
         `
 }
 
-// TODO: store the sprites
-function setScene(tileMap: Image): number {
+type GameState = {
+    diamonds: tilesprite.TileSprite[]
+    rocks: tilesprite.TileSprite[]
+    tileMap: Image;
+}
+
+function setScene(tileMap: Image): GameState {
     // convert image to tile map
     scene.setTileMap(tileMap)
     scene.setTile(codes.Dirt, art.Dirt)
@@ -206,14 +212,18 @@ function setScene(tileMap: Image): number {
     scene.setTile(codes.Rock, art.Space)
     scene.setTile(codes.Enemy, art.Space)
 
+    let gameState: GameState = { diamonds: [], rocks: [], tileMap: tileMap }
+
     let diamonds = scene.getTilesByType(codes.Diamond)
     for (let value of diamonds) {
         let diamond = sprites.create(art.Diamond, SpriteKind.Food)
+        gameState.diamonds.push(new tilesprite.TileSprite(diamond))
         value.place(diamond)
     }
     let rocks = scene.getTilesByType(codes.Rock)
     for (let value of rocks) {
         let rock = sprites.create(art.Rock, SpriteKind.Projectile)
+        gameState.rocks.push(new tilesprite.TileSprite(rock))
         value.place(rock)
     }
     let enemies = scene.getTilesByType(codes.Enemy)
@@ -221,14 +231,39 @@ function setScene(tileMap: Image): number {
         let enemy = sprites.create(art.Enemy, SpriteKind.Enemy)
         value.place(enemy)
     }
-    return diamonds.length
+    return gameState
+}
+
+// create map in which the pixels with codes.Space are unoccupied
+function unoccupiedSpaces(tileMap: Image): Image {
+    let unoccupied = tileMap.clone()
+    function placeSprites(sprites: Sprite[]) {
+        for (let s of sprites) {
+            let col = s.x >> 4
+            let row = s.y >> 4
+            unoccupied.setPixel(col, row, codes.SpriteHere)
+        }
+    }
+    placeSprites(sprites.allOfKind(SpriteKind.Food))
+    placeSprites(sprites.allOfKind(SpriteKind.Projectile))
+    placeSprites(sprites.allOfKind(SpriteKind.Enemy))
+    placeSprites(sprites.allOfKind(SpriteKind.Player))
+    return unoccupied
+}
+
+function moveRocks(gameState: GameState) {
+    for (let rock of gameState.rocks) {
+        // check that rock is not moving
+        // check under rock, if it's a space then 
+        // get the rock moving
+    }
 }
 
 namespace player {
     let mapArt = levels.level1
     // copy it, as it will be updated
     let copyMap = mapArt.clone()
-    let numDiamonds = setScene(copyMap)
+    let gameState = setScene(copyMap)
     let players = scene.getTilesByType(codes.Player)
     control.assert(players.length == 1, 0)
     let player = sprites.create(art.Player, SpriteKind.Player)
@@ -239,13 +274,18 @@ namespace player {
     let tilePlayer = new tilesprite.TileSprite(player)
     // bind it to L,R,U,D buttons
     tilesprite.bindToController(tilePlayer)
-    // can this be done automagically?
-    game.onUpdate(function () { tilePlayer.update() })
+
+    game.onUpdate(function () {
+        tilePlayer.update()
+        // look for open spaces for things to fall into
+        moveRocks(gameState)
+        let unoccupied = unoccupiedSpaces(copyMap)
+        let rocks = gameState.rocks
+    })
 
     // whereever player goes, replace with space
     tilePlayer.onTileEnter(function (col: number, row: number) {
         copyMap.setPixel(col, row, codes.Space)
-        // TODO: look for things to start falling
     })
 
     // BUG: neither of these is firing
@@ -260,10 +300,10 @@ namespace player {
         // when we run into a (non-moving) diamond, we eat it
         if (otherSprite.vx == 0 && otherSprite.vy == 0) {
             otherSprite.destroy()
-            numDiamonds--
-            if (numDiamonds == 0) {
-                game.showDialog("Got All Diamonds!", "")
-            }
+            //numDiamonds--
+            //if (numDiamonds == 0) {
+            //    game.showDialog("Got All Diamonds!", "")
+            //}
         } else {
             // otherwise, we die
         }

@@ -200,5 +200,4 @@ namespace tilesprite {
             sprite.stop(MoveDirection.Down)
         })
     }
-
 }
