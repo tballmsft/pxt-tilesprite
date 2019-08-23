@@ -22,7 +22,7 @@ namespace tilesprite {
         private queue: MoveDirection;
         private queue_moving: boolean;
         // notifications
-        private onEnter: (x: number, y: number) => boolean
+        private onEnter: (ts: TileSprite, x: number, y: number) => void
 
         constructor(s: Sprite, size: number = 16) {
             this.tileSize = size
@@ -53,7 +53,7 @@ namespace tilesprite {
                 this.moving = false;
             }
         }
-        onTileEnter(handler: (col: number, row: number) => boolean) {
+        onTileEnter(handler: (ts: TileSprite, col: number, row: number) => void) {
             this.onEnter = handler
         }
         // call from game update loop
@@ -123,14 +123,6 @@ namespace tilesprite {
             this.sprite.vy = sign * 100
         }
         private reachedTargetX(x: number, step: number = 0) {
-            // notify
-            if (step != 0 && this.onEnter) {
-                let stop = this.onEnter(x / this.tileSize, this.sprite.y / this.tileSize)
-                if (stop) {
-                    this.deadStop()
-                    return;
-                }
-            }
             // determine what comes next
             if (this.moving) {
                 this.next_x += step
@@ -144,16 +136,12 @@ namespace tilesprite {
                 }
                 this.queue = MoveDirection.None
             }
-        }
-        private reachedTargetY(y: number, step: number = 0) {
             // notify
             if (step != 0 && this.onEnter) {
-                let stop = this.onEnter(this.sprite.x / this.tileSize, y / this.tileSize)
-                if (stop) {
-                    this.deadStop()
-                    return;
-                }
+                this.onEnter(this, x / this.tileSize, this.sprite.y / this.tileSize)
             }
+        }
+        private reachedTargetY(y: number, step: number = 0) {
             if (this.moving) {
                 this.next_y += step
             } else {
@@ -165,6 +153,10 @@ namespace tilesprite {
                     this.moving = this.queue_moving
                 }
                 this.queue = MoveDirection.None
+            }
+            // notify
+            if (step != 0 && this.onEnter) {
+                this.onEnter(this, this.sprite.x / this.tileSize, y / this.tileSize)
             }
         }
         // we detected the sprite stopped moving (barrier)

@@ -292,9 +292,11 @@ let gameState = setScene(levels.level1)
 
 // add handlers for rock to stop when falling onto dirt
 for (let rock of gameState.rocks) {
-    rock.onTileEnter(function (col: number, row: number) {
+    rock.onTileEnter(function (ts: tilesprite.TileSprite, col: number, row: number) {
         // if we are above dirt, then stop
-        return gameState.spritesMap.getPixel(col, row + 1) == codes.Dirt;
+        if (ts.sprite.vy != 0 && gameState.spritesMap.getPixel(col, row + 1) == codes.Dirt) {
+            ts.deadStop()
+        }
     })
 }
 
@@ -306,9 +308,8 @@ game.onUpdate(function () {
 })
 
 // whereever player goes, replace with space
-gameState.player.onTileEnter(function (col: number, row: number) {
+gameState.player.onTileEnter(function (ts: tilesprite.TileSprite, col: number, row: number) {
     gameState.tileMap.setPixel(col, row, codes.Space);
-    return false
 })
 
 // BUG: neither of these is firing
