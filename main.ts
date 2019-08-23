@@ -198,6 +198,7 @@ type GameState = {
     player: tilesprite.TileSprite
     rocks: tilesprite.TileSprite[]
     tileMap: Image;
+    spritesMap: Image;
 }
 
 
@@ -215,7 +216,7 @@ function setScene(img: Image): GameState {
     scene.setTile(codes.Rock, art.Space)
     scene.setTile(codes.Enemy, art.Space)
 
-    let gameState: GameState = { player: null, rocks: [], tileMap: tileMap }
+    let gameState: GameState = { player: null, rocks: [], tileMap: tileMap, spritesMap: tileMap.clone() }
 
     let players = scene.getTilesByType(codes.Player)
     control.assert(players.length == 1, 0)
@@ -255,32 +256,30 @@ function setScene(img: Image): GameState {
             }
         }
     }
-
+    placeSprites(gameState)
     return gameState
 }
 
 // create map in which the pixels with codes.Space are unoccupied
-function unoccupiedSpaces(tileMap: Image): Image {
-    let unoccupied = tileMap.clone()
+function placeSprites(gameState: GameState) {
+    gameState.spritesMap.copyFrom(gameState.tileMap)
     function placeSprites(sprites: Sprite[]) {
         for (let s of sprites) {
-            unoccupied.setPixel(s.x >> 4, s.y >> 4, codes.SpriteHere)
+            gameState.spritesMap.setPixel(s.x >> 4, s.y >> 4, codes.SpriteHere)
         }
     }
     placeSprites(sprites.allOfKind(SpriteKind.Food))
     placeSprites(sprites.allOfKind(SpriteKind.Projectile))
     placeSprites(sprites.allOfKind(SpriteKind.Enemy))
     placeSprites(sprites.allOfKind(SpriteKind.Player))
-    return unoccupied
 }
 
 function startFalling(gameState: GameState) {
-    let unoccupied = unoccupiedSpaces(gameState.tileMap)
     for (let rock of gameState.rocks) {
         // only applies to stationary rocks
         if (rock.sprite.vx == 0 && rock.sprite.vy == 0) {
             // if there is space under rock 
-            if (unoccupied.getPixel(rock.sprite.x >> 4, (rock.sprite.y >> 4) + 1) == codes.Space) {
+            if (gameState.spritesMap.getPixel(rock.sprite.x >> 4, (rock.sprite.y >> 4) + 1) == codes.Space) {
                 rock.move(tilesprite.MoveDirection.Down)
             }
             // TODO: check to left and below left
@@ -289,72 +288,72 @@ function startFalling(gameState: GameState) {
     }
 }
 
-namespace player {
-    let gameState = setScene(levels.level1)
+let gameState = setScene(levels.level1)
 
-    game.onUpdate(function () {
-        gameState.player.update()
-        for (let rock of gameState.rocks) { rock.update() }
-        startFalling(gameState)
-    })
+game.onUpdate(function () {
+    placeSprites(gameState);
+    gameState.player.update()
+    for (let rock of gameState.rocks) { rock.update() }
+    startFalling(gameState)
+})
 
-    // whereever player goes, replace with space
-    gameState.player.onTileEnter(function (col: number, row: number) {
-        gameState.tileMap.setPixel(col, row, codes.Space)
-    })
+// whereever player goes, replace with space
+gameState.player.onTileEnter(function (col: number, row: number) {
+    gameState.tileMap.setPixel(col, row, codes.Space)
+})
 
-    // BUG: neither of these is firing
-    scene.onHitTile(codes.Wall, SpriteKind.Player, function (sprite: Sprite) {
-        gameState.player.deadStop()
-    })
-    scene.onHitTile(codes.StrongWall, SpriteKind.Player, function (sprite: Sprite) {
-        gameState.player.deadStop()
-    })
+// BUG: neither of these is firing
+scene.onHitTile(codes.Wall, SpriteKind.Player, function (sprite: Sprite) {
+    gameState.player.deadStop()
+})
+scene.onHitTile(codes.StrongWall, SpriteKind.Player, function (sprite: Sprite) {
+    gameState.player.deadStop()
+})
 
-    sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-        // when we run into a (non-moving) diamond, we eat it
-        if (otherSprite.vx == 0 && otherSprite.vy == 0) {
-            otherSprite.destroy()
-            //numDiamonds--
-            //if (numDiamonds == 0) {
-            //    game.showDialog("Got All Diamonds!", "")
-            //}
-        } else {
-            // otherwise, we die
-        }
-    })
-
-    // TODO: pushing rocks
-    sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-        // when we run into a (non-moving) rock we stop
-        if (otherSprite.vx == 0 && otherSprite.vy == 0) {
-            // unless there is an opportunity to push the rock
-            gameState.player.deadStop()
-        } else {
-            // TODO: otherwise, we die
-        }
-    })
-
-    function stopRock(sprite: Sprite) {
-        for (let rock of gameState.rocks) {
-            if (rock.sprite == sprite) {
-                rock.deadStop();
-                return;
-            }
-        }
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    // when we run into a (non-moving) diamond, we eat it
+    if (otherSprite.vx == 0 && otherSprite.vy == 0) {
+        otherSprite.destroy()
+        //numDiamonds--
+        //if (numDiamonds == 0) {
+        //    game.showDialog("Got All Diamonds!", "")
+        //}
+    } else {
+        // otherwise, we die
     }
+})
 
-    sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-        stopRock(sprite)
-    })
-    sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-        stopRock(sprite)
-    })
-    sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-        stopRock(sprite)
-    })
-    sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-        stopRock(sprite)
-    })
+// TODO: pushing rocks
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sprite, rock: Sprite) {
+    // when we run into a (non-moving) rock we stop
+    if (rock.vx == 0 && rock.vy == 0) {
+        // unless there is an opportunity to push the rock
+        // which depends on direction that the player is moving!
+        //if (gameState.spritesMap.getPixel((rock.x >> 4)+1, rock.y>>4) == codes.Space) {
+        //    findRock(rock).move(tilesprite.MoveDirection)
+        //} else {
+        gameState.player.deadStop()
+        //}
+    } else {
+        // TODO: otherwise, we die
+    }
+})
+
+function findRock(sprite: Sprite) {
+    return gameState.rocks.find(ts => ts.sprite == sprite)
 }
+
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
+    findRock(sprite).deadStop()
+})
+sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
+    findRock(sprite).deadStop()
+})
+sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    findRock(sprite).deadStop()
+})
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    findRock(sprite).deadStop()
+})
+
 
