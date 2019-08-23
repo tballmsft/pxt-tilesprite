@@ -195,7 +195,6 @@ namespace levels {
 }
 
 type GameState = {
-    diamonds: tilesprite.TileSprite[]
     rocks: tilesprite.TileSprite[]
     tileMap: Image;
 }
@@ -212,12 +211,12 @@ function setScene(tileMap: Image): GameState {
     scene.setTile(codes.Rock, art.Space)
     scene.setTile(codes.Enemy, art.Space)
 
-    let gameState: GameState = { diamonds: [], rocks: [], tileMap: tileMap }
+    let gameState: GameState = { rocks: [], tileMap: tileMap }
 
     let diamonds = scene.getTilesByType(codes.Diamond)
     for (let value of diamonds) {
         let diamond = sprites.create(art.Diamond, SpriteKind.Food)
-        gameState.diamonds.push(new tilesprite.TileSprite(diamond))
+        gameState.rocks.push(new tilesprite.TileSprite(diamond))
         value.place(diamond)
     }
     let rocks = scene.getTilesByType(codes.Rock)
@@ -251,11 +250,16 @@ function unoccupiedSpaces(tileMap: Image): Image {
     return unoccupied
 }
 
-function moveRocks(gameState: GameState) {
+function startFalling(gameState: GameState) {
+    let unoccupied = unoccupiedSpaces(gameState.tileMap)
     for (let rock of gameState.rocks) {
-        // check that rock is not moving
-        // check under rock, if it's a space then 
-        // get the rock moving
+        // only applies to stationary rocks
+        if (rock.sprite.vx == 0 && rock.sprite.vy == 0) {
+            // if there is space under rock 
+            if (unoccupied.getPixel(rock.sprite.x >> 4, (rock.sprite.y >> 4) + 1) == codes.Space) {
+                rock.move(tilesprite.MoveDirection.Down)
+            }
+        }
     }
 }
 
@@ -277,10 +281,9 @@ namespace player {
 
     game.onUpdate(function () {
         tilePlayer.update()
+        for (let rock of gameState.rocks) { rock.update() }
         // look for open spaces for things to fall into
-        moveRocks(gameState)
-        let unoccupied = unoccupiedSpaces(copyMap)
-        let rocks = gameState.rocks
+        startFalling(gameState)
     })
 
     // whereever player goes, replace with space
@@ -319,5 +322,13 @@ namespace player {
         }
     })
 
+    sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
+        for (let rock of gameState.rocks) {
+            if (rock.sprite == sprite) {
+                rock.deadStop();
+                return;
+            }
+        }
+    })
 }
 

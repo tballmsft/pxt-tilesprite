@@ -1,7 +1,7 @@
 namespace tilesprite {
 
     // which direction is the sprite moving
-    enum MoveDirection { None, Left, Right, Up, Down }
+    export enum MoveDirection { None, Left, Right, Up, Down }
 
     // a sprite that moves by tiles
     export class TileSprite {
