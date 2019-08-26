@@ -302,6 +302,8 @@ function isSpace(col: number, row: number) {
 }
 
 function startFalling(gameState: GameState) {
+    let px = gameState.player.sprite.x >> 4
+    let py = gameState.player.sprite.y >> 4
     for (let rock of gameState.rocks) {
         // only applies to stationary rocks
         if (rock.sprite.vx == 0 && rock.sprite.vy == 0) {
@@ -312,6 +314,7 @@ function startFalling(gameState: GameState) {
                 rock.move(tilesprite.MoveDirection.Down)
             } else if (isRock(col, row + 1) && !isRock(col, row - 1)) {
                 // rock is on top of rock pile
+                // TODO: doesn't quite work when player is diagonal 
                 let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
                 let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
                 if (fallLeftOK && fallRightOK) {
@@ -361,9 +364,10 @@ gameState.player.onTileEnter(function (ts: tilesprite.TileSprite, col: number, r
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
     // when we run into a (non-moving) diamond, we eat it
     if (otherSprite.vx == 0 && otherSprite.vy == 0) {
-        otherSprite.destroy()
+        // TODO: only eat when we are in tile
         let ts = findRock(otherSprite)
         gameState.rocks.removeElement(ts)
+        otherSprite.destroy()
         gameState.numDiamonds--
         if (gameState.numDiamonds == 0) {
             game.showDialog("Got All Diamonds!", "")
@@ -394,9 +398,6 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
 
 // TODO: should be able to get rid of this...
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop()
-})
-sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     findRock(sprite).deadStop()
 })
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
