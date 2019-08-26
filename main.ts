@@ -200,6 +200,7 @@ type GameState = {
     rocks: tilesprite.TileSprite[]
     tileMap: Image;
     spritesMap: Image;
+    motionMap: Image;
 }
 
 
@@ -222,7 +223,8 @@ function setScene(img: Image): GameState {
         numDiamonds: 0,
         rocks: [],
         tileMap: tileMap,
-        spritesMap: tileMap.clone()
+        spritesMap: tileMap.clone(),
+        motionMap: tileMap.clone()
     }
 
     let players = scene.getTilesByType(codes.Player)
@@ -259,8 +261,7 @@ function setScene(img: Image): GameState {
         value.place(enemy)
     }
 
-    // now that we have created sprites, remove them from 
-    // the tile map
+    // now that we have created sprites, remove them from the tile map
     for (let y = 0; y < tileMap.height; y++) {
         for (let x = 0; x < tileMap.width; x++) {
             let pixel = tileMap.getPixel(x, y)
@@ -277,14 +278,25 @@ function setScene(img: Image): GameState {
 // place sprites to eliminate spaces
 function placeSprites(gameState: GameState) {
     gameState.spritesMap.copyFrom(gameState.tileMap)
+    gameState.motionMap.fill(0)
     function place(sprites: tilesprite.TileSprite[], code: number) {
         for (let s of sprites) {
-            gameState.spritesMap.setPixel(s.sprite.x >> 4, s.sprite.y >> 4, code)
+            let col = s.sprite.x >> 4
+            let row = s.sprite.y >> 4
+            gameState.spritesMap.setPixel(col, row, code)
+            gameState.motionMap.setPixel(col, row, s.sprite.vy + s.sprite.vx)
         }
     }
     place(gameState.rocks, codes.Rock)
     place([gameState.player], codes.Player)
     // todo: enemies, dynamite, etc.
+    // todo: is the enemy stationary or moving?
+}
+
+function spritesInTile(col: number, row: number) {
+    return gameState.rocks.find(function (value: tilesprite.TileSprite, index: number) {
+        return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
+    })
 }
 
 function findRock(sprite: Sprite) {
@@ -359,20 +371,22 @@ game.onUpdate(function () {
 // whereever player goes, replace with space
 gameState.player.onTileEnter(function (ts: tilesprite.TileSprite, col: number, row: number) {
     gameState.tileMap.setPixel(col, row, codes.Space);
-})
-
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    // check for (stationary) diamond in tile
     // when we run into a (non-moving) diamond, we eat it
-    if (otherSprite.vx == 0 && otherSprite.vy == 0) {
-        // TODO: only eat when we are in tile
-        let ts = findRock(otherSprite)
-        gameState.rocks.removeElement(ts)
-        otherSprite.destroy()
+    let diamond = spritesInTile(col, row)
+    if (diamond != null) {
+        gameState.rocks.removeElement(diamond)
+        diamond.sprite.destroy()
         gameState.numDiamonds--
         if (gameState.numDiamonds == 0) {
             game.showDialog("Got All Diamonds!", "")
         }
-    } else {
+    }
+})
+
+// a moving diamond kills us
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+    if (otherSprite.vx != 0 && otherSprite.vy != 0) {
         // otherwise, we die
     }
 })
@@ -406,5 +420,7 @@ sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, ot
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
     findRock(sprite).deadStop()
 })
-
+sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
+    findRock(sprite).deadStop()
+})
 

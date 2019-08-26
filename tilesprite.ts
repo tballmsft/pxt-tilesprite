@@ -138,7 +138,7 @@ namespace tilesprite {
             }
             // notify
             if (step != 0 && this.onEnter) {
-                this.onEnter(this, x / this.tileSize, this.sprite.y / this.tileSize)
+                this.onEnter(this, x >> 4, this.sprite.y >> 4)
             }
         }
         private reachedTargetY(y: number, step: number = 0) {
@@ -156,7 +156,7 @@ namespace tilesprite {
             }
             // notify
             if (step != 0 && this.onEnter) {
-                this.onEnter(this, this.sprite.x / this.tileSize, y / this.tileSize)
+                this.onEnter(this, this.sprite.x >> 4, y >> 4)
             }
         }
         // we detected the sprite stopped moving (barrier)
