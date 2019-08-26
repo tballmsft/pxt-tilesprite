@@ -216,7 +216,11 @@ function setScene(img: Image): GameState {
     scene.setTile(codes.Rock, art.Space)
     scene.setTile(codes.Enemy, art.Space)
 
-    let gameState: GameState = { player: null, rocks: [], tileMap: tileMap, spritesMap: tileMap.clone() }
+    let gameState: GameState = { 
+        player: null, rocks: [], 
+        tileMap: tileMap, 
+        spritesMap: tileMap.clone() 
+    }
 
     let players = scene.getTilesByType(codes.Player)
     control.assert(players.length == 1, 0)
@@ -246,7 +250,7 @@ function setScene(img: Image): GameState {
         value.place(enemy)
     }
 
-    // now, remove the diamonds, rocks and enemies
+    // now, remove sprites
     for (let y = 0; y < tileMap.height; y++) {
         for (let x = 0; x < tileMap.width; x++) {
             let pixel = tileMap.getPixel(x, y)
@@ -290,15 +294,18 @@ function startFalling(gameState: GameState) {
     for (let rock of gameState.rocks) {
         // only applies to stationary rocks
         if (rock.sprite.vx == 0 && rock.sprite.vy == 0) {
-            // if there is space under rock 
             let col = rock.sprite.x >> 4
             let row = rock.sprite.y >> 4
             if (isSpace(col, row + 1)) {
+                // if there is space under rock, fall
                 rock.move(tilesprite.MoveDirection.Down)
             } else if (isRock(col, row + 1) && !isRock(col, row - 1)) {
+                // rock is on top of rock pile
                 if (isSpace(col - 1, row) && isSpace(col - 1, row + 1)) {
+                    // rock falls off to left
                     rock.move(tilesprite.MoveDirection.Left, true)
                 } else if (isSpace(col + 1, row) && isSpace(col + 1, row + 1)) {
+                    // rock falls off to right
                     rock.move(tilesprite.MoveDirection.Right, true)
                 }
             }
@@ -369,11 +376,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
     }
 })
 
-// TODO: rocks get stopped by dirt!
-scene.onHitTile(codes.Dirt, SpriteKind.Projectile, function (sprite: Sprite) {
-    findRock(sprite).deadStop()
-})
-
+// TODO: should be able to get rid of this...
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     findRock(sprite).deadStop()
 })
