@@ -175,31 +175,4 @@ namespace tilesprite {
             }
         }
     }
-
-    export function bindToController(sprite: TileSprite) {
-        controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.move(MoveDirection.Left)
-        })
-        controller.left.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Left)
-        })
-        controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.move(MoveDirection.Right)
-        })
-        controller.right.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Right)
-        })
-        controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.move(MoveDirection.Up)
-        })
-        controller.up.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Up)
-        })
-        controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.move(MoveDirection.Down)
-        })
-        controller.down.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Down)
-        })
-    }
 }
