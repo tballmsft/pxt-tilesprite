@@ -104,6 +104,8 @@ namespace tilesprite {
             this.sprite.vx = sign * 100
         }
         private moveInY(dir: MoveDirection, onlyOne: boolean) {
+            if (dir == this.dir)
+                return;
             let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
             let sign = dir == MoveDirection.Up ? -1 : 1
             if (this.dir == opDir) {

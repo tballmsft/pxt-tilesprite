@@ -331,10 +331,6 @@ function isSpace(col: number, row: number) {
     let value = gameState.spritesMap.getPixel(col, row)
     return value == codes.Space
 }
-function isSpaceOrPlayer(col: number, row: number) {
-    let value = gameState.spritesMap.getPixel(col, row)
-    return value == codes.Space || value == codes.Player
-}
 
 function startFalling(gameState: GameState) {
     function checkRock(rock: ts.TileSprite) {
@@ -346,8 +342,8 @@ function startFalling(gameState: GameState) {
                 rock.move(ts.MoveDirection.Down)
             } else if (isRock(col, row + 1) && !isRock(col, row - 1)) {
                 // rock is on top of rock pile
-                let fallLeftOK = isSpace(col - 1, row) && isSpaceOrPlayer(col - 1, row + 1)
-                let fallRightOK = isSpace(col + 1, row) && isSpaceOrPlayer(col + 1, row + 1)
+                let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
+                let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
                 if (fallLeftOK && fallRightOK) {
                     let choose = Math.pickRandom([true, false])
                     fallLeftOK = choose
@@ -375,9 +371,7 @@ function addRockHandler(rock: ts.TileSprite) {
         return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
     }
     rock.onTileEnter(function (ts: ts.TileSprite, col: number, row: number) {
-        if (ts.sprite.vy > 0 && rockStops(ts, col, row + 1) ||
-            ts.sprite.vx > 0 && rockStops(ts, col + 1, row) ||
-            ts.sprite.vx < 0 && rockStops(ts, col - 1, row)) {
+        if (ts.sprite.vy > 0 && rockStops(ts, col, row + 1)) {
             ts.deadStop()
         }
     })
@@ -387,25 +381,25 @@ for (let rock of gameState.rocks) { addRockHandler(rock) }
 for (let rock of gameState.diamonds) { addRockHandler(rock) }
 
 game.onUpdate(function () {
-    gameState.player.update();
+    placeSprites(gameState);
     for (let rock of gameState.rocks) { rock.update() }
     for (let rock of gameState.diamonds) { rock.update() }
-    placeSprites(gameState);
+    gameState.player.update();
     startFalling(gameState);
 })
 
 // if player moving, a rock may need to move
 // returns true if rock is moving (so player can continue to move) or no rock to move
 
+function rocksInTile(col: number, row: number) {
+    return gameState.rocks.find(function (value: ts.TileSprite, index: number) {
+        return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
+    })
+}
 enum Possibilities { RockMoves, PlayerStops, Default }
 function playerMovesRock(dir: ts.MoveDirection) {
     let col = gameState.player.sprite.x >> 4
     let row = gameState.player.sprite.y >> 4
-    function rocksInTile(col: number, row: number) {
-        return gameState.rocks.find(function (value: ts.TileSprite, index: number) {
-            return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
-        })
-    }
     if (dir == ts.MoveDirection.Left &&
         gameState.spritesMap.getPixel(col - 1, row) == codes.Rock) {
         if (gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
@@ -453,19 +447,11 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
 
 // a moving diamond kills us
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, diamond: Sprite) {
-    if (diamond.vx != 0 || diamond.vy != 0) {
 
-    }
 })
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sprite, rock: Sprite) {
     // when we run into a moving rock we die
-    if (rock.vy == 0 && rock.vx == 0) {
-        if (playerMovesRock(gameState.player.getDirection()) != Possibilities.RockMoves)
-            gameState.player.deadStop()
-    } else {
-
-    }
 })
 
 function findRock(sprite: Sprite) {
