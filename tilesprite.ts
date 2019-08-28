@@ -15,9 +15,6 @@ namespace tilesprite {
         // the target
         private next_x: number
         private next_y: number
-        // to track if we are moving
-        private old_x: number;
-        private old_y: number;
         // next request
         private queue: MoveDirection;
         private queue_moving: boolean;
@@ -29,7 +26,6 @@ namespace tilesprite {
             this.sprite = s;
             this.moving = false
             this.dir = MoveDirection.None
-            this.old_x = this.old_y = -1
             this.queue = MoveDirection.None
             this.onEnter = undefined
         }
@@ -42,9 +38,7 @@ namespace tilesprite {
                 this.moveInY(dir, onlyOne)
         }
         getDirection() { return this.dir; }
-        deadStop() {
-            this.spriteStopped()
-        }
+        deadStop() { this.stopSprite() }
         // request sprite to stop moving
         stop(dir: MoveDirection) {
             if (dir == this.queue) {
@@ -58,21 +52,6 @@ namespace tilesprite {
         }
         // call from game update loop
         update() {
-            // this is a hack until we get wall collision working
-            let is_moving_x = true;
-            let is_moving_y = true;
-            if (this.old_x != -1) {
-                is_moving_x = this.sprite.x != this.old_x
-            }
-            if (this.old_y != -1) {
-                is_moving_y = this.sprite.y != this.old_y
-            }
-            this.old_x = this.sprite.x
-            this.old_y = this.sprite.y
-            if (!is_moving_x && !is_moving_y) {
-                this.spriteStopped()
-                return;
-            }
             // have we reached the target?
             if (this.dir == MoveDirection.Left && this.sprite.x <= this.next_x) {
                 this.reachedTargetX(this.next_x, -this.tileSize)
@@ -87,7 +66,10 @@ namespace tilesprite {
         private moveInX(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
             let sign = dir == MoveDirection.Left ? -1 : 1
-            if (this.dir == dir || this.dir == opDir) {
+            if (this.dir == dir) {
+                this.next_x += sign * this.tileSize
+                return;
+            } else if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_x += sign * this.tileSize
             } else if (this.dir == MoveDirection.None) {
@@ -159,8 +141,7 @@ namespace tilesprite {
                 this.onEnter(this, this.sprite.x >> 4, y >> 4)
             }
         }
-        // we detected the sprite stopped moving (barrier)
-        private spriteStopped() {
+        private stopSprite() {
             this.moving = false
             this.queue_moving = false
             this.queue = MoveDirection.None

@@ -207,28 +207,28 @@ type GameState = {
 
 function bindToController(sprite: ts.TileSprite) {
     controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMovesRock(ts.MoveDirection.Left) != Possibilities.PlayerStops)
+        if (playerMoves(ts.MoveDirection.Left))
             sprite.move(ts.MoveDirection.Left)
     })
     controller.left.onEvent(ControllerButtonEvent.Released, function () {
         sprite.stop(ts.MoveDirection.Left)
     })
     controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMovesRock(ts.MoveDirection.Right) != Possibilities.PlayerStops)
+        if (playerMoves(ts.MoveDirection.Right))
             sprite.move(ts.MoveDirection.Right)
     })
     controller.right.onEvent(ControllerButtonEvent.Released, function () {
         sprite.stop(ts.MoveDirection.Right)
     })
     controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMovesRock(ts.MoveDirection.Up) != Possibilities.PlayerStops)
+        if (playerMoves(ts.MoveDirection.Up))
             sprite.move(ts.MoveDirection.Up)
     })
     controller.up.onEvent(ControllerButtonEvent.Released, function () {
         sprite.stop(ts.MoveDirection.Up)
     })
     controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMovesRock(ts.MoveDirection.Down) != Possibilities.PlayerStops)
+        if (playerMoves(ts.MoveDirection.Down))
             sprite.move(ts.MoveDirection.Down)
     })
     controller.down.onEvent(ControllerButtonEvent.Released, function () {
@@ -336,13 +336,16 @@ function isSpace(col: number, row: number) {
 
 function startFalling(gameState: GameState) {
     function checkRock(rock: ts.TileSprite) {
+        let col = rock.sprite.x >> 4
+        let row = rock.sprite.y >> 4
         if (rock.sprite.vy == 0) {
-            let col = rock.sprite.x >> 4
-            let row = rock.sprite.y >> 4
             if (isSpace(col, row + 1)) {
                 // if there is space under rock, fall
                 rock.move(ts.MoveDirection.Down)
-            } else if (isRock(col, row + 1) && !isRock(col, row - 1)) {
+                return;
+            }
+            // stationary rock can also fall to left/right
+            if (rock.sprite.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
                 // rock is on top of rock pile
                 let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
                 let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
@@ -398,33 +401,38 @@ function rocksInTile(col: number, row: number) {
         return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
     })
 }
-enum Possibilities { RockMoves, PlayerStops, Default }
-function playerMovesRock(dir: ts.MoveDirection) {
+
+function playerCanMoveTo(col: number, row: number) {
+    let value = gameState.spritesMap.getPixel(col, row)
+    return value == codes.Space || value == codes.Dirt || value == codes.Diamond || value == codes.Enemy
+}
+
+function playerMoves(dir: ts.MoveDirection) {
     let col = gameState.player.sprite.x >> 4
     let row = gameState.player.sprite.y >> 4
-    if (dir == ts.MoveDirection.Left &&
-        gameState.spritesMap.getPixel(col - 1, row) == codes.Rock) {
-        if (gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
+    if (dir == ts.MoveDirection.Left) {
+        if (playerCanMoveTo(col - 1, row))
+            return true
+        if (gameState.spritesMap.getPixel(col - 1, row) == codes.Rock &&
+            gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
             let rock = rocksInTile(col - 1, row)
             rock.move(ts.MoveDirection.Left, true)
-            return Possibilities.RockMoves
+            return true
         }
-        return Possibilities.PlayerStops
-    } else if (dir == ts.MoveDirection.Right &&
-        gameState.spritesMap.getPixel(col + 1, row) == codes.Rock) {
-        if (gameState.spritesMap.getPixel(col + 2, row) == codes.Space) {
+    } else if (dir == ts.MoveDirection.Right) {
+        if (playerCanMoveTo(col + 1, row))
+            return true
+        if (gameState.spritesMap.getPixel(col + 1, row) == codes.Rock &&
+            gameState.spritesMap.getPixel(col + 2, row) == codes.Space) {
             let rock = rocksInTile(col + 1, row)
             rock.move(ts.MoveDirection.Right, true)
-            return Possibilities.RockMoves
+            return true
         }
-        return Possibilities.PlayerStops
-    } else if (dir == ts.MoveDirection.Down &&
-        gameState.spritesMap.getPixel(col, row + 1) == codes.Rock ||
-        dir == ts.MoveDirection.Up &&
-        gameState.spritesMap.getPixel(col, row - 1) == codes.Rock) {
-        return Possibilities.PlayerStops
+    } else if (dir == ts.MoveDirection.Down && playerCanMoveTo(col, row + 1) ||
+        dir == ts.MoveDirection.Up && playerCanMoveTo(col, row - 1)) {
+        return true
     }
-    return Possibilities.Default
+    return false
 }
 
 gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: number) {
@@ -444,8 +452,8 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             game.showDialog("Got All Diamonds!", "")
         }
     }
-    // push rock
-    if (playerMovesRock(player.getDirection()) == Possibilities.PlayerStops)
+    // try to keep moving in current direction
+    if (!playerMoves(player.getDirection()))
         player.deadStop()
 
     // whereever player goes, replace with space
