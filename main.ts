@@ -370,14 +370,17 @@ let gameState = setScene(levels.level1)
 
 // add handlers for rock to stop when falling onto dirt
 function addRockHandler(rock: ts.TileSprite) {
-    function rockStops(ts: ts.TileSprite, col: number, row: number) {
+    function rockStops(col: number, row: number) {
         // if we are above dirt or rock, then stop
         let value = gameState.spritesMap.getPixel(col, row)
         return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
+            || value == codes.Wall || value == codes.StrongWall
     }
-    rock.onTileEnter(function (ts: ts.TileSprite, col: number, row: number) {
-        if (ts.sprite.vy > 0 && rockStops(ts, col, row + 1)) {
-            ts.deadStop()
+    rock.onTileEnter(function (s: ts.TileSprite, col: number, row: number) {
+        if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
+            s.deadStop()
+        } else if (s.sprite.vy == 0 && !rockStops(col, row + 1)) {
+            s.move(ts.MoveDirection.Down)
         }
     })
 }
@@ -441,7 +444,6 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
         })
     }
-
     // check for (stationary) diamond in tile
     // when we run into a (non-moving) diamond, we eat it
     let diamond = diamondsInTile(col, row)
@@ -455,7 +457,6 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
     // try to keep moving in current direction
     if (!playerMoves(player.getDirection()))
         player.deadStop()
-
     // whereever player goes, replace with space
     gameState.tileMap.setPixel(col, row, codes.Space);
 })
@@ -471,6 +472,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
     // when we run into a moving rock we die
 })
 
+// unfortunately, we need this because multiple rocks can be in motion at the same time
 function findRock(sprite: Sprite) {
     let ret = gameState.rocks.find(ts => ts.sprite == sprite)
     if (!ret) {
