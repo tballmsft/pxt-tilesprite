@@ -87,7 +87,7 @@ namespace tilesprite {
         private moveInX(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
             let sign = dir == MoveDirection.Left ? -1 : 1
-            if (this.dir == opDir) {
+            if (this.dir == dir || this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_x += sign * this.tileSize
             } else if (this.dir == MoveDirection.None) {
@@ -104,11 +104,9 @@ namespace tilesprite {
             this.sprite.vx = sign * 100
         }
         private moveInY(dir: MoveDirection, onlyOne: boolean) {
-            if (dir == this.dir)
-                return;
             let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
             let sign = dir == MoveDirection.Up ? -1 : 1
-            if (this.dir == opDir) {
+            if (this.dir == dir || this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_y += sign * this.tileSize
             } else if (this.dir == MoveDirection.None) {

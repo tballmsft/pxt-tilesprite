@@ -221,13 +221,15 @@ function bindToController(sprite: ts.TileSprite) {
         sprite.stop(ts.MoveDirection.Right)
     })
     controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-        sprite.move(ts.MoveDirection.Up)
+        if (playerMovesRock(ts.MoveDirection.Up) != Possibilities.PlayerStops)
+            sprite.move(ts.MoveDirection.Up)
     })
     controller.up.onEvent(ControllerButtonEvent.Released, function () {
         sprite.stop(ts.MoveDirection.Up)
     })
     controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-        sprite.move(ts.MoveDirection.Down)
+        if (playerMovesRock(ts.MoveDirection.Down) != Possibilities.PlayerStops)
+            sprite.move(ts.MoveDirection.Down)
     })
     controller.down.onEvent(ControllerButtonEvent.Released, function () {
         sprite.stop(ts.MoveDirection.Down)
@@ -334,7 +336,7 @@ function isSpace(col: number, row: number) {
 
 function startFalling(gameState: GameState) {
     function checkRock(rock: ts.TileSprite) {
-        if (rock.sprite.vx == 0 && rock.sprite.vy == 0) {
+        if (rock.sprite.vy == 0) {
             let col = rock.sprite.x >> 4
             let row = rock.sprite.y >> 4
             if (isSpace(col, row + 1)) {
@@ -416,6 +418,11 @@ function playerMovesRock(dir: ts.MoveDirection) {
             return Possibilities.RockMoves
         }
         return Possibilities.PlayerStops
+    } else if (dir == ts.MoveDirection.Down &&
+        gameState.spritesMap.getPixel(col, row + 1) == codes.Rock ||
+        dir == ts.MoveDirection.Up &&
+        gameState.spritesMap.getPixel(col, row - 1) == codes.Rock) {
+        return Possibilities.PlayerStops
     }
     return Possibilities.Default
 }
@@ -426,8 +433,7 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
         })
     }
-    // whereever player goes, replace with space
-    gameState.tileMap.setPixel(col, row, codes.Space);
+
     // check for (stationary) diamond in tile
     // when we run into a (non-moving) diamond, we eat it
     let diamond = diamondsInTile(col, row)
@@ -441,6 +447,9 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
     // push rock
     if (playerMovesRock(player.getDirection()) == Possibilities.PlayerStops)
         player.deadStop()
+
+    // whereever player goes, replace with space
+    gameState.tileMap.setPixel(col, row, codes.Space);
 })
 
 // all collision detection here:
