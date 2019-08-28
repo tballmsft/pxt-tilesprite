@@ -380,6 +380,7 @@ function addRockHandler(rock: ts.TileSprite) {
         if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
             s.deadStop()
         } else if (s.sprite.vy == 0 && !rockStops(col, row + 1)) {
+            s.deadStop()
             s.move(ts.MoveDirection.Down)
         }
     })
@@ -388,12 +389,17 @@ function addRockHandler(rock: ts.TileSprite) {
 for (let rock of gameState.rocks) { addRockHandler(rock) }
 for (let rock of gameState.diamonds) { addRockHandler(rock) }
 
+let turn = true
 game.onUpdate(function () {
     placeSprites(gameState);
-    for (let rock of gameState.rocks) { rock.update() }
-    for (let rock of gameState.diamonds) { rock.update() }
-    gameState.player.update();
-    startFalling(gameState);
+    if (turn) {
+        gameState.player.update();
+    } else {
+        for (let rock of gameState.rocks) { rock.update() }
+        for (let rock of gameState.diamonds) { rock.update() }
+        startFalling(gameState);
+    }
+    turn = !turn
 })
 
 // if player moving, a rock may need to move
