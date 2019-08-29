@@ -202,7 +202,6 @@ type GameState = {
     rocks: ts.TileSprite[]
     tileMap: Image;
     spritesMap: Image;
-    motionMap: Image;
 }
 
 function bindToController(sprite: ts.TileSprite) {
@@ -242,8 +241,8 @@ function setScene(img: Image): GameState {
     // convert image to tile map
     scene.setTileMap(tileMap)
     scene.setTile(codes.Dirt, art.Dirt)
-    scene.setTile(codes.Wall, art.Wall, true)
-    scene.setTile(codes.StrongWall, art.Wall, true)
+    scene.setTile(codes.Wall, art.Wall)
+    scene.setTile(codes.StrongWall, art.Wall)
     scene.setTile(codes.Player, art.Space)
     scene.setTile(codes.Space, art.Space)
     scene.setTile(codes.Diamond, art.Space)
@@ -255,8 +254,7 @@ function setScene(img: Image): GameState {
         diamonds: [],
         rocks: [],
         tileMap: tileMap,
-        spritesMap: tileMap.clone(),
-        motionMap: tileMap.clone()
+        spritesMap: tileMap.clone()
     }
 
     let players = scene.getTilesByType(codes.Player)
@@ -309,13 +307,11 @@ function setScene(img: Image): GameState {
 // place sprites to eliminate spaces
 function placeSprites(gameState: GameState) {
     gameState.spritesMap.copyFrom(gameState.tileMap)
-    gameState.motionMap.fill(0)
     function place(sprites: ts.TileSprite[], code: number) {
         for (let s of sprites) {
             let col = s.sprite.x >> 4
             let row = s.sprite.y >> 4
             gameState.spritesMap.setPixel(col, row, code)
-            gameState.motionMap.setPixel(col, row, s.sprite.vy + s.sprite.vx)
         }
     }
     place(gameState.rocks, codes.Rock)
@@ -355,9 +351,9 @@ function startFalling(gameState: GameState) {
                     fallRightOK = !choose
                 }
                 if (fallLeftOK) {
-                    rock.move(ts.MoveDirection.Left, true)
+                    rock.move(ts.MoveDirection.Left, false)
                 } else if (fallRightOK) {
-                    rock.move(ts.MoveDirection.Right, true)
+                    rock.move(ts.MoveDirection.Right, false)
                 }
             }
         }
@@ -381,10 +377,9 @@ function addRockHandler(rock: ts.TileSprite) {
             s.deadStop()
         } else if (s.sprite.vy == 0) {
             if (!rockStops(col, row + 1)) {
-                s.clearQueue();
+                s.deadStop();
                 s.move(ts.MoveDirection.Down)
             } else {
-                // need to check for collision???
                 if (s.isQueued())
                     s.doQueued()
             }
@@ -395,17 +390,12 @@ function addRockHandler(rock: ts.TileSprite) {
 for (let rock of gameState.rocks) { addRockHandler(rock) }
 for (let rock of gameState.diamonds) { addRockHandler(rock) }
 
-let turn = true
 game.onUpdate(function () {
     placeSprites(gameState);
-    if (turn) {
-        gameState.player.update();
-    } else {
-        for (let rock of gameState.rocks) { rock.update() }
-        for (let rock of gameState.diamonds) { rock.update() }
-        startFalling(gameState);
-    }
-    turn = !turn
+    gameState.player.update();
+    for (let rock of gameState.rocks) { rock.update() }
+    for (let rock of gameState.diamonds) { rock.update() }
+    startFalling(gameState);
 })
 
 // if player moving, a rock may need to move
@@ -431,7 +421,8 @@ function playerMoves(dir: ts.MoveDirection) {
         if (gameState.spritesMap.getPixel(col - 1, row) == codes.Rock &&
             gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
             let rock = rocksInTile(col - 1, row)
-            rock.move(ts.MoveDirection.Left, true)
+            control.assert(rock != null, 404)
+            rock.move(ts.MoveDirection.Left, false)
             return true
         }
     } else if (dir == ts.MoveDirection.Right) {
@@ -440,7 +431,7 @@ function playerMoves(dir: ts.MoveDirection) {
         if (gameState.spritesMap.getPixel(col + 1, row) == codes.Rock &&
             gameState.spritesMap.getPixel(col + 2, row) == codes.Space) {
             let rock = rocksInTile(col + 1, row)
-            rock.move(ts.MoveDirection.Right, true)
+            rock.move(ts.MoveDirection.Right, false)
             return true
         }
     } else if (dir == ts.MoveDirection.Down && playerCanMoveTo(col, row + 1) ||
@@ -466,14 +457,11 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             game.showDialog("Got All Diamonds!", "")
         }
     }
-    if (player.isQueued()) {
-        // execute turn
+    if (player.isQueued())
         player.doQueued()
-    } else {
-        // try to keep moving in current direction
-        if (!playerMoves(player.getDirection()))
-            player.deadStop()
-    }
+    // try to keep moving in current direction
+    if (!playerMoves(player.getDirection()))
+        player.deadStop()
     // whereever player goes, replace with space
     gameState.tileMap.setPixel(col, row, codes.Space);
 })
