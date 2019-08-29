@@ -15,15 +15,17 @@ namespace tilesprite {
         // the target
         private next_x: number
         private next_y: number
-        // notifications: should separate entering the tile from
-        // arriving at the center of the tile??
+        private queue_dir: MoveDirection;
+        private queue_moving: boolean;
+        // notification
         private onEnter: (ts: TileSprite, x: number, y: number) => void
 
         constructor(s: Sprite, size: number = 16) {
             this.tileSize = size
-            this.sprite = s;
+            this.sprite = s
             this.moving = false
             this.dir = MoveDirection.None
+            this.queue_dir = MoveDirection.None
             this.onEnter = undefined
         }
 
@@ -38,7 +40,19 @@ namespace tilesprite {
         deadStop() { this.stopSprite() }
         // request sprite to stop moving
         stop(dir: MoveDirection) {
-            this.moving = false;
+            if (dir == this.dir) {
+                this.moving = false;
+            } else if (dir == this.queue_dir) {
+                this.queue_moving = false;
+            }
+        }
+        clearQueue() { this.queue_dir = MoveDirection.None }
+        isQueued() { return this.queue_dir != MoveDirection.None }
+        doQueued() {
+            if (this.queue_dir != MoveDirection.None) {
+                this.move(this.queue_dir, this.queue_moving)
+            }
+            this.queue_dir = MoveDirection.None;
         }
         onTileEnter(handler: (ts: TileSprite, col: number, row: number) => void) {
             this.onEnter = handler
@@ -66,10 +80,9 @@ namespace tilesprite {
                 // player.x is aligned, so use it
                 this.next_x = this.sprite.x + sign * this.tileSize;
             } else {
-                // we are moving in y (snap to current row)
-                let row = this.sprite.y >> 4
-                this.sprite.y = (row << 4) + 8
-                this.sprite.vy = 0
+                this.queue_dir = dir;
+                this.queue_moving = !onlyOne
+                return;
             }
             this.dir = dir
             this.moving = !onlyOne
@@ -85,10 +98,9 @@ namespace tilesprite {
                 // player.x is aligned, so use it
                 this.next_y = this.sprite.y + sign * this.tileSize;
             } else {
-                // we are moving in x (snap to current col)
-                let col = this.sprite.x >> 4
-                this.sprite.x = (col << 4) + 8
-                this.sprite.vx = 0
+                this.queue_dir = dir;
+                this.queue_moving = !onlyOne
+                return;
             }
             this.dir = dir
             this.moving = !onlyOne
@@ -107,6 +119,7 @@ namespace tilesprite {
             if (this.onEnter) {
                 this.onEnter(this, x >> 4, this.sprite.y >> 4)
             }
+            this.queue_dir = MoveDirection.None
         }
         private reachedTargetY(y: number, step: number = 0) {
             if (this.moving) {
@@ -120,6 +133,7 @@ namespace tilesprite {
             if (this.onEnter) {
                 this.onEnter(this, this.sprite.x >> 4, y >> 4)
             }
+            this.queue_dir = MoveDirection.None
         }
         private stopSprite() {
             this.moving = false

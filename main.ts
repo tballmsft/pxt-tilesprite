@@ -379,9 +379,14 @@ function addRockHandler(rock: ts.TileSprite) {
     rock.onTileEnter(function (s: ts.TileSprite, col: number, row: number) {
         if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
             s.deadStop()
-        } else if (s.sprite.vy == 0 && !rockStops(col, row + 1)) {
-            s.deadStop()
-            s.move(ts.MoveDirection.Down)
+        } else if (s.sprite.vy == 0) {
+            if (!rockStops(col, row + 1)) {
+                s.clearQueue();
+                s.move(ts.MoveDirection.Down)
+            } else {
+                if (s.isQueued())
+                    s.doQueued()
+            }
         }
     })
 }
@@ -460,9 +465,14 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             game.showDialog("Got All Diamonds!", "")
         }
     }
-    // try to keep moving in current direction
-    if (!playerMoves(player.getDirection()))
-        player.deadStop()
+    if (player.isQueued()) {
+        // execute turn
+        player.doQueued()
+    } else {
+        // try to keep moving in current direction
+        if (!playerMoves(player.getDirection()))
+            player.deadStop()
+    }
     // whereever player goes, replace with space
     gameState.tileMap.setPixel(col, row, codes.Space);
 })
