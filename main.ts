@@ -384,6 +384,7 @@ function addRockHandler(rock: ts.TileSprite) {
                 s.clearQueue();
                 s.move(ts.MoveDirection.Down)
             } else {
+                // need to check for collision???
                 if (s.isQueued())
                     s.doQueued()
             }

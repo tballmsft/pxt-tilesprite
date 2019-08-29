@@ -46,6 +46,7 @@ namespace tilesprite {
                 this.queue_moving = false;
             }
         }
+        // next direction 
         clearQueue() { this.queue_dir = MoveDirection.None }
         isQueued() { return this.queue_dir != MoveDirection.None }
         doQueued() {
@@ -54,6 +55,7 @@ namespace tilesprite {
             }
             this.queue_dir = MoveDirection.None;
         }
+        // notify on
         onTileEnter(handler: (ts: TileSprite, col: number, row: number) => void) {
             this.onEnter = handler
         }
@@ -73,7 +75,7 @@ namespace tilesprite {
         private moveInX(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
             let sign = dir == MoveDirection.Left ? -1 : 1
-            if (this.dir == dir || this.dir == opDir) {
+            if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_x += sign * this.tileSize
             } else if (this.dir == MoveDirection.None) {
@@ -91,7 +93,7 @@ namespace tilesprite {
         private moveInY(dir: MoveDirection, onlyOne: boolean) {
             let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
             let sign = dir == MoveDirection.Up ? -1 : 1
-            if (this.dir == dir || this.dir == opDir) {
+            if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next_y += sign * this.tileSize
             } else if (this.dir == MoveDirection.None) {
