@@ -240,6 +240,8 @@ function setScene(img: Image): GameState {
     let tileMap = img.clone()
     // convert image to tile map
     scene.setTileMap(tileMap)
+    // don't use any physics collisions on tile sprites
+    // as we change these dynamically instead
     scene.setTile(codes.Dirt, art.Dirt)
     scene.setTile(codes.Wall, art.Wall)
     scene.setTile(codes.StrongWall, art.Wall)
@@ -314,6 +316,7 @@ function placeSprites(gameState: GameState) {
             gameState.spritesMap.setPixel(col, row, code)
         }
     }
+    // TODO: if multiple sprites occupy tile, we may want to break ties
     place(gameState.rocks, codes.Rock)
     place(gameState.diamonds, codes.Diamond)
     place([gameState.player], codes.Player)
@@ -374,14 +377,16 @@ function addRockHandler(rock: ts.TileSprite) {
     }
     rock.onTileEnter(function (s: ts.TileSprite, col: number, row: number) {
         if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
+            // falling rock stopped by barrier
             s.deadStop()
         } else if (s.sprite.vy == 0) {
+            // horizontally moving rock
             if (!rockStops(col, row + 1)) {
+                // falls if there's a hole
                 s.deadStop();
                 s.move(ts.MoveDirection.Down)
             } else {
-                if (s.isQueued())
-                    s.doQueued()
+                s.doQueued()
             }
         }
     })
@@ -421,7 +426,6 @@ function playerMoves(dir: ts.MoveDirection) {
         if (gameState.spritesMap.getPixel(col - 1, row) == codes.Rock &&
             gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
             let rock = rocksInTile(col - 1, row)
-            control.assert(rock != null, 404)
             rock.move(ts.MoveDirection.Left, false)
             return true
         }
@@ -457,8 +461,7 @@ gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: 
             game.showDialog("Got All Diamonds!", "")
         }
     }
-    if (player.isQueued())
-        player.doQueued()
+    player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player.getDirection()))
         player.deadStop()

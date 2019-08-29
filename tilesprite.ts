@@ -48,7 +48,6 @@ namespace tilesprite {
         }
         // next direction 
         clearQueue() { this.queue_dir = MoveDirection.None }
-        isQueued() { return this.queue_dir != MoveDirection.None }
         doQueued() {
             if (this.queue_dir != MoveDirection.None) {
                 this.move(this.queue_dir, this.queue_moving)
