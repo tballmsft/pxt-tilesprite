@@ -20,9 +20,9 @@ namespace tilesprite {
         private queue_dir: MoveDirection;
         private queue_moving: boolean;
         // notification
-        private onEnter: (ts: TileSprite, x: number, y: number) => void
+        private onArrived: (ts: TileSprite) => void
         // TODO
-        private onExit: (ts: TileSprite, x: number, y: number) => void
+        private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
         constructor(s: Sprite, bits: number = 4) {
             this.tileBits = bits;
@@ -30,9 +30,12 @@ namespace tilesprite {
             this.moving = false
             this.dir = MoveDirection.None
             this.queue_dir = MoveDirection.None
-            this.onEnter = undefined
-            this.onExit = undefined
+            this.onArrived = undefined
+            this.onTransition = undefined
         }
+
+        getColumn() { return this.sprite.x >> this.tileBits}
+        getRow() { return this.sprite.y >> this.tileBits }
 
         // request sprite to move in specified direction
         move(dir: MoveDirection, moving: boolean = true) {
@@ -62,23 +65,26 @@ namespace tilesprite {
         }
         clearQueue() { this.queue_dir = MoveDirection.None }
         // notify client on entering tile
-        onTileEnter(handler: (ts: TileSprite, col: number, row: number) => void) {
-            this.onEnter = handler
+        onTileArrived(handler: (ts: TileSprite) => void) {
+            this.onArrived = handler
+        }
+        onTileTransition(handler: (ts: TileSprite, col: number, row: number) => void) {
+            this.onTransition = handler
         }
         // call from game update loop
         update() {
             // have we crossed into a new tile?
-            if (this.onExit) {
+            if (this.onTransition) {
                 if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
-                    if (this.old >> this.tileBits != this.sprite.x >> this.tileBits) {
-                        this.onExit(this, this.old >> this.tileBits, this.sprite.y >> this.tileBits)
+                    if (this.old != this.getColumn()) {
+                        this.onTransition(this, this.old, this.getRow())
                     }
-                    this.old = this.sprite.x
+                    this.old = this.getColumn()
                 } else if (this.dir == MoveDirection.Up || this.dir == MoveDirection.Down) {
-                    if (this.old >> this.tileBits != this.sprite.y >> this.tileBits) {
-                        this.onExit(this, this.sprite.x >> this.tileBits, this.old >> this.tileBits)
+                    if (this.old != this.getRow()) {
+                        this.onTransition(this, this.getColumn(), this.old)
                     }
-                    this.old = this.sprite.y
+                    this.old = this.getRow()
                 }
             }
             // have we reached the target?
@@ -104,7 +110,7 @@ namespace tilesprite {
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next = this.sprite.x + sign * size;
-                this.old = this.sprite.x
+                this.old = this.getColumn()
             } else {
                 // 90 degree turn, need to wait until arrived
                 this.queue_dir = dir;
@@ -125,7 +131,7 @@ namespace tilesprite {
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next = this.sprite.y + sign * size;
-                this.old = this.sprite.y
+                this.old = this.getRow()
             } else {
                 this.queue_dir = dir;
                 this.queue_moving = moving
@@ -145,8 +151,8 @@ namespace tilesprite {
                 this.sprite.vx = 0
             }
             // notify
-            if (this.onEnter) {
-                this.onEnter(this, x >> this.tileBits, this.sprite.y >> this.tileBits)
+            if (this.onArrived) {
+                this.onArrived(this)
             }
             this.queue_dir = MoveDirection.None
         }
@@ -159,8 +165,8 @@ namespace tilesprite {
                 this.sprite.vy = 0
             }
             // notify
-            if (this.onEnter) {
-                this.onEnter(this, this.sprite.x >> this.tileBits, y >> this.tileBits)
+            if (this.onArrived) {
+                this.onArrived(this)
             }
             this.queue_dir = MoveDirection.None
         }

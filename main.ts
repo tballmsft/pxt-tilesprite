@@ -308,7 +308,7 @@ function setScene(img: Image): GameState {
 
 function diamondsInTile(col: number, row: number) {
     return gameState.diamonds.find(function (value: ts.TileSprite, index: number) {
-        return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
+        return (value.getColumn() == col && value.getRow() == row)
     })
 }
 // place sprites to eliminate spaces
@@ -316,16 +316,14 @@ function placeSprites(gameState: GameState) {
     gameState.spritesMap.copyFrom(gameState.tileMap)
     function place(sprites: ts.TileSprite[], code: number) {
         for (let s of sprites) {
-            let col = s.sprite.x >> 4
-            let row = s.sprite.y >> 4
-            gameState.spritesMap.setPixel(col, row, code)
+            gameState.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
         }
     }
     // TODO: if multiple sprites occupy tile, we may want to break ties
     place(gameState.rocks, codes.Rock)
     place(gameState.diamonds, codes.Diamond)
-    let col = gameState.player.sprite.x >> 4
-    let row = gameState.player.sprite.y >> 4
+    let col = gameState.player.getColumn()
+    let row = gameState.player.getRow()
     if (gameState.spritesMap.getPixel(col, row) == codes.Diamond) {
         // check for (stationary) diamond in tile
         // when we run into a (non-moving) diamond, we eat it
@@ -354,8 +352,8 @@ function isSpace(col: number, row: number) {
 
 function startFalling(gameState: GameState) {
     function checkRock(rock: ts.TileSprite) {
-        let col = rock.sprite.x >> 4
-        let row = rock.sprite.y >> 4
+        let col = rock.getColumn()
+        let row = rock.getRow()
         if (rock.sprite.vy == 0) {
             if (isSpace(col, row + 1)) {
                 // if there is space under rock, fall
@@ -394,7 +392,8 @@ function addRockHandler(rock: ts.TileSprite) {
         return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
             || value == codes.Wall || value == codes.StrongWall
     }
-    rock.onTileEnter(function (s: ts.TileSprite, col: number, row: number) {
+    rock.onTileArrived(function (s: ts.TileSprite) {
+        let col = s.getColumn(), row = s.getRow()
         if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
             // falling rock stopped by barrier
             s.deadStop()
@@ -427,7 +426,7 @@ game.onUpdate(function () {
 
 function rocksInTile(col: number, row: number) {
     return gameState.rocks.find(function (value: ts.TileSprite, index: number) {
-        return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
+        return (value.getColumn() == col && value.getRow() == row)
     })
 }
 
@@ -437,8 +436,8 @@ function playerCanMoveTo(col: number, row: number) {
 }
 
 function playerMoves(dir: ts.MoveDirection) {
-    let col = gameState.player.sprite.x >> 4
-    let row = gameState.player.sprite.y >> 4
+    let col = gameState.player.getColumn()
+    let row = gameState.player.getRow()
     if (dir == ts.MoveDirection.Left) {
         if (playerCanMoveTo(col - 1, row))
             return true
@@ -464,13 +463,13 @@ function playerMoves(dir: ts.MoveDirection) {
     return false
 }
 
-gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: number) {
+gameState.player.onTileArrived(function (player: ts.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
-    gameState.tileMap.setPixel(col, row, codes.Space);
+    gameState.tileMap.setPixel(player.getColumn(), player.getRow(), codes.Space);
 })
 
 // all collision detection here:
