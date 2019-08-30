@@ -306,6 +306,11 @@ function setScene(img: Image): GameState {
     return gameState
 }
 
+function diamondsInTile(col: number, row: number) {
+    return gameState.diamonds.find(function (value: ts.TileSprite, index: number) {
+        return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
+    })
+}
 // place sprites to eliminate spaces
 function placeSprites(gameState: GameState) {
     gameState.spritesMap.copyFrom(gameState.tileMap)
@@ -319,6 +324,20 @@ function placeSprites(gameState: GameState) {
     // TODO: if multiple sprites occupy tile, we may want to break ties
     place(gameState.rocks, codes.Rock)
     place(gameState.diamonds, codes.Diamond)
+    let col = gameState.player.sprite.x >> 4
+    let row = gameState.player.sprite.y >> 4
+    if (gameState.spritesMap.getPixel(col, row) == codes.Diamond) {
+        // check for (stationary) diamond in tile
+        // when we run into a (non-moving) diamond, we eat it
+        let diamond = diamondsInTile(col, row)
+        if (diamond != null) {
+            gameState.diamonds.removeElement(diamond)
+            diamond.sprite.destroy()
+            if (gameState.diamonds.length == 0) {
+                game.showDialog("Got All Diamonds!", "")
+            }
+        }
+    }
     place([gameState.player], codes.Player)
     // todo: enemies, dynamite, etc.
     // todo: is the enemy stationary or moving?
@@ -446,21 +465,6 @@ function playerMoves(dir: ts.MoveDirection) {
 }
 
 gameState.player.onTileEnter(function (player: ts.TileSprite, col: number, row: number) {
-    function diamondsInTile(col: number, row: number) {
-        return gameState.diamonds.find(function (value: ts.TileSprite, index: number) {
-            return (value.sprite.x >> 4 == col && value.sprite.y >> 4 == row)
-        })
-    }
-    // check for (stationary) diamond in tile
-    // when we run into a (non-moving) diamond, we eat it
-    let diamond = diamondsInTile(col, row)
-    if (diamond != null) {
-        gameState.diamonds.removeElement(diamond)
-        diamond.sprite.destroy()
-        if (gameState.diamonds.length == 0) {
-            game.showDialog("Got All Diamonds!", "")
-        }
-    }
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player.getDirection()))
