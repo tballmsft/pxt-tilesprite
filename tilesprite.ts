@@ -18,6 +18,8 @@ namespace tilesprite {
         private old: number;
         // the target
         private next: number
+        // the final target
+        private final: number;
         // the next direction to go
         private queue_dir: MoveDirection;
         private queue_moving: boolean;
@@ -53,6 +55,7 @@ namespace tilesprite {
         stop(dir: MoveDirection) {
             if (dir == this.dir) {
                 this.moving = false;
+                this.final = 0;
             } else if (dir == this.queue_dir) {
                 this.queue_moving = false;
             }
@@ -104,7 +107,10 @@ namespace tilesprite {
             let size = 1 << this.tileBits
             let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
             let sign = dir == MoveDirection.Left ? -1 : 1
-            if (this.dir == opDir) {
+            if (this.dir == dir && !moving) {
+                this.final += sign * size;
+                return;
+            } else if (this.dir == opDir) {
                 // switching 180 doesn't require queuing
                 // next_x is defined, so use it
                 this.next += sign * size
@@ -119,13 +125,17 @@ namespace tilesprite {
             this.old = this.getColumn()
             this.dir = dir
             this.moving = moving
+            this.final = this.next;
             this.sprite.vx = sign * 100
         }
         private moveInY(dir: MoveDirection, moving: boolean) {
             let size = 1 << this.tileBits
             let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
             let sign = dir == MoveDirection.Up ? -1 : 1
-            if (this.dir == opDir) {
+            if (this.dir == dir && !moving) {
+                this.final += sign * size;
+                return;
+            } else if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next += sign * size
             } else if (this.dir == MoveDirection.None) {
@@ -139,15 +149,16 @@ namespace tilesprite {
             this.old = this.getRow()
             this.dir = dir
             this.moving = moving
+            this.final = this.next
             this.sprite.vy = sign * 100
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             // determine what comes next
-            if (this.moving) {
+            this.sprite.x = x
+            if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
                 this.dir = MoveDirection.None
-                this.sprite.x = x
                 this.sprite.vx = 0
             }
             // notify
@@ -158,11 +169,11 @@ namespace tilesprite {
             this.old = this.getColumn()
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
-            if (this.moving) {
+            this.sprite.y = y
+            if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
                 this.dir = MoveDirection.None
-                this.sprite.y = y
                 this.sprite.vy = 0
             }
             // notify
@@ -177,6 +188,7 @@ namespace tilesprite {
         }
         private stopSprite(reentrant: boolean) {
             this.moving = false
+            this.final = 0
             this.queue_dir = MoveDirection.None
             if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
                 this.reachedTargetX(this.centerIt(this.sprite.x), 0, reentrant)
