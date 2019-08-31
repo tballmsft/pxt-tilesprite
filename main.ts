@@ -322,21 +322,6 @@ function placeSprites(gameState: GameState) {
     // TODO: if multiple sprites occupy tile, we may want to break ties
     place(gameState.rocks, codes.Rock)
     place(gameState.diamonds, codes.Diamond)
-    let col = gameState.player.getColumn()
-    let row = gameState.player.getRow()
-    if (gameState.spritesMap.getPixel(col, row) == codes.Diamond) {
-        // check for (stationary) diamond in tile
-        // when we run into a (non-moving) diamond, we eat it
-        let diamond = diamondsInTile(col, row)
-        if (diamond != null) {
-            gameState.diamonds.removeElement(diamond)
-            diamond.sprite.destroy()
-            if (gameState.diamonds.length == 0) {
-                game.showDialog("Got All Diamonds!", "")
-            }
-        }
-    }
-    place([gameState.player], codes.Player)
     // todo: enemies, dynamite, etc.
     // todo: is the enemy stationary or moving?
 }
@@ -347,7 +332,7 @@ function isRock(col: number, row: number) {
 }
 function isSpace(col: number, row: number) {
     let value = gameState.spritesMap.getPixel(col, row)
-    return value == codes.Space
+    return value == codes.Space && !(col == gameState.player.getColumn() && row == gameState.player.getRow())
 }
 
 function startFalling(gameState: GameState) {
@@ -397,14 +382,13 @@ function addRockHandler(rock: ts.TileSprite) {
         if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
             // falling rock stopped by barrier
             s.deadStop()
-        } else if (s.sprite.vy == 0) {
+        } else {
+            s.doQueued()
             // horizontally moving rock
             if (!rockStops(col, row + 1)) {
                 // falls if there's a hole
                 s.deadStop();
                 s.move(ts.MoveDirection.Down)
-            } else {
-                s.doQueued()
             }
         }
     })
@@ -419,6 +403,7 @@ game.onUpdate(function () {
     for (let rock of gameState.rocks) { rock.update() }
     for (let rock of gameState.diamonds) { rock.update() }
     startFalling(gameState);
+
 })
 
 // if player moving, a rock may need to move
@@ -463,6 +448,24 @@ function playerMoves(dir: ts.MoveDirection) {
     return false
 }
 
+gameState.player.onTileTransition(function (ts: ts.TileSprite) {
+    let col = ts.getColumn()
+    let row = ts.getRow()
+    if (gameState.spritesMap.getPixel(col, row) == codes.Diamond) {
+        // TODO: player overwrites diamond
+        // check for (stationary) diamond in tile
+        // when we run into a (non-moving) diamond, we eat it
+        let diamond = diamondsInTile(col, row)
+        if (diamond != null) {
+            gameState.diamonds.removeElement(diamond)
+            diamond.sprite.destroy()
+            if (gameState.diamonds.length == 0) {
+                game.showDialog("Got All Diamonds!", "")
+            }
+        }
+    }
+})
+
 gameState.player.onTileArrived(function (player: ts.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
@@ -492,14 +495,14 @@ function findRock(sprite: Sprite) {
     return ret
 }
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop()
+    findRock(sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop()
+    findRock(sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop()
+    findRock(sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop()
+    findRock(sprite).deadStop(true)
 })

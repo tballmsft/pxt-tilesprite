@@ -6,10 +6,12 @@ namespace tilesprite {
     // a sprite that moves by tiles
     export class TileSprite {
         tileBits: number;
+        // TODO: abstract over sprite for movement
         sprite: Sprite;
-        // true iff the user is requesting motion and nothing has stopped
+        // < 0 iff the user is requesting motion and nothing has stopped
         // the sprite from moving
-        private moving: boolean = false
+        // > 0 to count number of tiles
+        private moving: boolean;
         // which direction is the target 
         private dir: MoveDirection;
         // previous sprite coord value
@@ -21,7 +23,6 @@ namespace tilesprite {
         private queue_moving: boolean;
         // notification
         private onArrived: (ts: TileSprite) => void
-        // TODO
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
         constructor(s: Sprite, bits: number = 4) {
@@ -34,7 +35,7 @@ namespace tilesprite {
             this.onTransition = undefined
         }
 
-        getColumn() { return this.sprite.x >> this.tileBits}
+        getColumn() { return this.sprite.x >> this.tileBits }
         getRow() { return this.sprite.y >> this.tileBits }
 
         // request sprite to move in specified direction
@@ -47,7 +48,7 @@ namespace tilesprite {
         getDirection() { return this.dir; }
 
         // stop at current tile
-        deadStop() { this.stopSprite() }
+        deadStop(rentrant: boolean = false) { this.stopSprite(rentrant) }
         // request sprite to stop moving when it reaches destination
         stop(dir: MoveDirection) {
             if (dir == this.dir) {
@@ -110,13 +111,12 @@ namespace tilesprite {
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next = this.sprite.x + sign * size;
-                this.old = this.getColumn()
             } else {
-                // 90 degree turn, need to wait until arrived
                 this.queue_dir = dir;
                 this.queue_moving = moving
                 return;
             }
+            this.old = this.getColumn()
             this.dir = dir
             this.moving = moving
             this.sprite.vx = sign * 100
@@ -131,17 +131,17 @@ namespace tilesprite {
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
                 this.next = this.sprite.y + sign * size;
-                this.old = this.getRow()
             } else {
                 this.queue_dir = dir;
                 this.queue_moving = moving
                 return;
             }
+            this.old = this.getRow()
             this.dir = dir
             this.moving = moving
             this.sprite.vy = sign * 100
         }
-        private reachedTargetX(x: number, step: number = 0) {
+        private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             // determine what comes next
             if (this.moving) {
                 this.next += step
@@ -151,12 +151,13 @@ namespace tilesprite {
                 this.sprite.vx = 0
             }
             // notify
-            if (this.onArrived) {
+            if (this.onArrived && reentrant) {
                 this.onArrived(this)
             }
             this.queue_dir = MoveDirection.None
+            this.old = this.getColumn()
         }
-        private reachedTargetY(y: number, step: number = 0) {
+        private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
             if (this.moving) {
                 this.next += step
             } else {
@@ -165,23 +166,22 @@ namespace tilesprite {
                 this.sprite.vy = 0
             }
             // notify
-            if (this.onArrived) {
+            if (this.onArrived && reentrant) {
                 this.onArrived(this)
             }
             this.queue_dir = MoveDirection.None
+            this.old = this.getRow()
         }
-        private stopSprite() {
-            let size = 1 << this.tileBits
+        private centerIt(n: number) {
+            return ((n >> this.tileBits) << this.tileBits) + (1 << (this.tileBits - 1))
+        }
+        private stopSprite(reentrant: boolean) {
             this.moving = false
             this.queue_dir = MoveDirection.None
-            if (this.dir == MoveDirection.Left) {
-                this.reachedTargetX(this.next + size)
-            } else if (this.dir == MoveDirection.Right) {
-                this.reachedTargetX(this.next - size)
-            } else if (this.dir == MoveDirection.Up) {
-                this.reachedTargetY(this.next + size)
-            } else if (this.dir == MoveDirection.Down) {
-                this.reachedTargetY(this.next - size)
+            if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
+                this.reachedTargetX(this.centerIt(this.sprite.x), 0, reentrant)
+            } else {
+                this.reachedTargetY(this.centerIt(this.sprite.y), 0, reentrant)
             }
         }
     }
