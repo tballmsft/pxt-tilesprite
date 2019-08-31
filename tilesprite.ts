@@ -197,4 +197,37 @@ namespace tilesprite {
             }
         }
     }
+
+    // basic movement for player sprite
+    export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: MoveDirection) => boolean) {
+        controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (canMove(sprite, MoveDirection.Left))
+                sprite.move(MoveDirection.Left)
+        })
+        controller.left.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.stop(MoveDirection.Left)
+        })
+        controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (canMove(sprite, MoveDirection.Right))
+                sprite.move(MoveDirection.Right)
+        })
+        controller.right.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.stop(MoveDirection.Right)
+        })
+        controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (canMove(sprite, MoveDirection.Up))
+                sprite.move(MoveDirection.Up)
+        })
+        controller.up.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.stop(MoveDirection.Up)
+        })
+        controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (canMove(sprite, MoveDirection.Down))
+                sprite.move(MoveDirection.Down)
+        })
+        controller.down.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.stop(MoveDirection.Down)
+        })
+    }
+
 }

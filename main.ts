@@ -204,37 +204,6 @@ type GameState = {
     spritesMap: Image;
 }
 
-function bindToController(sprite: ts.TileSprite) {
-    controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMoves(ts.MoveDirection.Left))
-            sprite.move(ts.MoveDirection.Left)
-    })
-    controller.left.onEvent(ControllerButtonEvent.Released, function () {
-        sprite.stop(ts.MoveDirection.Left)
-    })
-    controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMoves(ts.MoveDirection.Right))
-            sprite.move(ts.MoveDirection.Right)
-    })
-    controller.right.onEvent(ControllerButtonEvent.Released, function () {
-        sprite.stop(ts.MoveDirection.Right)
-    })
-    controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMoves(ts.MoveDirection.Up))
-            sprite.move(ts.MoveDirection.Up)
-    })
-    controller.up.onEvent(ControllerButtonEvent.Released, function () {
-        sprite.stop(ts.MoveDirection.Up)
-    })
-    controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-        if (playerMoves(ts.MoveDirection.Down))
-            sprite.move(ts.MoveDirection.Down)
-    })
-    controller.down.onEvent(ControllerButtonEvent.Released, function () {
-        sprite.stop(ts.MoveDirection.Down)
-    })
-}
-
 function setScene(img: Image): GameState {
     // copy it, as it will be updated
     let tileMap = img.clone()
@@ -266,7 +235,7 @@ function setScene(img: Image): GameState {
     // make the player sprite snap to tile grid
     gameState.player = new ts.TileSprite(player)
     // bind it to L,R,U,D buttons
-    bindToController(gameState.player)
+    ts.bindToController(gameState.player, playerMoves)
     scene.cameraFollowSprite(player)
 
     // diamonds are "food" that the player can eat
@@ -420,9 +389,9 @@ function playerCanMoveTo(col: number, row: number) {
     return value == codes.Space || value == codes.Dirt || value == codes.Diamond || value == codes.Enemy
 }
 
-function playerMoves(dir: ts.MoveDirection) {
-    let col = gameState.player.getColumn()
-    let row = gameState.player.getRow()
+function playerMoves(player: ts.TileSprite, dir: ts.MoveDirection) {
+    let col = player.getColumn()
+    let row = player.getRow()
     if (dir == ts.MoveDirection.Left) {
         if (playerCanMoveTo(col - 1, row))
             return true
@@ -469,7 +438,7 @@ gameState.player.onTileTransition(function (ts: ts.TileSprite) {
 gameState.player.onTileArrived(function (player: ts.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
-    if (!playerMoves(player.getDirection()))
+    if (!playerMoves(player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
     gameState.tileMap.setPixel(player.getColumn(), player.getRow(), codes.Space);
