@@ -230,4 +230,50 @@ namespace tilesprite {
         })
     }
 
+    // this is now generic
+    export type GameState = {
+        [key: number]: ts.TileSprite[];
+        tileMap: Image;
+        spritesMap: Image;
+    }
+
+    // description of sprites
+    export type Description = { c: codes, a: Image, sk: number, t: codes }
+
+    // ready to move out...
+    export function setScene(img: Image, spriteDescriptions: Description[]): GameState {
+        // copy it, as it will be updated
+        let tileMap = img.clone()
+        // convert image to tile map
+        scene.setTileMap(tileMap)
+
+        let gameState: GameState = {
+            tileMap: tileMap,
+            spritesMap: tileMap.clone()
+        }
+
+        for (let sd of spriteDescriptions) {
+            let tiles = scene.getTilesByType(sd.c)
+            scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
+            if (sd.sk != undefined) {
+                gameState[sd.c] = []
+                for (let value of tiles) {
+                    let sprite = sprites.create(sd.a, sd.sk)
+                    let tileSprite = new ts.TileSprite(sprite)
+                    gameState[sd.c].push(tileSprite)
+                    value.place(sprite)
+                }
+            }
+        }
+
+        // now that we have created sprites, remove them from the tile map
+        for (let y = 0; y < tileMap.height; y++) {
+            for (let x = 0; x < tileMap.width; x++) {
+                let pixel = tileMap.getPixel(x, y)
+                let r = spriteDescriptions.find(r => r.c == pixel)
+                if (r && r.sk) tileMap.setPixel(x, y, r.t)
+            }
+        }
+        return gameState
+    }
 }

@@ -196,87 +196,18 @@ namespace levels {
         `
 }
 
-// this is now generic
-type GameState = {
-    [key: number]: ts.TileSprite[];
-    tileMap: Image;
-    spritesMap: Image;
-}
-
-// description of sprites
-type Description = { c: codes, a: Image, sk: number, t: Image }
-
-let spriteDescriptions = [
-    { c: codes.Rock, a: art.Rock, sk: SpriteKind.Projectile, t: art.Space },
-    { c: codes.Diamond, a: art.Diamond, sk: SpriteKind.Food, t: art.Space },
-    { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: art.Space },
-    { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: art.Space }
+let spriteDescriptions: ts.Description[] = [
+    { c: codes.Rock, a: art.Rock, sk: SpriteKind.Projectile, t: codes.Space },
+    { c: codes.Diamond, a: art.Diamond, sk: SpriteKind.Food, t: codes.Space },
+    { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: codes.Space },
+    { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: codes.Space },
+    { c: codes.Wall, a: art.Wall, sk: undefined, t: undefined },
+    { c: codes.StrongWall, a: art.Wall, sk: undefined, t: undefined },
+    { c: codes.Space, a: art.Space, sk: undefined, t: undefined },
+    { c: codes.Dirt, a: art.Dirt, sk: undefined, t: undefined }
 ];
 
-// place sprites to eliminate spaces
-function placeSprites(gameState: GameState) {
-    gameState.spritesMap.copyFrom(gameState.tileMap)
-    function place(sprites: ts.TileSprite[], code: number) {
-        for (let s of sprites) {
-            gameState.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
-        }
-    }
-    // TODO: if multiple sprites occupy tile, we may want to break ties
-    place(gameState[codes.Rock], codes.Rock)
-    place(gameState[codes.Diamond], codes.Diamond)
-    // todo: enemies, dynamite, etc.
-    // todo: is the enemy stationary or moving?
-}
-
-function setScene(img: Image): GameState {
-    // copy it, as it will be updated
-    let tileMap = img.clone()
-    // convert image to tile map
-    scene.setTileMap(tileMap)
-    // don't use any physics collisions on tile sprites
-    // as we change these dynamically instead
-    // TODO: need to abstract the following
-    scene.setTile(codes.Dirt, art.Dirt)
-    scene.setTile(codes.Wall, art.Wall)
-    scene.setTile(codes.StrongWall, art.Wall)
-    scene.setTile(codes.Player, art.Space)
-    scene.setTile(codes.Space, art.Space)
-    scene.setTile(codes.Diamond, art.Space)
-    scene.setTile(codes.Rock, art.Space)
-    scene.setTile(codes.Enemy, art.Space)
-
-    let gameState: GameState = {
-        tileMap: tileMap,
-        spritesMap: tileMap.clone()
-    }
-
-    let spriteCodes: codes[] = []
-    for (let sd of spriteDescriptions) {
-        let tiles = scene.getTilesByType(sd.c)
-        gameState[sd.c] = []
-        spriteCodes.push(sd.c)
-        for (let value of tiles) {
-            let sprite = sprites.create(sd.a, sd.sk)
-            let tileSprite = new ts.TileSprite(sprite)
-            gameState[sd.c].push(tileSprite)
-            value.place(sprite)
-        }
-    }
-
-    // now that we have created sprites, remove them from the tile map
-    for (let y = 0; y < tileMap.height; y++) {
-        for (let x = 0; x < tileMap.width; x++) {
-            let pixel = tileMap.getPixel(x, y)
-            if (spriteCodes.find(c => c == pixel)) {
-                tileMap.setPixel(x, y, codes.Space)
-            }
-        }
-    }
-    placeSprites(gameState)
-    return gameState
-}
-
-let gameState = setScene(levels.level1)
+let gameState = ts.setScene(levels.level1, spriteDescriptions)
 function player(): ts.TileSprite {
     return <ts.TileSprite>(<any>gameState[codes.Player][0])
 }
@@ -364,9 +295,24 @@ function checkRock(rock: ts.TileSprite) {
 for (let r of gameState[codes.Rock]) { addRockHandler(r) }
 for (let r of gameState[codes.Diamond]) { addRockHandler(r) }
 
-function startFalling(gameState: GameState) {
+function startFalling(gameState: ts.GameState) {
     for (let r of gameState[codes.Rock]) { checkRock(r) }
     for (let r of gameState[codes.Diamond]) { checkRock(r) }
+}
+
+// place sprites to eliminate spaces
+function placeSprites(gameState: ts.GameState) {
+    gameState.spritesMap.copyFrom(gameState.tileMap)
+    function place(sprites: ts.TileSprite[], code: number) {
+        for (let s of sprites) {
+            gameState.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
+        }
+    }
+    // TODO: if multiple sprites occupy tile, we may want to break ties
+    place(gameState[codes.Rock], codes.Rock)
+    place(gameState[codes.Diamond], codes.Diamond)
+    // todo: enemies, dynamite, etc.
+    // todo: is the enemy stationary or moving?
 }
 
 game.onUpdate(function () {
