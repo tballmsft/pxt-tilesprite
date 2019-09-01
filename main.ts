@@ -196,12 +196,36 @@ namespace levels {
         `
 }
 
+// this is now generic
 type GameState = {
-    player: ts.TileSprite
-    diamonds: ts.TileSprite[]
-    rocks: ts.TileSprite[]
+    [key: number]: ts.TileSprite[];
     tileMap: Image;
     spritesMap: Image;
+}
+
+// description of sprites
+type Description = { c: codes, a: Image, sk: number, t: Image }
+
+let spriteDescriptions = [
+    { c: codes.Rock, a: art.Rock, sk: SpriteKind.Projectile, t: art.Space },
+    { c: codes.Diamond, a: art.Diamond, sk: SpriteKind.Food, t: art.Space },
+    { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: art.Space },
+    { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: art.Space }
+];
+
+// place sprites to eliminate spaces
+function placeSprites(gameState: GameState) {
+    gameState.spritesMap.copyFrom(gameState.tileMap)
+    function place(sprites: ts.TileSprite[], code: number) {
+        for (let s of sprites) {
+            gameState.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
+        }
+    }
+    // TODO: if multiple sprites occupy tile, we may want to break ties
+    place(gameState[codes.Rock], codes.Rock)
+    place(gameState[codes.Diamond], codes.Diamond)
+    // todo: enemies, dynamite, etc.
+    // todo: is the enemy stationary or moving?
 }
 
 function setScene(img: Image): GameState {
@@ -211,6 +235,7 @@ function setScene(img: Image): GameState {
     scene.setTileMap(tileMap)
     // don't use any physics collisions on tile sprites
     // as we change these dynamically instead
+    // TODO: need to abstract the following
     scene.setTile(codes.Dirt, art.Dirt)
     scene.setTile(codes.Wall, art.Wall)
     scene.setTile(codes.StrongWall, art.Wall)
@@ -221,52 +246,28 @@ function setScene(img: Image): GameState {
     scene.setTile(codes.Enemy, art.Space)
 
     let gameState: GameState = {
-        player: null,
-        diamonds: [],
-        rocks: [],
         tileMap: tileMap,
         spritesMap: tileMap.clone()
     }
 
-    let players = scene.getTilesByType(codes.Player)
-    control.assert(players.length == 1, 0)
-    let player = sprites.create(art.Player, SpriteKind.Player)
-    players[0].place(player)
-    // make the player sprite snap to tile grid
-    gameState.player = new ts.TileSprite(player)
-    // bind it to L,R,U,D buttons
-    ts.bindToController(gameState.player, playerMoves)
-    scene.cameraFollowSprite(player)
-
-    // diamonds are "food" that the player can eat
-    // but they also are "projectiles" that can fall and
-    // kill the player, like rocks
-    let diamonds = scene.getTilesByType(codes.Diamond)
-    for (let value of diamonds) {
-        let diamond = sprites.create(art.Diamond, SpriteKind.Food)
-        gameState.diamonds.push(new ts.TileSprite(diamond))
-        value.place(diamond)
-    }
-    // rocks can fall and be pushed by the player
-    let rocks = scene.getTilesByType(codes.Rock)
-    for (let value of rocks) {
-        let rock = sprites.create(art.Rock, SpriteKind.Projectile)
-        gameState.rocks.push(new ts.TileSprite(rock))
-        value.place(rock)
-    }
-    // enemies move around spaces
-    let enemies = scene.getTilesByType(codes.Enemy)
-    for (let value of enemies) {
-        let enemy = sprites.create(art.Enemy, SpriteKind.Enemy)
-        value.place(enemy)
+    let spriteCodes: codes[] = []
+    for (let sd of spriteDescriptions) {
+        let tiles = scene.getTilesByType(sd.c)
+        gameState[sd.c] = []
+        spriteCodes.push(sd.c)
+        for (let value of tiles) {
+            let sprite = sprites.create(sd.a, sd.sk)
+            let tileSprite = new ts.TileSprite(sprite)
+            gameState[sd.c].push(tileSprite)
+            value.place(sprite)
+        }
     }
 
     // now that we have created sprites, remove them from the tile map
     for (let y = 0; y < tileMap.height; y++) {
         for (let x = 0; x < tileMap.width; x++) {
             let pixel = tileMap.getPixel(x, y)
-            if (pixel == codes.Diamond || pixel == codes.Rock ||
-                pixel == codes.Enemy || pixel == codes.Player) {
+            if (spriteCodes.find(c => c == pixel)) {
                 tileMap.setPixel(x, y, codes.Space)
             }
         }
@@ -275,68 +276,106 @@ function setScene(img: Image): GameState {
     return gameState
 }
 
-function diamondsInTile(col: number, row: number) {
-    return gameState.diamonds.find(function (value: ts.TileSprite, index: number) {
+let gameState = setScene(levels.level1)
+function player(): ts.TileSprite {
+    return <ts.TileSprite>(<any>gameState[codes.Player][0])
+}
+ts.bindToController(player(), playerMoves)
+scene.cameraFollowSprite(player().sprite)
+
+function findInTile(code: codes, col: number, row: number) {
+    return gameState[code].find(function (value: ts.TileSprite, index: number) {
         return (value.getColumn() == col && value.getRow() == row)
     })
 }
-// place sprites to eliminate spaces
-function placeSprites(gameState: GameState) {
-    gameState.spritesMap.copyFrom(gameState.tileMap)
-    function place(sprites: ts.TileSprite[], code: number) {
-        for (let s of sprites) {
-            gameState.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
+
+function playerCanMoveTo(col: number, row: number) {
+    let value = gameState.spritesMap.getPixel(col, row)
+    return value == codes.Space || value == codes.Dirt || value == codes.Diamond || value == codes.Enemy
+}
+
+function playerMoves(player: ts.TileSprite, dir: ts.MoveDirection) {
+    let col = player.getColumn()
+    let row = player.getRow()
+    if (dir == ts.MoveDirection.Left) {
+        if (playerCanMoveTo(col - 1, row))
+            return true
+        if (gameState.spritesMap.getPixel(col - 1, row) == codes.Rock &&
+            gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
+            let rock = findInTile(codes.Rock, col - 1, row)
+            rock.move(ts.MoveDirection.Left, false)
+            return true
         }
+    } else if (dir == ts.MoveDirection.Right) {
+        if (playerCanMoveTo(col + 1, row))
+            return true
+        if (gameState.spritesMap.getPixel(col + 1, row) == codes.Rock &&
+            gameState.spritesMap.getPixel(col + 2, row) == codes.Space) {
+            let rock = findInTile(codes.Rock, col + 1, row)
+            rock.move(ts.MoveDirection.Right, false)
+            return true
+        }
+    } else if (dir == ts.MoveDirection.Down && playerCanMoveTo(col, row + 1) ||
+        dir == ts.MoveDirection.Up && playerCanMoveTo(col, row - 1)) {
+        return true
     }
-    // TODO: if multiple sprites occupy tile, we may want to break ties
-    place(gameState.rocks, codes.Rock)
-    place(gameState.diamonds, codes.Diamond)
-    // todo: enemies, dynamite, etc.
-    // todo: is the enemy stationary or moving?
+    return false
 }
 
 function isRock(col: number, row: number) {
     let value = gameState.spritesMap.getPixel(col, row)
     return value == codes.Rock || value == codes.Diamond
+
 }
 function isSpace(col: number, row: number) {
     let value = gameState.spritesMap.getPixel(col, row)
-    return value == codes.Space && !(col == gameState.player.getColumn() && row == gameState.player.getRow())
+    return value == codes.Space && !(col == player().getColumn() &&
+        row == player().getRow())
 }
 
-function startFalling(gameState: GameState) {
-    function checkRock(rock: ts.TileSprite) {
-        let col = rock.getColumn()
-        let row = rock.getRow()
-        if (rock.sprite.vy == 0) {
-            if (isSpace(col, row + 1)) {
-                // if there is space under rock, fall
-                rock.move(ts.MoveDirection.Down)
-                return;
+function checkRock(rock: ts.TileSprite) {
+    let col = rock.getColumn()
+    let row = rock.getRow()
+    if (rock.sprite.vy == 0) {
+        if (isSpace(col, row + 1)) {
+            // if there is space under rock, fall
+            rock.move(ts.MoveDirection.Down)
+            return;
+        }
+        // stationary rock can also fall to left/right
+        if (rock.sprite.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
+            // rock is on top of rock pile
+            let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
+            let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
+            if (fallLeftOK && fallRightOK) {
+                let choose = Math.pickRandom([true, false])
+                fallLeftOK = choose
+                fallRightOK = !choose
             }
-            // stationary rock can also fall to left/right
-            if (rock.sprite.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
-                // rock is on top of rock pile
-                let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
-                let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
-                if (fallLeftOK && fallRightOK) {
-                    let choose = Math.pickRandom([true, false])
-                    fallLeftOK = choose
-                    fallRightOK = !choose
-                }
-                if (fallLeftOK) {
-                    rock.move(ts.MoveDirection.Left, false)
-                } else if (fallRightOK) {
-                    rock.move(ts.MoveDirection.Right, false)
-                }
+            if (fallLeftOK) {
+                rock.move(ts.MoveDirection.Left, false)
+            } else if (fallRightOK) {
+                rock.move(ts.MoveDirection.Right, false)
             }
         }
     }
-    for (let rock of gameState.rocks) { checkRock(rock) }
-    for (let rock of gameState.diamonds) { checkRock(rock) }
 }
 
-let gameState = setScene(levels.level1)
+for (let r of gameState[codes.Rock]) { addRockHandler(r) }
+for (let r of gameState[codes.Diamond]) { addRockHandler(r) }
+
+function startFalling(gameState: GameState) {
+    for (let r of gameState[codes.Rock]) { checkRock(r) }
+    for (let r of gameState[codes.Diamond]) { checkRock(r) }
+}
+
+game.onUpdate(function () {
+    placeSprites(gameState);
+    player().update();
+    for (let r of gameState[codes.Rock]) { r.update() }
+    for (let r of gameState[codes.Diamond]) { r.update() }
+    startFalling(gameState);
+})
 
 // add handlers for rock to stop when falling onto dirt
 function addRockHandler(rock: ts.TileSprite) {
@@ -363,79 +402,25 @@ function addRockHandler(rock: ts.TileSprite) {
     })
 }
 
-for (let rock of gameState.rocks) { addRockHandler(rock) }
-for (let rock of gameState.diamonds) { addRockHandler(rock) }
-
-game.onUpdate(function () {
-    placeSprites(gameState);
-    gameState.player.update();
-    for (let rock of gameState.rocks) { rock.update() }
-    for (let rock of gameState.diamonds) { rock.update() }
-    startFalling(gameState);
-
-})
-
-// if player moving, a rock may need to move
-// returns true if rock is moving (so player can continue to move) or no rock to move
-
-function rocksInTile(col: number, row: number) {
-    return gameState.rocks.find(function (value: ts.TileSprite, index: number) {
-        return (value.getColumn() == col && value.getRow() == row)
-    })
-}
-
-function playerCanMoveTo(col: number, row: number) {
-    let value = gameState.spritesMap.getPixel(col, row)
-    return value == codes.Space || value == codes.Dirt || value == codes.Diamond || value == codes.Enemy
-}
-
-function playerMoves(player: ts.TileSprite, dir: ts.MoveDirection) {
-    let col = player.getColumn()
-    let row = player.getRow()
-    if (dir == ts.MoveDirection.Left) {
-        if (playerCanMoveTo(col - 1, row))
-            return true
-        if (gameState.spritesMap.getPixel(col - 1, row) == codes.Rock &&
-            gameState.spritesMap.getPixel(col - 2, row) == codes.Space) {
-            let rock = rocksInTile(col - 1, row)
-            rock.move(ts.MoveDirection.Left, false)
-            return true
-        }
-    } else if (dir == ts.MoveDirection.Right) {
-        if (playerCanMoveTo(col + 1, row))
-            return true
-        if (gameState.spritesMap.getPixel(col + 1, row) == codes.Rock &&
-            gameState.spritesMap.getPixel(col + 2, row) == codes.Space) {
-            let rock = rocksInTile(col + 1, row)
-            rock.move(ts.MoveDirection.Right, false)
-            return true
-        }
-    } else if (dir == ts.MoveDirection.Down && playerCanMoveTo(col, row + 1) ||
-        dir == ts.MoveDirection.Up && playerCanMoveTo(col, row - 1)) {
-        return true
-    }
-    return false
-}
-
-gameState.player.onTileTransition(function (ts: ts.TileSprite) {
+player().onTileTransition(function (ts: ts.TileSprite) {
     let col = ts.getColumn()
     let row = ts.getRow()
     if (gameState.spritesMap.getPixel(col, row) == codes.Diamond) {
         // TODO: player overwrites diamond
         // check for (stationary) diamond in tile
         // when we run into a (non-moving) diamond, we eat it
-        let diamond = diamondsInTile(col, row)
+        let diamond = findInTile(codes.Diamond, col, row)
         if (diamond != null) {
-            gameState.diamonds.removeElement(diamond)
+            gameState[codes.Diamond].removeElement(diamond)
             diamond.sprite.destroy()
-            if (gameState.diamonds.length == 0) {
+            if (gameState[codes.Diamond].length == 0) {
                 game.showDialog("Got All Diamonds!", "")
             }
         }
     }
 })
 
-gameState.player.onTileArrived(function (player: ts.TileSprite) {
+player().onTileArrived(function (player: ts.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
@@ -457,9 +442,9 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
 
 // unfortunately, we need this because multiple rocks can be in motion at the same time
 function findRock(sprite: Sprite) {
-    let ret = gameState.rocks.find(ts => ts.sprite == sprite)
+    let ret = gameState[codes.Rock].find((t: ts.TileSprite) => t.sprite == sprite)
     if (!ret) {
-        ret = gameState.diamonds.find(ts => ts.sprite == sprite)
+        ret = gameState[codes.Diamond].find((t: ts.TileSprite) => t.sprite == sprite)
     }
     return ret
 }
