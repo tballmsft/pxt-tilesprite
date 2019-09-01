@@ -32,6 +32,29 @@ enum codes {
     Rock = 0xb,
     SpriteHere = 0
 }
+
+namespace levels {
+    export let level1 =
+        img`
+            c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
+            c d d d d d d d d d d b d d d d d d b d d d d d d d d d d d d c
+            c d d d d d 6 d d d d b d d d d d d b d d d d d d d d d d d d c
+            c d d 7 d d b d d d d b d d d d d d b d d d d b d d d d d d d c
+            c d d d d d d d d d d d d d d d d d b 1 1 d d d d d d b d d d c
+            c a a a a a a a a a a a a a a a a a a 1 1 d d d d d b d d d d c
+            c d d d d d d d d d d d d d d d d d d 1 1 d d d 6 b b b b b d c
+            c d d d b d d d d d d d d d d d d d d 1 1 6 d d d d b d d d d c
+            c d d d d d d d d d d d d d d 6 d d d 1 1 d d d d d d b d d d c
+            c d d d d d d d d a a a a a a a a a a a a a a a a a a a a a a c
+            c d 1 d d d d 6 d d d d d d d d 1 1 1 1 1 1 1 1 1 1 2 d d d d c
+            c d 1 1 d d b b b d d d d d d d d d d d d 6 d d d d d d d d d c
+            c d 1 d d d d 6 d d d d d d d d d d d d 6 6 6 d d d d d d d d c
+            c d b d d d d d d d d d d d d d d d d d d 6 d d d d d d d d d c
+            c d d d d d d d d d d d d d d d d d d d d d d d d d d d d d d c
+            c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
+        `
+}
+
 // others to follow:
 // Dynamite
 // Explosion
@@ -174,27 +197,7 @@ namespace art {
     `
 }
 
-namespace levels {
-    export let level1 =
-        img`
-            c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
-            c d d d d d d d d d d b d d d d d d b d d d d d d d d d d d d c
-            c d d d d d 6 d d d d b d d d d d d b d d d d d d d d d d d d c
-            c d d 7 d d b d d d d b d d d d d d b d d d d b d d d d d d d c
-            c d d d d d d d d d d d d d d d d d b 1 1 d d d d d d b d d d c
-            c a a a a a a a a a a a a a a a a a a 1 1 d d d d d b d d d d c
-            c d d d d d d d d d d d d d d d d d d 1 1 d d d 6 b b b b b d c
-            c d d d b d d d d d d d d d d d d d d 1 1 6 d d d d b d d d d c
-            c d d d d d d d d d d d d d d 6 d d d 1 1 d d d d d d b d d d c
-            c d d d d d d d d a a a a a a a a a a a a a a a a a a a a a a c
-            c d 1 d d d d 6 d d d d d d d d 1 1 1 1 1 1 1 1 1 1 2 d d d d c
-            c d 1 1 d d b b b d d d d d d d d d d d d 6 d d d d d d d d d c
-            c d 1 d d d d 6 d d d d d d d d d d d d 6 6 6 d d d d d d d d c
-            c d b d d d d d d d d d d d d d d d d d d 6 d d d d d d d d d c
-            c d d d d d d d d d d d d d d d d d d d d d d d d d d d d d d c
-            c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
-        `
-}
+
 
 let spriteDescriptions: ts.Description[] = [
     { c: codes.Rock, a: art.Rock, sk: SpriteKind.Projectile, t: codes.Space },
@@ -212,7 +215,7 @@ function player(): ts.TileSprite {
     return <ts.TileSprite>(<any>gameState[codes.Player][0])
 }
 ts.bindToController(player(), playerMoves)
-scene.cameraFollowSprite(player().sprite)
+scene.cameraFollowSprite(player())
 
 function findInTile(code: codes, col: number, row: number) {
     return gameState[code].find(function (value: ts.TileSprite, index: number) {
@@ -220,10 +223,24 @@ function findInTile(code: codes, col: number, row: number) {
     })
 }
 
+function stopsRocks(value: number) {
+    return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
+        || value == codes.Wall || value == codes.StrongWall
+}
+
+function playerCanMoveOver(value: number) {
+    return value == codes.Space || value == codes.Dirt || value == codes.Diamond
+        || value == codes.Enemy
+}
+
 function playerCanMoveTo(col: number, row: number) {
     let value = gameState.spritesMap.getPixel(col, row)
-    return value == codes.Space || value == codes.Dirt || value == codes.Diamond || value == codes.Enemy
+    return playerCanMoveOver(value)
 }
+
+// p.left \in  
+// condition: p.left = rock and p.left.left = space
+// action p.move.left and p.left.move.left
 
 function playerMoves(player: ts.TileSprite, dir: ts.MoveDirection) {
     let col = player.getColumn()
@@ -267,14 +284,14 @@ function isSpace(col: number, row: number) {
 function checkRock(rock: ts.TileSprite) {
     let col = rock.getColumn()
     let row = rock.getRow()
-    if (rock.sprite.vy == 0) {
+    if (rock.vy == 0) {
         if (isSpace(col, row + 1)) {
             // if there is space under rock, fall
             rock.move(ts.MoveDirection.Down)
             return;
         }
         // stationary rock can also fall to left/right
-        if (rock.sprite.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
+        if (rock.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
             // rock is on top of rock pile
             let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
             let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
@@ -325,21 +342,19 @@ game.onUpdate(function () {
 
 // add handlers for rock to stop when falling onto dirt
 function addRockHandler(rock: ts.TileSprite) {
-    function rockStops(col: number, row: number) {
+    function stop(col: number, row: number) {
         // if we are above dirt or rock, then stop
-        let value = gameState.spritesMap.getPixel(col, row)
-        return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
-            || value == codes.Wall || value == codes.StrongWall
+        return stopsRocks(gameState.spritesMap.getPixel(col, row))
     }
     rock.onTileArrived(function (s: ts.TileSprite) {
         let col = s.getColumn(), row = s.getRow()
-        if (s.sprite.vy > 0 && rockStops(col, row + 1)) {
+        if (s.vy > 0 && stop(col, row + 1)) {
             // falling rock stopped by barrier
             s.deadStop()
         } else {
             s.doQueued()
             // horizontally moving rock
-            if (!rockStops(col, row + 1)) {
+            if (!stop(col, row + 1)) {
                 // falls if there's a hole
                 s.deadStop();
                 s.move(ts.MoveDirection.Down)
@@ -358,7 +373,7 @@ player().onTileTransition(function (ts: ts.TileSprite) {
         let diamond = findInTile(codes.Diamond, col, row)
         if (diamond != null) {
             gameState[codes.Diamond].removeElement(diamond)
-            diamond.sprite.destroy()
+            diamond.destroy()
             if (gameState[codes.Diamond].length == 0) {
                 game.showDialog("Got All Diamonds!", "")
             }
@@ -387,22 +402,15 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function (sprite: Sp
 })
 
 // unfortunately, we need this because multiple rocks can be in motion at the same time
-function findRock(sprite: Sprite) {
-    let ret = gameState[codes.Rock].find((t: ts.TileSprite) => t.sprite == sprite)
-    if (!ret) {
-        ret = gameState[codes.Diamond].find((t: ts.TileSprite) => t.sprite == sprite)
-    }
-    return ret
-}
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop(true)
+    (<ts.TileSprite>sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop(true)
+    (<ts.TileSprite>sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop(true)
+    (<ts.TileSprite>sprite).deadStop(true)
 })
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    findRock(sprite).deadStop(true)
+    (<ts.TileSprite>sprite).deadStop(true)
 })

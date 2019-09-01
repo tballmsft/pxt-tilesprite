@@ -3,14 +3,11 @@ namespace tilesprite {
     // which direction is the sprite moving
     export enum MoveDirection { None, Left, Right, Up, Down }
 
-    // a sprite that moves by tiles
-    export class TileSprite {
-        tileBits: number;
-        // TODO: abstract over sprite for movement
-        sprite: Sprite;
-        // < 0 iff the user is requesting motion and nothing has stopped
+    // a sprite that moves by tiles, but only in one of four directions
+    export class TileSprite extends Sprite {
+        private tileBits: number;
+        // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
-        // > 0 to count number of tiles
         private moving: boolean;
         // which direction is the target 
         private dir: MoveDirection;
@@ -27,9 +24,13 @@ namespace tilesprite {
         private onArrived: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(s: Sprite, bits: number = 4) {
+        // TODO: have we shadowed something in Sprite?
+        constructor(image: Image, sk: number, bits: number = 4) {
+            super(image)
+            this.setKind(sk)
+            const scene = game.currentScene();
+            scene.physicsEngine.addSprite(this);
             this.tileBits = bits;
-            this.sprite = s
             this.moving = false
             this.dir = MoveDirection.None
             this.queue_dir = MoveDirection.None
@@ -37,8 +38,8 @@ namespace tilesprite {
             this.onTransition = undefined
         }
 
-        getColumn() { return this.sprite.x >> this.tileBits }
-        getRow() { return this.sprite.y >> this.tileBits }
+        getColumn() { return this.x >> this.tileBits }
+        getRow() { return this.y >> this.tileBits }
 
         // request sprite to move in specified direction
         move(dir: MoveDirection, moving: boolean = true) {
@@ -93,13 +94,13 @@ namespace tilesprite {
             }
             // have we reached the target?
             let size = 1 << this.tileBits
-            if (this.dir == MoveDirection.Left && this.sprite.x <= this.next) {
+            if (this.dir == MoveDirection.Left && this.x <= this.next) {
                 this.reachedTargetX(this.next, -size)
-            } else if (this.dir == MoveDirection.Right && this.sprite.x >= this.next) {
+            } else if (this.dir == MoveDirection.Right && this.x >= this.next) {
                 this.reachedTargetX(this.next, size)
-            } else if (this.dir == MoveDirection.Up && this.sprite.y <= this.next) {
+            } else if (this.dir == MoveDirection.Up && this.y <= this.next) {
                 this.reachedTargetY(this.next, -size)
-            } else if (this.dir == MoveDirection.Down && this.sprite.y >= this.next) {
+            } else if (this.dir == MoveDirection.Down && this.y >= this.next) {
                 this.reachedTargetY(this.next, size)
             }
         }
@@ -116,7 +117,7 @@ namespace tilesprite {
                 this.next += sign * size
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
-                this.next = this.sprite.x + sign * size;
+                this.next = this.x + sign * size;
             } else {
                 this.queue_dir = dir;
                 this.queue_moving = moving
@@ -126,7 +127,7 @@ namespace tilesprite {
             this.dir = dir
             this.moving = moving
             this.final = this.next;
-            this.sprite.vx = sign * 100
+            this.vx = sign * 100
         }
         private moveInY(dir: MoveDirection, moving: boolean) {
             let size = 1 << this.tileBits
@@ -140,7 +141,7 @@ namespace tilesprite {
                 this.next += sign * size
             } else if (this.dir == MoveDirection.None) {
                 // player.x is aligned, so use it
-                this.next = this.sprite.y + sign * size;
+                this.next = this.y + sign * size;
             } else {
                 this.queue_dir = dir;
                 this.queue_moving = moving
@@ -150,16 +151,16 @@ namespace tilesprite {
             this.dir = dir
             this.moving = moving
             this.final = this.next
-            this.sprite.vy = sign * 100
+            this.vy = sign * 100
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             // determine what comes next
-            this.sprite.x = x
+            this.x = x
             if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
                 this.dir = MoveDirection.None
-                this.sprite.vx = 0
+                this.vx = 0
             }
             // notify
             if (this.onArrived && reentrant) {
@@ -169,12 +170,12 @@ namespace tilesprite {
             this.old = this.getColumn()
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
-            this.sprite.y = y
+            this.y = y
             if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
                 this.dir = MoveDirection.None
-                this.sprite.vy = 0
+                this.vy = 0
             }
             // notify
             if (this.onArrived && reentrant) {
@@ -191,9 +192,9 @@ namespace tilesprite {
             this.final = 0
             this.queue_dir = MoveDirection.None
             if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
-                this.reachedTargetX(this.centerIt(this.sprite.x), 0, reentrant)
+                this.reachedTargetX(this.centerIt(this.x), 0, reentrant)
             } else {
-                this.reachedTargetY(this.centerIt(this.sprite.y), 0, reentrant)
+                this.reachedTargetY(this.centerIt(this.y), 0, reentrant)
             }
         }
     }
@@ -238,7 +239,7 @@ namespace tilesprite {
     }
 
     // description of sprites
-    export type Description = { c: codes, a: Image, sk: number, t: codes }
+    export type Description = { c: number, a: Image, sk: number, t: number }
 
     // ready to move out...
     export function setScene(img: Image, spriteDescriptions: Description[]): GameState {
@@ -258,10 +259,9 @@ namespace tilesprite {
             if (sd.sk != undefined) {
                 gameState[sd.c] = []
                 for (let value of tiles) {
-                    let sprite = sprites.create(sd.a, sd.sk)
-                    let tileSprite = new ts.TileSprite(sprite)
+                    let tileSprite = new ts.TileSprite(sd.a, sd.sk)
                     gameState[sd.c].push(tileSprite)
-                    value.place(sprite)
+                    value.place(tileSprite)
                 }
             }
         }
