@@ -255,31 +255,30 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     return false
 }
 
-function isRock(col: number, row: number) {
-    let value = world.spritesMap.getPixel(col, row)
+function isRock(p: tw.Path) {
+    let value = getTile(p)
     return value == codes.Rock || value == codes.Diamond
 
 }
-function isSpace(col: number, row: number) {
-    let value = world.spritesMap.getPixel(col, row)
-    return value == codes.Space && !(col == player().getColumn() &&
-        row == player().getRow())
+function isSpace(p: tw.Path) {
+    let value = getTile(p)
+    return value == codes.Space && !(p.getColumn() == player().getColumn() &&
+        p.getRow() == player().getRow())
 }
 
 function checkRock(rock: tw.TileSprite) {
-    let col = rock.getColumn()
-    let row = rock.getRow()
-    if (rock.vy == 0) {
-        if (isSpace(col, row + 1)) {
-            // if there is space under rock, fall
-            rock.move(tw.Dir.Down)
-            return;
-        }
-        // stationary rock can also fall to left/right
-        if (rock.vx == 0 && isRock(col, row + 1) && !isRock(col, row - 1)) {
-            // rock is on top of rock pile
-            let fallLeftOK = isSpace(col - 1, row) && isSpace(col - 1, row + 1)
-            let fallRightOK = isSpace(col + 1, row) && isSpace(col + 1, row + 1)
+    let below = rock.Path(tw.Dir.Down)
+    if (isSpace(below)) {
+        rock.move(tw.Dir.Down)
+        return;
+    }
+    if (rock.inMotion() == tw.Dir.None && isRock(below)) {
+        let above = rock.Path(tw.Dir.Up)
+        if (!isRock(above)) {
+            let same = rock.Path(tw.Dir.None)
+            let fallLeftOK = isSpace(same.Next(tw.Dir.Left)) && isSpace(below.Next(tw.Dir.Left))
+            same.Origin(); below.Origin()
+            let fallRightOK = isSpace(same.Next(tw.Dir.Right)) && isSpace(below.Next(tw.Dir.Right))
             if (fallLeftOK && fallRightOK) {
                 let choose = Math.pickRandom([true, false])
                 fallLeftOK = choose

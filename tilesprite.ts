@@ -41,7 +41,13 @@ namespace TileWorld {
         Path(dir: Dir) { return new Path(this, dir) }
         getColumn() { return this.x >> this.tileBits }
         getRow() { return this.y >> this.tileBits }
-
+        inMotion() {
+            if (this.vx > 0) return Dir.Right
+            else if (this.vx < 0) return Dir.Left
+            else if (this.vy > 0) return Dir.Down
+            else if (this.vy < 0) return Dir.Up;
+            else return Dir.None;
+        }
         // request sprite to move in specified direction
         move(dir: Dir, moving: boolean = true) {
             if (dir == Dir.Left || dir == Dir.Right)
