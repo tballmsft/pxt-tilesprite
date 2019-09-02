@@ -1,16 +1,16 @@
-namespace tilesprite {
+namespace TileWorld {
 
     // which direction is the sprite moving
-    export enum MoveDirection { None, Left, Right, Up, Down }
+    export enum Dir { None, Left, Right, Up, Down }
 
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite {
-        private tileBits: number;
+        public tileBits: number;
         // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
         private moving: boolean;
         // which direction is the target 
-        private dir: MoveDirection;
+        private dir: Dir;
         // previous sprite coord value
         private old: number;
         // the target
@@ -18,7 +18,7 @@ namespace tilesprite {
         // the final target
         private final: number;
         // the next direction to go
-        private queue_dir: MoveDirection;
+        private queue_dir: Dir;
         private queue_moving: boolean;
         // notification
         private onArrived: (ts: TileSprite) => void
@@ -32,20 +32,21 @@ namespace tilesprite {
             scene.physicsEngine.addSprite(this);
             this.tileBits = bits;
             this.moving = false
-            this.dir = MoveDirection.None
-            this.queue_dir = MoveDirection.None
+            this.dir = Dir.None
+            this.queue_dir = Dir.None
             this.onArrived = undefined
             this.onTransition = undefined
         }
 
+        Path(dir: Dir) { return new Path(this, dir) }
         getColumn() { return this.x >> this.tileBits }
         getRow() { return this.y >> this.tileBits }
 
         // request sprite to move in specified direction
-        move(dir: MoveDirection, moving: boolean = true) {
-            if (dir == MoveDirection.Left || dir == MoveDirection.Right)
+        move(dir: Dir, moving: boolean = true) {
+            if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir, moving)
-            else if (dir == MoveDirection.Up || dir == MoveDirection.Down)
+            else if (dir == Dir.Up || dir == Dir.Down)
                 this.moveInY(dir, moving)
         }
         getDirection() { return this.dir; }
@@ -53,7 +54,7 @@ namespace tilesprite {
         // stop at current tile
         deadStop(rentrant: boolean = false) { this.stopSprite(rentrant) }
         // request sprite to stop moving when it reaches destination
-        stop(dir: MoveDirection) {
+        stop(dir: Dir) {
             if (dir == this.dir) {
                 this.moving = false;
                 this.final = 0;
@@ -63,12 +64,12 @@ namespace tilesprite {
         }
         // process queued movement (client must invoke)
         doQueued() {
-            if (this.queue_dir != MoveDirection.None) {
+            if (this.queue_dir != Dir.None) {
                 this.move(this.queue_dir, this.queue_moving)
             }
-            this.queue_dir = MoveDirection.None;
+            this.queue_dir = Dir.None;
         }
-        clearQueue() { this.queue_dir = MoveDirection.None }
+        clearQueue() { this.queue_dir = Dir.None }
         // notify client on entering tile
         onTileArrived(handler: (ts: TileSprite) => void) {
             this.onArrived = handler
@@ -80,12 +81,12 @@ namespace tilesprite {
         update() {
             // have we crossed into a new tile?
             if (this.onTransition) {
-                if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
+                if (this.dir == Dir.Left || this.dir == Dir.Right) {
                     if (this.old != this.getColumn()) {
                         this.onTransition(this, this.old, this.getRow())
                     }
                     this.old = this.getColumn()
-                } else if (this.dir == MoveDirection.Up || this.dir == MoveDirection.Down) {
+                } else if (this.dir == Dir.Up || this.dir == Dir.Down) {
                     if (this.old != this.getRow()) {
                         this.onTransition(this, this.getColumn(), this.old)
                     }
@@ -94,20 +95,20 @@ namespace tilesprite {
             }
             // have we reached the target?
             let size = 1 << this.tileBits
-            if (this.dir == MoveDirection.Left && this.x <= this.next) {
+            if (this.dir == Dir.Left && this.x <= this.next) {
                 this.reachedTargetX(this.next, -size)
-            } else if (this.dir == MoveDirection.Right && this.x >= this.next) {
+            } else if (this.dir == Dir.Right && this.x >= this.next) {
                 this.reachedTargetX(this.next, size)
-            } else if (this.dir == MoveDirection.Up && this.y <= this.next) {
+            } else if (this.dir == Dir.Up && this.y <= this.next) {
                 this.reachedTargetY(this.next, -size)
-            } else if (this.dir == MoveDirection.Down && this.y >= this.next) {
+            } else if (this.dir == Dir.Down && this.y >= this.next) {
                 this.reachedTargetY(this.next, size)
             }
         }
-        private moveInX(dir: MoveDirection, moving: boolean) {
+        private moveInX(dir: Dir, moving: boolean) {
             let size = 1 << this.tileBits
-            let opDir = dir == MoveDirection.Left ? MoveDirection.Right : MoveDirection.Left
-            let sign = dir == MoveDirection.Left ? -1 : 1
+            let opDir = dir == Dir.Left ? Dir.Right : Dir.Left
+            let sign = dir == Dir.Left ? -1 : 1
             if (this.dir == dir && !moving) {
                 this.final += sign * size;
                 return;
@@ -115,7 +116,7 @@ namespace tilesprite {
                 // switching 180 doesn't require queuing
                 // next_x is defined, so use it
                 this.next += sign * size
-            } else if (this.dir == MoveDirection.None) {
+            } else if (this.dir == Dir.None) {
                 // player.x is aligned, so use it
                 this.next = this.x + sign * size;
             } else {
@@ -129,17 +130,17 @@ namespace tilesprite {
             this.final = this.next;
             this.vx = sign * 100
         }
-        private moveInY(dir: MoveDirection, moving: boolean) {
+        private moveInY(dir: Dir, moving: boolean) {
             let size = 1 << this.tileBits
-            let opDir = dir == MoveDirection.Up ? MoveDirection.Down : MoveDirection.Up
-            let sign = dir == MoveDirection.Up ? -1 : 1
+            let opDir = dir == Dir.Up ? Dir.Down : Dir.Up
+            let sign = dir == Dir.Up ? -1 : 1
             if (this.dir == dir && !moving) {
                 this.final += sign * size;
                 return;
             } else if (this.dir == opDir) {
                 // next_x is defined, so use it
                 this.next += sign * size
-            } else if (this.dir == MoveDirection.None) {
+            } else if (this.dir == Dir.None) {
                 // player.x is aligned, so use it
                 this.next = this.y + sign * size;
             } else {
@@ -159,14 +160,14 @@ namespace tilesprite {
             if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
-                this.dir = MoveDirection.None
+                this.dir = Dir.None
                 this.vx = 0
             }
             // notify
             if (this.onArrived && reentrant) {
                 this.onArrived(this)
             }
-            this.queue_dir = MoveDirection.None
+            this.queue_dir = Dir.None
             this.old = this.getColumn()
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
@@ -174,14 +175,14 @@ namespace tilesprite {
             if (this.moving || this.final && this.next != this.final) {
                 this.next += step
             } else {
-                this.dir = MoveDirection.None
+                this.dir = Dir.None
                 this.vy = 0
             }
             // notify
             if (this.onArrived && reentrant) {
                 this.onArrived(this)
             }
-            this.queue_dir = MoveDirection.None
+            this.queue_dir = Dir.None
             this.old = this.getRow()
         }
         private centerIt(n: number) {
@@ -190,8 +191,8 @@ namespace tilesprite {
         private stopSprite(reentrant: boolean) {
             this.moving = false
             this.final = 0
-            this.queue_dir = MoveDirection.None
-            if (this.dir == MoveDirection.Left || this.dir == MoveDirection.Right) {
+            this.queue_dir = Dir.None
+            if (this.dir == Dir.Left || this.dir == Dir.Right) {
                 this.reachedTargetX(this.centerIt(this.x), 0, reentrant)
             } else {
                 this.reachedTargetY(this.centerIt(this.y), 0, reentrant)
@@ -200,55 +201,57 @@ namespace tilesprite {
     }
 
     // basic movement for player sprite
-    export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: MoveDirection) => boolean) {
+    export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: Dir) => boolean) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, MoveDirection.Left))
-                sprite.move(MoveDirection.Left)
+            if (canMove(sprite, Dir.Left))
+                sprite.move(Dir.Left)
         })
         controller.left.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Left)
+            sprite.stop(Dir.Left)
         })
         controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, MoveDirection.Right))
-                sprite.move(MoveDirection.Right)
+            if (canMove(sprite, Dir.Right))
+                sprite.move(Dir.Right)
         })
         controller.right.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Right)
+            sprite.stop(Dir.Right)
         })
         controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, MoveDirection.Up))
-                sprite.move(MoveDirection.Up)
+            if (canMove(sprite, Dir.Up))
+                sprite.move(Dir.Up)
         })
         controller.up.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Up)
+            sprite.stop(Dir.Up)
         })
         controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, MoveDirection.Down))
-                sprite.move(MoveDirection.Down)
+            if (canMove(sprite, Dir.Down))
+                sprite.move(Dir.Down)
         })
         controller.down.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.stop(MoveDirection.Down)
+            sprite.stop(Dir.Down)
         })
     }
 
-    // this is now generic
-    export type GameState = {
-        [key: number]: ts.TileSprite[];
+    export type WorldState = {
+        // the sprites, divided up by category
+        // TODO: scene already has this
+        [key: number]: TileSprite[];
+        // the current tile map (no sprites)  
         tileMap: Image;
+        // need to track sprites and map
         spritesMap: Image;
     }
 
     // description of sprites
     export type Description = { c: number, a: Image, sk: number, t: number }
 
-    // ready to move out...
-    export function setScene(img: Image, spriteDescriptions: Description[]): GameState {
+    export function setScene(img: Image, spriteDescriptions: Description[]): WorldState {
         // copy it, as it will be updated
         let tileMap = img.clone()
         // convert image to tile map
         scene.setTileMap(tileMap)
 
-        let gameState: GameState = {
+        let worldState: WorldState = {
             tileMap: tileMap,
             spritesMap: tileMap.clone()
         }
@@ -257,10 +260,10 @@ namespace tilesprite {
             let tiles = scene.getTilesByType(sd.c)
             scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
             if (sd.sk != undefined) {
-                gameState[sd.c] = []
+                worldState[sd.c] = []
                 for (let value of tiles) {
-                    let tileSprite = new ts.TileSprite(sd.a, sd.sk)
-                    gameState[sd.c].push(tileSprite)
+                    let tileSprite = new TileSprite(sd.a, sd.sk)
+                    worldState[sd.c].push(tileSprite)
                     value.place(tileSprite)
                 }
             }
@@ -274,6 +277,36 @@ namespace tilesprite {
                 if (r && r.sk) tileMap.setPixel(x, y, r.t)
             }
         }
-        return gameState
+        return worldState
+    }
+
+    // paths
+    export class Path {
+        private root: TileSprite;
+        private dir: Dir;
+        private col: number;
+        private row: number;
+        constructor(s: TileSprite, dir: Dir) {
+            this.root = s;
+            this.dir = dir;
+            this.Origin();
+        }
+        public getColumn() { return this.col }
+        public getRow() { return this.row }
+        public Origin() {
+            this.col = this.root.getColumn()
+            this.row = this.root.getRow()
+            this.Next(this.dir)
+            return this;
+        }
+        public Next(dir: Dir) {
+            switch (dir) {
+                case Dir.Left: this.col--; return this;
+                case Dir.Right: this.col++; return this;
+                case Dir.Up: this.row--; return this;
+                case Dir.Down: this.row++; return this
+            }
+            return this;
+        }
     }
 }
