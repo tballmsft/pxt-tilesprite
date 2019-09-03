@@ -6,6 +6,7 @@ namespace TileWorld {
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite {
         public tileBits: number;
+        public code: number;
         // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
         private moving: boolean;
@@ -24,9 +25,9 @@ namespace TileWorld {
         private onArrived: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        // TODO: have we shadowed something in Sprite?
-        constructor(image: Image, sk: number, bits: number = 4) {
+        constructor(code: number, image: Image, sk: number, bits: number = 4) {
             super(image)
+            this.code = code;
             this.setKind(sk)
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
@@ -273,17 +274,24 @@ namespace TileWorld {
     export type Description = { c: number, a: Image, sk: number, t: number }
 
     export class TileWorldState {
+        private spriteCodes: number[];
         // the sprites, divided up by category
         sprites: TileSprite[][];
         // the current tile map (no sprites)  
         tileMap: Image;
-        // need to track sprites and map
-        spritesMap: Image;
+        // fill in with sprites
+        spriteMap: Image;
+        // note tiles with more than one sprite
+        multiples: Image;
+        spritesInTile: TileSprite[][][];
 
         constructor(tileMap: Image, spriteDescriptions: Description[]) {
-            this.tileMap = tileMap.clone();
-            this.spritesMap = tileMap.clone()
             this.sprites = []
+            this.spriteCodes = []
+            this.tileMap = tileMap.clone();
+            this.spriteMap = tileMap.clone();
+            this.multiples = tileMap.clone();
+            this.spritesInTile = [];
             scene.setTileMap(this.tileMap)
 
             for (let sd of spriteDescriptions) {
@@ -291,8 +299,9 @@ namespace TileWorld {
                 scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
                 if (sd.sk != undefined) {
                     this.sprites[sd.c] = []
+                    this.spriteCodes.push(sd.c);
                     for (let value of tiles) {
-                        let tileSprite = new TileSprite(sd.a, sd.sk)
+                        let tileSprite = new TileSprite(sd.c, sd.a, sd.sk)
                         this.sprites[sd.c].push(tileSprite)
                         value.place(tileSprite)
                     }
@@ -309,18 +318,55 @@ namespace TileWorld {
             }
         }
 
-        private place(sprites: tw.TileSprite[], code: number) {
-            for (let s of sprites) {
-                this.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
-            }
+        private getAllSprites(col: number, row: number) {
+            let res: TileSprite[] = []
+            this.sprites.forEach((arr, code) => {
+                if (arr) {
+                    arr.forEach((sprite) => {
+                        if (col == sprite.getColumn() && row == sprite.getRow())
+                            res.push(sprite);
+                    })
+                }
+            })
+            return res;
         }
 
-        // place sprites to eliminate spaces
-        placeSprites() {
-            this.spritesMap.copyFrom(this.tileMap)
-            // TODO: if multiple sprites occupy tile, we may want to break ties
-            this.sprites.forEach((value: TileSprite[], index: number) => {
-                if (value) this.place(value, index)
+        private addSprites(col: number, row: number) {
+            if (this.spritesInTile[col]) {
+                if (this.spritesInTile[col][row]) {
+                    // already filled
+                    return;
+                }
+            } else {
+                this.spritesInTile[col] = [];
+            }
+            this.spritesInTile[col][row] = this.getAllSprites(col, row)
+        }
+
+        update() {
+            // first recompute the map
+            this.spriteMap.copyFrom(this.tileMap)
+            this.multiples.fill(0)
+            this.spritesInTile = []
+            this.sprites.forEach((arr, code) => {
+                if (arr) {
+                    arr.forEach((sprite) => {
+                        let col = sprite.getColumn(), row = sprite.getRow()
+                        let here = this.spriteMap.getPixel(col, row)
+                        if (this.spriteCodes.find((code) => code == here)) {
+                            // we have more than 1 sprite at (col,row)
+                            this.addSprites(col, row)
+                            this.multiples.setPixel(col, row, 1)
+                        } else {
+                            // no sprite at this tile yet
+                            this.spriteMap.setPixel(col, row, code)
+                        }
+                    })
+                }
+            })
+            // update the sprites
+            this.sprites.forEach((arr) => {
+                if (arr) { arr.forEach((sprite) => { sprite.update() }) }
             })
         }
 
@@ -328,14 +374,22 @@ namespace TileWorld {
             return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
         }
 
-        findSprite(code: number, path: tw.Path) {
+        getSprite(code: number, path: tw.Path) {
             return this.sprites[code].find(function (value: tw.TileSprite, index: number) {
                 return (value.getColumn() == path.getColumn() && value.getRow() == path.getRow())
             })
         }
 
+        getSprites(p: tw.Path) {
+            return this.spritesInTile[p.getColumn()][p.getRow()]
+        }
+
         getTile(p: tw.Path) {
-            return this.spritesMap.getPixel(p.getColumn(), p.getRow())
+            if (this.multiples.getPixel(p.getColumn(), p.getRow())) {
+                return -1
+            } else {
+                return this.spriteMap.getPixel(p.getColumn(), p.getRow())
+            }
         }
     }
 }

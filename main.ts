@@ -234,7 +234,7 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.getTile(tile) == codes.Rock &&
             world.getTile(tile.Next(dir)) == codes.Space) {
-            let rock = world.findSprite(codes.Rock, tile.Origin())
+            let rock = world.getSprite(codes.Rock, tile.Origin())
             rock.move(dir, false)
             return true
         }
@@ -245,12 +245,11 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
 function isRock(p: tw.Path) {
     let value = world.getTile(p)
     return value == codes.Rock || value == codes.Diamond
-
 }
+
 function isSpace(p: tw.Path) {
     let value = world.getTile(p)
-    return value == codes.Space && !(p.getColumn() == world.player().getColumn() &&
-        p.getRow() == world.player().getRow())
+    return value == codes.Space
 }
 
 function checkRock(rock: tw.TileSprite) {
@@ -289,28 +288,26 @@ function startFalling() {
 }
 
 game.onUpdate(function () {
-    world.placeSprites();
-    world.player().update();
-    for (let r of world.sprites[codes.Rock]) { r.update() }
-    for (let r of world.sprites[codes.Diamond]) { r.update() }
+    world.update();
     startFalling();
 })
 
 // add handlers for rock to stop when falling onto dirt
 function addRockHandler(rock: tw.TileSprite) {
-    function stop(col: number, row: number) {
+    function stop(p: tw.Path) {
         // if we are above dirt or rock, then stop
-        return stopsRocks(world.spritesMap.getPixel(col, row))
+        return stopsRocks(world.getTile(p))
     }
     rock.onTileArrived(function (s: tw.TileSprite) {
-        let col = s.getColumn(), row = s.getRow()
-        if (s.vy > 0 && stop(col, row + 1)) {
+        let below = s.Path(tw.Dir.Down)
+        let stopRock = stop(below)
+        if (s.inMotion() == tw.Dir.Down && stopRock) {
             // falling rock stopped by barrier
             s.deadStop()
         } else {
             s.doQueued()
             // horizontally moving rock
-            if (!stop(col, row + 1)) {
+            if (!stopRock) {
                 // falls if there's a hole
                 s.deadStop();
                 s.move(tw.Dir.Down)
@@ -321,11 +318,8 @@ function addRockHandler(rock: tw.TileSprite) {
 
 world.player().onTileTransition(function (sprite: tw.TileSprite) {
     let here = sprite.Path(tw.Dir.None)
-    if (world.getTile(here) == codes.Diamond) {
-        // TODO: player overwrites diamond
-        // check for (stationary) diamond in tile
-        // when we run into a (non-moving) diamond, we eat it
-        let diamond = world.findSprite(codes.Diamond, here)
+    if (world.getTile(here) == -1) {
+        let diamond = world.getSprite(codes.Diamond, here)
         if (diamond != null) {
             world.sprites[codes.Diamond].removeElement(diamond)
             diamond.destroy()
