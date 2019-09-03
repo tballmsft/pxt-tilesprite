@@ -206,6 +206,37 @@ namespace TileWorld {
         }
     }
 
+
+    // paths
+    export class Path {
+        private root: TileSprite;
+        private dir: Dir;
+        private col: number;
+        private row: number;
+        constructor(s: TileSprite, dir: Dir) {
+            this.root = s;
+            this.dir = dir;
+            this.Origin();
+        }
+        public getColumn() { return this.col }
+        public getRow() { return this.row }
+        public Origin() {
+            this.col = this.root.getColumn()
+            this.row = this.root.getRow()
+            this.Next(this.dir)
+            return this;
+        }
+        public Next(dir: Dir) {
+            switch (dir) {
+                case Dir.Left: this.col--; return this;
+                case Dir.Right: this.col++; return this;
+                case Dir.Up: this.row--; return this;
+                case Dir.Down: this.row++; return this
+            }
+            return this;
+        }
+    }
+
     // basic movement for player sprite
     export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: Dir) => boolean) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -238,81 +269,73 @@ namespace TileWorld {
         })
     }
 
-    export type WorldState = {
+    // description of sprites
+    export type Description = { c: number, a: Image, sk: number, t: number }
+
+    export class TileWorldState {
         // the sprites, divided up by category
-        // TODO: scene already has this
-        [key: number]: TileSprite[];
+        sprites: TileSprite[][];
         // the current tile map (no sprites)  
         tileMap: Image;
         // need to track sprites and map
         spritesMap: Image;
-    }
 
-    // description of sprites
-    export type Description = { c: number, a: Image, sk: number, t: number }
+        constructor(tileMap: Image, spriteDescriptions: Description[]) {
+            this.tileMap = tileMap.clone();
+            this.spritesMap = tileMap.clone()
+            this.sprites = []
+            scene.setTileMap(this.tileMap)
 
-    export function setScene(img: Image, spriteDescriptions: Description[]): WorldState {
-        // copy it, as it will be updated
-        let tileMap = img.clone()
-        // convert image to tile map
-        scene.setTileMap(tileMap)
+            for (let sd of spriteDescriptions) {
+                let tiles = scene.getTilesByType(sd.c)
+                scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
+                if (sd.sk != undefined) {
+                    this.sprites[sd.c] = []
+                    for (let value of tiles) {
+                        let tileSprite = new TileSprite(sd.a, sd.sk)
+                        this.sprites[sd.c].push(tileSprite)
+                        value.place(tileSprite)
+                    }
+                }
+            }
 
-        let worldState: WorldState = {
-            tileMap: tileMap,
-            spritesMap: tileMap.clone()
-        }
-
-        for (let sd of spriteDescriptions) {
-            let tiles = scene.getTilesByType(sd.c)
-            scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
-            if (sd.sk != undefined) {
-                worldState[sd.c] = []
-                for (let value of tiles) {
-                    let tileSprite = new TileSprite(sd.a, sd.sk)
-                    worldState[sd.c].push(tileSprite)
-                    value.place(tileSprite)
+            // now that we have created sprites, remove them from the tile map
+            for (let y = 0; y < tileMap.height; y++) {
+                for (let x = 0; x < tileMap.width; x++) {
+                    let pixel = this.tileMap.getPixel(x, y)
+                    let r = spriteDescriptions.find(r => r.c == pixel)
+                    if (r && r.sk) this.tileMap.setPixel(x, y, r.t)
                 }
             }
         }
 
-        // now that we have created sprites, remove them from the tile map
-        for (let y = 0; y < tileMap.height; y++) {
-            for (let x = 0; x < tileMap.width; x++) {
-                let pixel = tileMap.getPixel(x, y)
-                let r = spriteDescriptions.find(r => r.c == pixel)
-                if (r && r.sk) tileMap.setPixel(x, y, r.t)
+        private place(sprites: tw.TileSprite[], code: number) {
+            for (let s of sprites) {
+                this.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
             }
         }
-        return worldState
-    }
 
-    // paths
-    export class Path {
-        private root: TileSprite;
-        private dir: Dir;
-        private col: number;
-        private row: number;
-        constructor(s: TileSprite, dir: Dir) {
-            this.root = s;
-            this.dir = dir;
-            this.Origin();
+        // place sprites to eliminate spaces
+        placeSprites() {
+            this.spritesMap.copyFrom(this.tileMap)
+            // TODO: if multiple sprites occupy tile, we may want to break ties
+            this.sprites.forEach((value: TileSprite[], index: number) => {
+                if (value) this.place(value, index)
+            })
         }
-        public getColumn() { return this.col }
-        public getRow() { return this.row }
-        public Origin() {
-            this.col = this.root.getColumn()
-            this.row = this.root.getRow()
-            this.Next(this.dir)
-            return this;
+
+        player() {
+            return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
         }
-        public Next(dir: Dir) {
-            switch (dir) {
-                case Dir.Left: this.col--; return this;
-                case Dir.Right: this.col++; return this;
-                case Dir.Up: this.row--; return this;
-                case Dir.Down: this.row++; return this
-            }
-            return this;
+
+        findSprite(code: number, path: tw.Path) {
+            return this.sprites[code].find(function (value: tw.TileSprite, index: number) {
+                return (value.getColumn() == path.getColumn() && value.getRow() == path.getRow())
+            })
+        }
+
+        getTile(p: tw.Path) {
+            return this.spritesMap.getPixel(p.getColumn(), p.getRow())
         }
     }
 }

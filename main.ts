@@ -208,18 +208,9 @@ let spriteDescriptions: tw.Description[] = [
     { c: codes.Dirt, a: art.Dirt, sk: undefined, t: undefined }
 ];
 
-let world = tw.setScene(levels.level1, spriteDescriptions)
-function player(): tw.TileSprite {
-    return <tw.TileSprite>(<any>world[codes.Player][0])
-}
-tw.bindToController(player(), playerMoves)
-scene.cameraFollowSprite(player())
-
-function findInTile(code: codes, path: tw.Path) {
-    return world[code].find(function (value: tw.TileSprite, index: number) {
-        return (value.getColumn() == path.getColumn() && value.getRow() == path.getRow())
-    })
-}
+let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
+tw.bindToController(world.player(), playerMoves)
+scene.cameraFollowSprite(world.player())
 
 function stopsRocks(value: number) {
     return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
@@ -227,13 +218,9 @@ function stopsRocks(value: number) {
 }
 
 function playerOK(p: tw.Path) {
-    let value = getTile(p)
+    let value = world.getTile(p)
     return value == codes.Space || value == codes.Dirt || value == codes.Diamond
         || value == codes.Enemy
-}
-
-function getTile(p: tw.Path) {
-    return world.spritesMap.getPixel(p.getColumn(), p.getRow())
 }
 
 // p.left \in  
@@ -245,9 +232,9 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (playerOK(tile))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
-        if (getTile(tile) == codes.Rock &&
-            getTile(tile.Next(dir)) == codes.Space) {
-            let rock = findInTile(codes.Rock, tile.Origin())
+        if (world.getTile(tile) == codes.Rock &&
+            world.getTile(tile.Next(dir)) == codes.Space) {
+            let rock = world.findSprite(codes.Rock, tile.Origin())
             rock.move(dir, false)
             return true
         }
@@ -256,14 +243,14 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
 }
 
 function isRock(p: tw.Path) {
-    let value = getTile(p)
+    let value = world.getTile(p)
     return value == codes.Rock || value == codes.Diamond
 
 }
 function isSpace(p: tw.Path) {
-    let value = getTile(p)
-    return value == codes.Space && !(p.getColumn() == player().getColumn() &&
-        p.getRow() == player().getRow())
+    let value = world.getTile(p)
+    return value == codes.Space && !(p.getColumn() == world.player().getColumn() &&
+        p.getRow() == world.player().getRow())
 }
 
 function checkRock(rock: tw.TileSprite) {
@@ -293,35 +280,20 @@ function checkRock(rock: tw.TileSprite) {
     }
 }
 
-for (let r of world[codes.Rock]) { addRockHandler(r) }
-for (let r of world[codes.Diamond]) { addRockHandler(r) }
+for (let r of world.sprites[codes.Rock]) { addRockHandler(r) }
+for (let r of world.sprites[codes.Diamond]) { addRockHandler(r) }
 
-function startFalling(world: tw.WorldState) {
-    for (let r of world[codes.Rock]) { checkRock(r) }
-    for (let r of world[codes.Diamond]) { checkRock(r) }
-}
-
-// place sprites to eliminate spaces
-function placeSprites(world: tw.WorldState) {
-    world.spritesMap.copyFrom(world.tileMap)
-    function place(sprites: tw.TileSprite[], code: number) {
-        for (let s of sprites) {
-            world.spritesMap.setPixel(s.getColumn(), s.getRow(), code)
-        }
-    }
-    // TODO: if multiple sprites occupy tile, we may want to break ties
-    place(world[codes.Rock], codes.Rock)
-    place(world[codes.Diamond], codes.Diamond)
-    // todo: enemies, dynamite, etc.
-    // todo: is the enemy stationary or moving?
+function startFalling() {
+    for (let r of world.sprites[codes.Rock]) { checkRock(r) }
+    for (let r of world.sprites[codes.Diamond]) { checkRock(r) }
 }
 
 game.onUpdate(function () {
-    placeSprites(world);
-    player().update();
-    for (let r of world[codes.Rock]) { r.update() }
-    for (let r of world[codes.Diamond]) { r.update() }
-    startFalling(world);
+    world.placeSprites();
+    world.player().update();
+    for (let r of world.sprites[codes.Rock]) { r.update() }
+    for (let r of world.sprites[codes.Diamond]) { r.update() }
+    startFalling();
 })
 
 // add handlers for rock to stop when falling onto dirt
@@ -347,25 +319,24 @@ function addRockHandler(rock: tw.TileSprite) {
     })
 }
 
-player().onTileTransition(function (sprite: tw.TileSprite) {
-    let col = sprite.getColumn()
-    let row = sprite.getRow()
-    if (world.spritesMap.getPixel(col, row) == codes.Diamond) {
+world.player().onTileTransition(function (sprite: tw.TileSprite) {
+    let here = sprite.Path(tw.Dir.None)
+    if (world.getTile(here) == codes.Diamond) {
         // TODO: player overwrites diamond
         // check for (stationary) diamond in tile
         // when we run into a (non-moving) diamond, we eat it
-        let diamond = findInTile(codes.Diamond, sprite.Path(tw.Dir.None))
+        let diamond = world.findSprite(codes.Diamond, here)
         if (diamond != null) {
-            world[codes.Diamond].removeElement(diamond)
+            world.sprites[codes.Diamond].removeElement(diamond)
             diamond.destroy()
-            if (world[codes.Diamond].length == 0) {
+            if (world.sprites[codes.Diamond].length == 0) {
                 game.showDialog("Got All Diamonds!", "")
             }
         }
     }
 })
 
-player().onTileArrived(function (player: tw.TileSprite) {
+world.player().onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
