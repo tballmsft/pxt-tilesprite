@@ -29,7 +29,7 @@ enum codes {
     Space = 0x1,
     Enemy = 0x2,
     Diamond = 0x6,
-    Rock = 0xb,
+    Boulder = 0xb,
     SpriteHere = 0
 }
 
@@ -79,7 +79,7 @@ namespace art {
         . . . . . f f f f f f . . . . .
         . . . . . f f . . f f . . . . .
     `
-    export let Rock = img`
+    export let Boulder = img`
         . . . . . c c b b b . . . . . .
         . . . . c b d d d d b . . . . .
         . . . . c d d d d d d b b . . .
@@ -198,7 +198,7 @@ namespace art {
 }
 
 let spriteDescriptions: tw.Description[] = [
-    { c: codes.Rock, a: art.Rock, sk: SpriteKind.Projectile, t: codes.Space },
+    { c: codes.Boulder, a: art.Boulder, sk: SpriteKind.Projectile, t: codes.Space },
     { c: codes.Diamond, a: art.Diamond, sk: SpriteKind.Food, t: codes.Space },
     { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: codes.Space },
     { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: codes.Space },
@@ -212,15 +212,23 @@ let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
 tw.bindToController(world.player(), playerMoves)
 scene.cameraFollowSprite(world.player())
 
-function stopsRocks(value: number) {
-    return value == codes.Dirt || value == codes.Rock || value == codes.Diamond
-        || value == codes.Wall || value == codes.StrongWall
+// predicates (sets)
+
+function isWall(value:number) {
+    return value == codes.Wall || value == codes.StrongWall
 }
 
-function playerOK(p: tw.Path) {
-    let value = world.getTile(p)
-    return value == codes.Space || value == codes.Dirt || value == codes.Diamond
-        || value == codes.Enemy
+function isRock(value: number) {
+    return value == codes.Boulder || value == codes.Diamond
+}
+
+function stopsRocks(value: number) {
+    return value == codes.Dirt || isRock(value) || isWall(value)
+}
+
+function playerCanMoveOver(value: number) {
+    return value == codes.Space || value == codes.Dirt 
+        || value == codes.Diamond || value == codes.Enemy
 }
 
 // p.left \in  
@@ -229,12 +237,12 @@ function playerOK(p: tw.Path) {
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     let tile = player.Path(dir)
-    if (playerOK(tile))
+    if (playerCanMoveOver(world.getTile(tile)))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
-        if (world.getTile(tile) == codes.Rock &&
+        if (world.getTile(tile) == codes.Boulder &&
             world.getTile(tile.Next(dir)) == codes.Space) {
-            let rock = world.getSprite(codes.Rock, tile.Origin())
+            let rock = world.getSprite(codes.Boulder, tile.Origin())
             rock.move(dir, false)
             return true
         }
@@ -242,25 +250,20 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     return false
 }
 
-function isRock(p: tw.Path) {
-    let value = world.getTile(p)
-    return value == codes.Rock || value == codes.Diamond
-}
-
 function isSpace(p: tw.Path) {
     let value = world.getTile(p)
     return value == codes.Space
 }
 
-function checkRock(rock: tw.TileSprite) {
+function rockfall(rock: tw.TileSprite) {
     let below = rock.Path(tw.Dir.Down)
     if (isSpace(below)) {
         rock.move(tw.Dir.Down)
         return;
     }
-    if (rock.inMotion() == tw.Dir.None && isRock(below)) {
+    if (rock.inMotion() == tw.Dir.None && isRock(world.getTile(below))) {
         let above = rock.Path(tw.Dir.Up)
-        if (!isRock(above)) {
+        if (!isRock(world.getTile(above))) {
             let same = rock.Path(tw.Dir.None)
             let fallLeftOK = isSpace(same.Next(tw.Dir.Left)) && isSpace(below.Next(tw.Dir.Left))
             same.Origin(); below.Origin()
@@ -279,17 +282,13 @@ function checkRock(rock: tw.TileSprite) {
     }
 }
 
-for (let r of world.sprites[codes.Rock]) { addRockHandler(r) }
+for (let r of world.sprites[codes.Boulder]) { addRockHandler(r) }
 for (let r of world.sprites[codes.Diamond]) { addRockHandler(r) }
-
-function startFalling() {
-    for (let r of world.sprites[codes.Rock]) { checkRock(r) }
-    for (let r of world.sprites[codes.Diamond]) { checkRock(r) }
-}
 
 game.onUpdate(function () {
     world.update();
-    startFalling();
+    for (let r of world.sprites[codes.Boulder]) { rockfall(r) }
+    for (let r of world.sprites[codes.Diamond]) { rockfall(r) }
 })
 
 // add handlers for rock to stop when falling onto dirt
