@@ -208,8 +208,8 @@ let spriteDescriptions: tw.Description[] = [
 ];
 
 let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
-tw.bindToController(world.player(), playerMoves)
-scene.cameraFollowSprite(world.player())
+tw.bindToController(world.getPlayer(), playerMoves)
+scene.cameraFollowSprite(world.getPlayer())
 
 // predicates (sets)
 
@@ -319,33 +319,30 @@ function addRockHandlers(rock: tw.TileSprite) {
     })
 }
 
-for (let r of world.sprites[codes.Boulder]) { addRockHandlers(r) }
-for (let r of world.sprites[codes.Diamond]) { addRockHandlers(r) }
+for (let r of world.getSpritesWithCode(codes.Boulder)) { addRockHandlers(r) }
+for (let r of world.getSpritesWithCode(codes.Diamond)) { addRockHandlers(r) }
 
 game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
-world.player().onTileTransition(function (sprite: tw.TileSprite) {
+world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
     let here = sprite.Path(tw.Dir.None)
     if (world.getTile(here) == -1) {
         let diamond = world.getSprite(codes.Diamond, here)
         if (diamond != null) {
-            world.sprites[codes.Diamond].removeElement(diamond)
+            // world.sprites[codes.Diamond].removeElement(diamond)
             diamond.destroy()
-            if (world.sprites[codes.Diamond].length == 0) {
-                game.showDialog("Got All Diamonds!", "")
-            }
         }
     }
 })
 
-world.player().onTileArrived(function (player: tw.TileSprite) {
+world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
-    world.tileMap.setPixel(player.getColumn(), player.getRow(), codes.Space);
+    world.setTile(player.Path(tw.Dir.None), codes.Space);
 })
 
 // here - we abstract to tiles rather than sprites colliding

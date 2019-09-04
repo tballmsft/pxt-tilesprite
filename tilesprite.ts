@@ -288,14 +288,15 @@ namespace TileWorld {
     export class TileWorldState {
         private spriteCodes: number[];
         // the sprites, divided up by category
-        sprites: TileSprite[][];
+        private sprites: TileSprite[][];
         // the current tile map (no sprites)  
-        tileMap: Image;
+        private tileMap: Image;
         // fill in with sprites
-        spriteMap: Image;
+        private spriteMap: Image;
         // note tiles with more than one sprite
-        multiples: Image;
-        spritesInTile: TileSprite[][][];
+        private multiples: Image;
+        private spritesInTile: TileSprite[][][];
+        private tileHandler: (colliding: TileSprite[]) => void;
 
         constructor(tileMap: Image, spriteDescriptions: Description[]) {
             this.sprites = []
@@ -304,6 +305,7 @@ namespace TileWorld {
             this.spriteMap = tileMap.clone();
             this.multiples = tileMap.clone();
             this.spritesInTile = [];
+            this.tileHandler = undefined;
             scene.setTileMap(this.tileMap)
 
             for (let sd of spriteDescriptions) {
@@ -355,6 +357,14 @@ namespace TileWorld {
             this.spritesInTile[col][row] = this.getAllSprites(col, row)
         }
 
+        onSpritesInTile(h: (collision: TileSprite[]) => void) {
+            this.tileHandler = h;
+        }
+
+        getSpritesWithCode(code: number) {
+            return this.sprites[code];
+        }
+
         update() {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
@@ -376,9 +386,18 @@ namespace TileWorld {
                     })
                 }
             })
+            // process collisions at tiles
+            this.spritesInTile.forEach((arr) => {
+                if (arr) arr.forEach((arr2,col) => {
+                    if (arr2) arr2.forEach((spr,row) => {
+                        
+                    })
+                })
+            })
+
             // update the moving sprites
             this.sprites.forEach((arr) => {
-                if (arr) { arr.forEach((sprite) => { sprite.updateInMotion() }) }
+                if (arr) arr.forEach((sprite) => { sprite.updateInMotion() })
             })
             // TODO: note that a sprite can be acted upon twice, if
             // TODO: it transitions from moving to stationary
@@ -388,7 +407,7 @@ namespace TileWorld {
             })
         }
 
-        player() {
+        getPlayer() {
             return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
         }
 
@@ -402,6 +421,10 @@ namespace TileWorld {
             return this.spritesInTile[p.getColumn()][p.getRow()]
         }
 
+        setTile(p: tw.Path, code: number) {
+            this.tileMap.setPixel(p.getColumn(), p.getRow(), code)
+        }
+        
         getTile(p: tw.Path) {
             if (this.multiples.getPixel(p.getColumn(), p.getRow())) {
                 return -1
