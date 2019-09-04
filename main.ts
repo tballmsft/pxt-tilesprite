@@ -353,16 +353,17 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     // there's also the question of the code of the sprite, and its kind
 
     // let's first deal with moving rocks
-    // let onlyMovingRocks = collision.every((spr) => isRock(spr.code))
-    // if (onlyMovingRocks) {
-    //    collision[0].knockBack(true)
-    //}
+    let onlyMovingRocks = collision.every((spr) => isRock(spr.code))
+    if (onlyMovingRocks) {
+        let choose = collision.pop()
+        choose.knockBack(true)
+    }
 })
 
 // here - we abstract to tiles rather than sprites colliding
 // unfortunately, we need this because multiple rocks can be in motion at the same time
 // for example, one entering tile from above, one entering from right
-
+/*
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     (<tw.TileSprite>sprite).deadStop(true)
 })
@@ -375,3 +376,4 @@ sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Spri
 sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     (<tw.TileSprite>sprite).deadStop(true)
 })
+*/

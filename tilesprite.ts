@@ -65,10 +65,10 @@ namespace TileWorld {
         knockBack(rentrant: boolean = false) {
             if ((this.dir == Dir.Left || this.dir == Dir.Right) &&
                 this.old != this.getColumn()) {
-                this.x = this.old << this.tileBits
+                this.x = this.centerIt(this.old << this.tileBits)
             } else if ((this.dir == Dir.Up || this.dir == Dir.Down) &&
                 this.old != this.getRow()) {
-                this.y = this.old << this.tileBits
+                this.y = this.centerIt(this.old << this.tileBits)
             }
             this.stopSprite(rentrant)
         }
@@ -356,11 +356,8 @@ namespace TileWorld {
         }
 
         private addSprites(col: number, row: number) {
-            if (this.spritesInTile[col]) {
-                if (this.spritesInTile[col][row]) {
-                    // already filled
-                    return;
-                }
+            if (this.spritesInTile[col] && this.spritesInTile[col][row]) {
+                return;
             } else {
                 this.spritesInTile[col] = [];
             }
@@ -397,15 +394,6 @@ namespace TileWorld {
                 }
             })
 
-            // process collisions at tiles
-            if (this.tileHandler) {
-                this.spritesInTile.forEach((arr) => {
-                    if (arr) arr.forEach((arr2, col) => {
-                        if (arr2) this.tileHandler(arr2)
-                    })
-                })
-            }
-
             // update the moving sprites
             this.sprites.forEach((arr) => {
                 if (arr) arr.forEach((sprite) => { sprite.updateInMotion() })
@@ -416,6 +404,15 @@ namespace TileWorld {
             this.sprites.forEach((arr) => {
                 if (arr) { arr.forEach((sprite) => { sprite.updateStationary() }) }
             })
+
+            // process collisions at tiles
+            if (this.tileHandler) {
+                this.spritesInTile.forEach((arr) => {
+                    if (arr) arr.forEach((arr2, col) => {
+                        if (arr2) this.tileHandler(arr2)
+                    })
+                })
+            }
         }
 
         getPlayer() {
