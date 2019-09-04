@@ -23,20 +23,22 @@ namespace TileWorld {
         private queue_moving: boolean;
         // notification
         private onArrived: (ts: TileSprite) => void
+        private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
         constructor(code: number, image: Image, sk: number, bits: number = 4) {
-            super(image)
+            super(image);
             this.code = code;
-            this.setKind(sk)
+            this.setKind(sk);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
             this.tileBits = bits;
-            this.moving = false
-            this.dir = Dir.None
-            this.queue_dir = Dir.None
-            this.onArrived = undefined
-            this.onTransition = undefined
+            this.moving = false;
+            this.dir = Dir.None;
+            this.queue_dir = Dir.None;
+            this.onArrived = undefined;
+            this.onStationary = undefined;
+            this.onTransition = undefined;
         }
 
         Path(dir: Dir) { return new Path(this, dir) }
@@ -81,11 +83,16 @@ namespace TileWorld {
         onTileArrived(handler: (ts: TileSprite) => void) {
             this.onArrived = handler
         }
+        onTileStationary(handler: (ts: TileSprite) => void) {
+            this.onStationary = handler
+        }
         onTileTransition(handler: (ts: TileSprite, col: number, row: number) => void) {
             this.onTransition = handler
         }
         // call from game update loop
-        update() {
+        updateInMotion() {
+            if (this.dir == Dir.None)
+                return;
             // have we crossed into a new tile?
             if (this.onTransition) {
                 if (this.dir == Dir.Left || this.dir == Dir.Right) {
@@ -110,6 +117,11 @@ namespace TileWorld {
                 this.reachedTargetY(this.next, -size)
             } else if (this.dir == Dir.Down && this.y >= this.next) {
                 this.reachedTargetY(this.next, size)
+            }
+        }
+        updateStationary() {
+            if (this.onStationary && this.dir == Dir.None) {
+                this.onStationary(this)
             }
         }
         private moveInX(dir: Dir, moving: boolean) {
@@ -364,9 +376,15 @@ namespace TileWorld {
                     })
                 }
             })
-            // update the sprites
+            // update the moving sprites
             this.sprites.forEach((arr) => {
-                if (arr) { arr.forEach((sprite) => { sprite.update() }) }
+                if (arr) { arr.forEach((sprite) => { sprite.updateInMotion() }) }
+            })
+            // TODO: note that a sprite can be acted upon twice, if
+            // TODO: it transitions from moving to stationary
+            // update the stationary sprites
+            this.sprites.forEach((arr) => {
+                if (arr) { arr.forEach((sprite) => { sprite.updateStationary() }) }
             })
         }
 
