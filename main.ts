@@ -1,18 +1,5 @@
 // Rules of the game:
 
-// BASIC
-// X Player removes Dirt on tile it occupies (dirt->space)
-// X Dirt/Wall are non-movable items (NMI) - they never move
-// X Player/Rocks/Diamonds/Enemies/Pets are MI
-// X MI (except Player) can only move in space (blocked by NMI)
-// - Strong Walls can never be destroyed 
-// X Diamonds can be collected by player (collect them all to win level)
-// X a diamond is a rock (follows rules of rocks)
-// X Rocks fall down if space below
-// X player/enemy dies if MI moves onto its tile
-// X rock (on rock) will move LD or RD (if space permits)
-// X player can push a (single) rock L or R (space permitting)
-
 // ADVANCED
 // - Tough enemy don't get killed by explosion
 // - Enemies that collide with Pets yield explosions
@@ -21,6 +8,7 @@
 
 import tw = TileWorld
 
+// various tiles and sprites in the game
 enum codes {
     StrongWall = 0xc,
     Dirt = 0xd,
@@ -32,7 +20,13 @@ enum codes {
     Boulder = 0xb
 }
 
+// others to follow:
+// Dynamite
+// Explosion
+// Pet
+
 namespace levels {
+    // the values in the image correspond to the 'codes' enum above
     export let level1 =
         img`
             c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
@@ -53,11 +47,6 @@ namespace levels {
             c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
         `
 }
-
-// others to follow:
-// Dynamite
-// Explosion
-// Pet
 
 namespace art {
     export let Player = img`
@@ -253,7 +242,7 @@ function isSpace(p: tw.Path) {
 function rockfallDown(rock: tw.TileSprite) {
     let below = rock.Path(tw.Dir.Down)
     if (isSpace(below)) {
-        rock.move(tw.Dir.Down)
+        rock.move(tw.Dir.Down, false)
         return true;
     }
     return false;
@@ -297,18 +286,12 @@ function rockfall(rock: tw.TileSprite) {
 // add handlers for rock to stop when falling onto dirt
 function addRockHandlers(rock: tw.TileSprite) {
     // start a rockfall
-    rock.onTileStationary(function (s: tw.TileSprite) {
-        rockfall(s)
-    })
-    // deal with moving rock
+    rock.onTileStationary(function (s: tw.TileSprite) { rockfall(s) })
     rock.onTileArrived(function (s: tw.TileSprite) {
-        let below = s.Path(tw.Dir.Down)
-        let stopRock = stopsRocks(world.getTile(below))
-        if (s.inMotion() == tw.Dir.Down && stopRock) {
-            // falling rock stopped by barrier
-            s.deadStop()
-        } else {
-            s.doQueued()
+        // if we are moving left, right, need to watch for hole
+        if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
+            let below = s.Path(tw.Dir.Down)
+            let stopRock = stopsRocks(world.getTile(below))
             // horizontally moving rock
             if (!stopRock) {
                 // falls if there's a hole

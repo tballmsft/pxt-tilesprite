@@ -372,6 +372,7 @@ namespace TileWorld {
             return this.sprites[code];
         }
 
+        // TODO: need to handle multiple actions on sprite
         update() {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
@@ -394,18 +395,23 @@ namespace TileWorld {
                 }
             })
 
-            // update the moving sprites
+            // three main update steps (ordering issues to be addressed
+            // by tracking which sprite is affected by which step and lot
+            // 
+
+            // 1. update the moving sprites
             this.sprites.forEach((arr) => {
                 if (arr) arr.forEach((sprite) => { sprite.updateInMotion() })
             })
+
             // TODO: note that a sprite can be acted upon twice, if
             // TODO: it transitions from moving to stationary
-            // update the stationary sprites
+            // 2. update the stationary sprites
             this.sprites.forEach((arr) => {
                 if (arr) { arr.forEach((sprite) => { sprite.updateStationary() }) }
             })
 
-            // process collisions at tiles
+            // 3. process collisions at tiles
             if (this.tileHandler) {
                 this.spritesInTile.forEach((arr) => {
                     if (arr) arr.forEach((arr2, col) => {
