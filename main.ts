@@ -345,9 +345,24 @@ world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
     world.setTile(player.Path(tw.Dir.None), codes.Space);
 })
 
+world.onSpritesInTile(function (collision: tw.TileSprite[]) {
+    // there are a few cases here to consider:
+    // 1. all sprites are moving
+    // 2. some are stationary, some are moving
+    // 3. all are stationary (currently, won't happen)
+    // there's also the question of the code of the sprite, and its kind
+
+    // let's first deal with moving rocks
+    // let onlyMovingRocks = collision.every((spr) => isRock(spr.code))
+    // if (onlyMovingRocks) {
+    //    collision[0].knockBack(true)
+    //}
+})
+
 // here - we abstract to tiles rather than sprites colliding
 // unfortunately, we need this because multiple rocks can be in motion at the same time
 // for example, one entering tile from above, one entering from right
+
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
     (<tw.TileSprite>sprite).deadStop(true)
 })

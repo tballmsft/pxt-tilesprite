@@ -62,6 +62,16 @@ namespace TileWorld {
 
         // stop at current tile
         deadStop(rentrant: boolean = false) { this.stopSprite(rentrant) }
+        knockBack(rentrant: boolean = false) {
+            if ((this.dir == Dir.Left || this.dir == Dir.Right) &&
+                this.old != this.getColumn()) {
+                this.x = this.old << this.tileBits
+            } else if ((this.dir == Dir.Up || this.dir == Dir.Down) &&
+                this.old != this.getRow()) {
+                this.y = this.old << this.tileBits
+            }
+            this.stopSprite(rentrant)
+        }
         // request sprite to stop moving when it reaches destination
         stop(dir: Dir) {
             if (dir == this.dir) {
@@ -386,14 +396,15 @@ namespace TileWorld {
                     })
                 }
             })
+
             // process collisions at tiles
-            this.spritesInTile.forEach((arr) => {
-                if (arr) arr.forEach((arr2,col) => {
-                    if (arr2) arr2.forEach((spr,row) => {
-                        
+            if (this.tileHandler) {
+                this.spritesInTile.forEach((arr) => {
+                    if (arr) arr.forEach((arr2, col) => {
+                        if (arr2) this.tileHandler(arr2)
                     })
                 })
-            })
+            }
 
             // update the moving sprites
             this.sprites.forEach((arr) => {
@@ -424,7 +435,7 @@ namespace TileWorld {
         setTile(p: tw.Path, code: number) {
             this.tileMap.setPixel(p.getColumn(), p.getRow(), code)
         }
-        
+
         getTile(p: tw.Path) {
             if (this.multiples.getPixel(p.getColumn(), p.getRow())) {
                 return -1
