@@ -220,13 +220,13 @@ function stopsPlayer(value: number) {
 
 // TODO: this code assumes lack of motion of rock
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    let tile = player.Path(dir)
+    let tile = new tw.Cursor(player, dir)
     if (!stopsPlayer(world.getTile(tile)))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.getTile(tile) == codes.Boulder &&
-            world.getTile(tile.Next(dir)) == codes.Space) {
-            let rock = world.getSprite(codes.Boulder, tile.Origin())
+            world.getTile(new tw.Cursor(tile, dir)) == codes.Space) {
+            let rock = world.getSprite(codes.Boulder, tile)
             rock.move(dir, false)
             return true
         }
@@ -234,13 +234,13 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     return false
 }
 
-function isSpace(p: tw.Path) {
-    let value = world.getTile(p)
+function isSpace(curs: tw.Cursor) {
+    let value = world.getTile(curs)
     return value == codes.Space
 }
 
 function rockfallDown(rock: tw.TileSprite) {
-    let below = rock.Path(tw.Dir.Down)
+    let below = new tw.Cursor(rock, tw.Dir.Down)
     if (isSpace(below)) {
         rock.move(tw.Dir.Down, false)
         return true;
@@ -249,18 +249,18 @@ function rockfallDown(rock: tw.TileSprite) {
 }
 
 function rockOnTopofStack(rock: tw.TileSprite) {
-    let below = rock.Path(tw.Dir.Down)
+    let below = new tw.Cursor(rock, tw.Dir.Down)
     if (isRock(world.getTile(below))) {
-        let above = rock.Path(tw.Dir.Up)
+        let above = new tw.Cursor(rock, tw.Dir.Up)
         return !isRock(world.getTile(above))
     }
     return false
 }
 
 function spaceToFallOff(rock: tw.TileSprite, dir: tw.Dir) {
-    let below = rock.Path(tw.Dir.Down)
-    let same = rock.Path(tw.Dir.None)
-    return isSpace(same.Next(dir)) && isSpace(below.Next(dir))
+    let below = new tw.Cursor(rock, tw.Dir.Down)
+    let same = new tw.Cursor(rock, tw.Dir.None)
+    return isSpace(new tw.Cursor(same, dir)) && isSpace(new tw.Cursor(below, dir))
 }
 
 function rockfallSide(rock: tw.TileSprite) {
@@ -279,8 +279,7 @@ function rockfallSide(rock: tw.TileSprite) {
 }
 
 function rockfall(rock: tw.TileSprite) {
-    return rock.inMotion() != tw.Dir.None ||
-        rockfallDown(rock) || rockfallSide(rock)
+    return rockfallDown(rock) || rockfallSide(rock)
 }
 
 // add handlers for rock to stop when falling onto dirt
@@ -290,13 +289,13 @@ function addRockHandlers(rock: tw.TileSprite) {
     rock.onTileArrived(function (s: tw.TileSprite) {
         // if we are moving left, right, need to watch for hole
         if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
-            let below = s.Path(tw.Dir.Down)
+            let below = new tw.Cursor(s, tw.Dir.Down)
             let stopRock = stopsRocks(world.getTile(below))
             // horizontally moving rock
             if (!stopRock) {
                 // falls if there's a hole
                 s.deadStop();
-                s.move(tw.Dir.Down)
+                s.move(tw.Dir.Down, false)
             }
         }
     })
@@ -309,7 +308,7 @@ game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
 world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
-    let here = sprite.Path(tw.Dir.None)
+    let here = new tw.Cursor(sprite, tw.Dir.None)
     if (world.getTile(here) == -1) {
         let diamond = world.getSprite(codes.Diamond, here)
         if (diamond != null) {
@@ -325,7 +324,7 @@ world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
     if (!playerMoves(player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
-    world.setTile(player.Path(tw.Dir.None), codes.Space);
+    world.setTile(new tw.Cursor(player, tw.Dir.None), codes.Space);
 })
 
 world.onSpritesInTile(function (collision: tw.TileSprite[]) {

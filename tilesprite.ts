@@ -3,8 +3,13 @@ namespace TileWorld {
     // which direction is the sprite moving
     export enum Dir { None, Left, Right, Up, Down }
 
+    interface Tile {
+        getColumn(): number;
+        getRow(): number;
+    }
+
     // a sprite that moves by tiles, but only in one of four directions
-    export class TileSprite extends Sprite {
+    export class TileSprite extends Sprite implements Tile {
         public tileBits: number;
         public code: number;
         // trie iff the user is requesting motion and nothing has stopped
@@ -41,7 +46,6 @@ namespace TileWorld {
             this.onTransition = undefined;
         }
 
-        Path(dir: Dir) { return new Path(this, dir) }
         getColumn() { return this.x >> this.tileBits }
         getRow() { return this.y >> this.tileBits }
         inMotion() {
@@ -229,35 +233,22 @@ namespace TileWorld {
         }
     }
 
-
-    // paths
-    export class Path {
-        private root: TileSprite;
-        private dir: Dir;
+    // a cursor is just a coordinate
+    export class Cursor implements Tile {
         private col: number;
         private row: number;
-        constructor(s: TileSprite, dir: Dir) {
-            this.root = s;
-            this.dir = dir;
-            this.Origin();
+        constructor(s: Tile, dir: Dir) {
+            this.col = s.getColumn()
+            this.row = s.getRow()
+            switch (dir) {
+                case Dir.Left: this.col--; break;
+                case Dir.Right: this.col++; break;
+                case Dir.Up: this.row--; break;
+                case Dir.Down: this.row++; break;
+            }
         }
         public getColumn() { return this.col }
         public getRow() { return this.row }
-        public Origin() {
-            this.col = this.root.getColumn()
-            this.row = this.root.getRow()
-            this.Next(this.dir)
-            return this;
-        }
-        public Next(dir: Dir) {
-            switch (dir) {
-                case Dir.Left: this.col--; return this;
-                case Dir.Right: this.col++; return this;
-                case Dir.Up: this.row--; return this;
-                case Dir.Down: this.row++; return this
-            }
-            return this;
-        }
     }
 
     // basic movement for player sprite
@@ -425,25 +416,25 @@ namespace TileWorld {
             return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
         }
 
-        getSprite(code: number, path: tw.Path) {
+        getSprite(code: number, curs: Cursor) {
             return this.sprites[code].find(function (value: tw.TileSprite, index: number) {
-                return (value.getColumn() == path.getColumn() && value.getRow() == path.getRow())
+                return (value.getColumn() == curs.getColumn() && value.getRow() == curs.getRow())
             })
         }
 
-        getSprites(p: tw.Path) {
-            return this.spritesInTile[p.getColumn()][p.getRow()]
+        getSprites(curs: Cursor) {
+            return this.spritesInTile[curs.getColumn()][curs.getRow()]
         }
 
-        setTile(p: tw.Path, code: number) {
-            this.tileMap.setPixel(p.getColumn(), p.getRow(), code)
+        setTile(curs: Cursor, code: number) {
+            this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
 
-        getTile(p: tw.Path) {
-            if (this.multiples.getPixel(p.getColumn(), p.getRow())) {
+        getTile(curs: Cursor) {
+            if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
                 return -1
             } else {
-                return this.spriteMap.getPixel(p.getColumn(), p.getRow())
+                return this.spriteMap.getPixel(curs.getColumn(), curs.getRow())
             }
         }
     }
