@@ -3,7 +3,7 @@ namespace TileWorld {
     // which direction is the sprite moving
     export enum Dir { None, Left, Right, Up, Down }
 
-    interface Tile {
+    export interface Tile {
         getColumn(): number;
         getRow(): number;
     }
@@ -26,14 +26,17 @@ namespace TileWorld {
         // the next direction to go
         private queue_dir: Dir;
         private queue_moving: boolean;
+        // wants to be exclusive to a tile
+        private exclusive: boolean;
         // notification
         private onArrived: (ts: TileSprite) => void
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(code: number, image: Image, sk: number, bits: number = 4) {
+        constructor(code: number, image: Image, sk: number, exclusive: boolean = true, bits: number = 4) {
             super(image);
             this.code = code;
+            this.exclusive = exclusive;
             this.setKind(sk);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
@@ -234,12 +237,17 @@ namespace TileWorld {
     }
 
     // a cursor is just a coordinate
-    export class Cursor implements Tile {
+    class Cursor implements Tile {
+        private world: TileWorldState;
         private col: number;
         private row: number;
-        constructor(s: Tile, dir: Dir) {
-            this.col = s.getColumn()
-            this.row = s.getRow()
+        constructor(w: TileWorldState, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            this.world = w;
+            this.col = s.getColumn();
+            this.row = s.getRow();
+            this.move(dir); this.move(dir2); this.move(dir3)
+        }
+        private move(dir: Dir) {
             switch (dir) {
                 case Dir.Left: this.col--; break;
                 case Dir.Right: this.col++; break;
@@ -249,6 +257,7 @@ namespace TileWorld {
         }
         public getColumn() { return this.col }
         public getRow() { return this.row }
+        public getCode() { return this.world.getCode(this, Dir.None) }
     }
 
     // basic movement for player sprite
@@ -416,21 +425,22 @@ namespace TileWorld {
             return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
         }
 
-        getSprite(code: number, curs: Cursor) {
-            return this.sprites[code].find(function (value: tw.TileSprite, index: number) {
-                return (value.getColumn() == curs.getColumn() && value.getRow() == curs.getRow())
-            })
-        }
-
-        getSprites(curs: Cursor) {
-            return this.spritesInTile[curs.getColumn()][curs.getRow()]
-        }
-
-        setTile(curs: Cursor, code: number) {
+        setCode(curs: Tile, code: number) {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
 
-        getTile(curs: Cursor) {
+        getCode(orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.getTile(cursor)
+        }
+
+        getSprite(code: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.sprites[code].find((t: Tile) =>
+                t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+        }
+
+        private getTile(curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
                 return -1
             } else {
