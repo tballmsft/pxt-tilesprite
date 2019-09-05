@@ -26,17 +26,14 @@ namespace TileWorld {
         // the next direction to go
         private queue_dir: Dir;
         private queue_moving: boolean;
-        // wants to be exclusive to a tile
-        private exclusive: boolean;
         // notification
         private onArrived: (ts: TileSprite) => void
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(code: number, image: Image, sk: number, exclusive: boolean = true, bits: number = 4) {
+        constructor(code: number, image: Image, sk: number, bits: number = 4) {
             super(image);
             this.code = code;
-            this.exclusive = exclusive;
             this.setKind(sk);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
@@ -307,6 +304,8 @@ namespace TileWorld {
         private multiples: Image;
         private spritesInTile: TileSprite[][][];
         private tileHandler: (colliding: TileSprite[]) => void;
+        // exclusion sets
+        private exclusionSets: SpriteSet[];
 
         constructor(tileMap: Image, spriteDescriptions: Description[]) {
             this.sprites = []
@@ -362,6 +361,18 @@ namespace TileWorld {
                 this.spritesInTile[col] = [];
             }
             this.spritesInTile[col][row] = this.getAllSprites(col, row)
+        }
+
+        public onTileStationary(code: number, h: (ts: TileSprite) => void) {
+            this.sprites[code].forEach((spr) => {
+                spr.onTileStationary(h);
+            })
+        }
+
+        public onTileArrived(code: number, h: (ts: TileSprite) => void) {
+            this.sprites[code].forEach((spr) => {
+                spr.onTileArrived(h);
+            })
         }
 
         onSpritesInTile(h: (collision: TileSprite[]) => void) {

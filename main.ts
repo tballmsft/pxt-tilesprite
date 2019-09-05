@@ -222,7 +222,6 @@ function isSpace(value: number) {
     return value == codes.Space
 }
 
-// TODO: this code assumes lack of motion of rock
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (!stopsPlayer(world.getCode(player, dir)))
         return true
@@ -237,9 +236,8 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     return false
 }
 
-
 function rockfallDown(rock: tw.TileSprite) {
-    if(world.getCode(rock, tw.Dir.Down) == codes.Space) {
+    if (world.getCode(rock, tw.Dir.Down) == codes.Space) {
         rock.move(tw.Dir.Down, false)
         return true;
     }
@@ -247,53 +245,52 @@ function rockfallDown(rock: tw.TileSprite) {
 }
 
 function rockOnTopofStack(rock: tw.TileSprite) {
-    return isRock(world.getCode(rock, tw.Dir.Down)) && 
-          !isRock(world.getCode(rock, tw.Dir.Up))
+    return isRock(world.getCode(rock, tw.Dir.Down)) &&
+        !isRock(world.getCode(rock, tw.Dir.Up))
 }
 
 function spaceToFallOff(rock: tw.TileSprite, dir: tw.Dir) {
     return world.getCode(rock, dir) == codes.Space &&
-           world.getCode(rock, dir, tw.Dir.Down) == codes.Space
+        world.getCode(rock, dir, tw.Dir.Down) == codes.Space
 }
 
-function rockfallSide(rock: tw.TileSprite) {
-    if (rockOnTopofStack(rock)) {
-        let fallLeftOK = spaceToFallOff(rock, tw.Dir.Left)
-        let fallRightOK = spaceToFallOff(rock, tw.Dir.Right)
-        if (fallLeftOK) {
-            rock.move(tw.Dir.Left, false);
-            return true
-        } else if (fallRightOK) {
-            rock.move(tw.Dir.Right, false)
-            return true
-        }
+function rockfallLeft(rock: tw.TileSprite) {
+    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Left)) {
+        rock.move(tw.Dir.Left, false);
+        return true;
     }
     return false;
 }
 
-function rockfall(rock: tw.TileSprite) {
-    return rockfallDown(rock) || rockfallSide(rock)
+function rockfallRight(rock: tw.TileSprite) {
+    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Right)) {
+        rock.move(tw.Dir.Right, false);
+        return true;
+    }
+    return false;
 }
 
-// add handlers for rock to stop when falling onto dirt
-function addRockHandlers(rock: tw.TileSprite) {
-    // start a rockfall
-    rock.onTileStationary(function (s: tw.TileSprite) { rockfall(s) })
-    rock.onTileArrived(function (s: tw.TileSprite) {
-        // if we are moving left, right, need to watch for hole
-        if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
-            // horizontally moving rock
-            if (!stopsRocks(world.getCode(s, tw.Dir.Down))) {
-                // falls if there's a hole
-                s.deadStop();
-                s.move(tw.Dir.Down, false)
-            }
+// start a rockfall
+function rockfall(s: tw.TileSprite) {
+    return rockfallDown(s) || rockfallLeft(s) || rockfallRight(s)
+}
+
+function rockfallMoving(s: tw.TileSprite) {
+    // if we are moving left, right, need to watch for hole
+    if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
+        // horizontally moving rock
+        if (!stopsRocks(world.getCode(s, tw.Dir.Down))) {
+            // falls if there's a hole
+            s.deadStop();
+            s.move(tw.Dir.Down, false)
         }
-    })
+    }
 }
 
-for (let r of world.getSpritesWithCode(codes.Boulder)) { addRockHandlers(r) }
-for (let r of world.getSpritesWithCode(codes.Diamond)) { addRockHandlers(r) }
+world.onTileStationary(codes.Boulder, rockfall)
+world.onTileStationary(codes.Diamond, rockfall)
+world.onTileArrived(codes.Boulder, rockfallMoving)
+world.onTileArrived(codes.Diamond, rockfallMoving)
 
 game.onUpdate(function () { world.update(); })
 
@@ -331,21 +328,3 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
         choose.knockBack(true)
     }
 })
-
-// here - we abstract to tiles rather than sprites colliding
-// unfortunately, we need this because multiple rocks can be in motion at the same time
-// for example, one entering tile from above, one entering from right
-/*
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    (<tw.TileSprite>sprite).deadStop(true)
-})
-sprites.onOverlap(SpriteKind.Food, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    (<tw.TileSprite>sprite).deadStop(true)
-})
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
-    (<tw.TileSprite>sprite).deadStop(true)
-})
-sprites.onOverlap(SpriteKind.Food, SpriteKind.Projectile, function (sprite: Sprite, otherSprite: Sprite) {
-    (<tw.TileSprite>sprite).deadStop(true)
-})
-*/
