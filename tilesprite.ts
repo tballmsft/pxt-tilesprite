@@ -302,7 +302,7 @@ namespace TileWorld {
         private spriteMap: Image;
         // note tiles with more than one sprite
         private multiples: Image;
-        private spritesInTile: TileSprite[][][];
+        private multipleSprites: TileSprite[];
         private tileHandler: (colliding: TileSprite[]) => void;
         private arrivalHandlers: ((ts: TileSprite) => void)[][];
         private stationaryHandlers: ((ts: TileSprite) => void)[][];
@@ -315,7 +315,7 @@ namespace TileWorld {
             this.tileMap = tileMap.clone();
             this.spriteMap = tileMap.clone();
             this.multiples = tileMap.clone();
-            this.spritesInTile = [];
+            this.multipleSprites = [];
             this.tileHandler = undefined;
             this.arrivalHandlers = []
             this.stationaryHandlers = []
@@ -353,7 +353,6 @@ namespace TileWorld {
             }
             this.stationaryHandlers[code].push(h);
         }
-
 
         onTileArrived(code: number, h: (ts: TileSprite) => void) {
             if (!this.arrivalHandlers[code]) {
@@ -395,20 +394,20 @@ namespace TileWorld {
                 t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
         }
 
-        // TODO: need to handle multiple actions on sprite
         update() {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
-            this.spritesInTile = []
+            this.multipleSprites = []
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {
                         let col = sprite.getColumn(), row = sprite.getRow()
                         let here = this.spriteMap.getPixel(col, row)
-                        if (this.spriteCodes.find((code) => code == here)) {
+                        if (this.spriteCodes.find((code) => code == here) &&
+                            !this.multiples.getPixel(col, row)) {
                             // we have more than 1 sprite at (col,row)
-                            this.addSprites(col, row)
+                            this.addSprites(col, row);
                             this.multiples.setPixel(col, row, 1)
                         } else {
                             // no sprite at this tile yet
@@ -435,35 +434,21 @@ namespace TileWorld {
             })
 
             // 3. process collisions at tiles
-            if (this.tileHandler) {
-                this.spritesInTile.forEach((arr) => {
-                    if (arr) arr.forEach((arr2, col) => {
-                        if (arr2) this.tileHandler(arr2)
-                    })
-                })
+            // TODO: there could be multiple (col, row)
+            if (this.tileHandler && this.multipleSprites.length > 0) {
+                this.tileHandler(this.multipleSprites)
             }
         }
 
-        private getAllSprites(col: number, row: number) {
-            let res: TileSprite[] = []
+        private addSprites(col: number, row: number) {
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {
                         if (col == sprite.getColumn() && row == sprite.getRow())
-                            res.push(sprite);
+                            this.multipleSprites.push(sprite);
                     })
                 }
             })
-            return res;
-        }
-
-        private addSprites(col: number, row: number) {
-            if (this.spritesInTile[col] && this.spritesInTile[col][row]) {
-                return;
-            } else {
-                this.spritesInTile[col] = [];
-            }
-            this.spritesInTile[col][row] = this.getAllSprites(col, row)
         }
     }
 }

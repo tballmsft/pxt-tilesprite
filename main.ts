@@ -185,16 +185,16 @@ namespace art {
     `
 }
 
-let SpriteRock = SpriteKind.create()
-let SpriteWall = SpriteKind.create()
+let isRockPred = SpriteKind.create()
+let isWallPred = SpriteKind.create()
 
 let spriteDescriptions: tw.Description[] = [
-    { c: codes.Boulder, a: art.Boulder, sk: SpriteRock, t: codes.Space },
-    { c: codes.Diamond, a: art.Diamond, sk: SpriteRock, t: codes.Space },
+    { c: codes.Boulder, a: art.Boulder, sk: isRockPred, t: codes.Space },
+    { c: codes.Diamond, a: art.Diamond, sk: isRockPred, t: codes.Space },
     { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: codes.Space },
     { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: codes.Space },
-    { c: codes.Wall, a: art.Wall, sk: SpriteWall, t: undefined },
-    { c: codes.StrongWall, a: art.Wall, sk: SpriteWall, t: undefined },
+    { c: codes.Wall, a: art.Wall, sk: isWallPred, t: undefined },
+    { c: codes.StrongWall, a: art.Wall, sk: isWallPred, t: undefined },
     { c: codes.Space, a: art.Space, sk: undefined, t: undefined },
     { c: codes.Dirt, a: art.Dirt, sk: undefined, t: undefined }
 ];
@@ -202,8 +202,6 @@ let spriteDescriptions: tw.Description[] = [
 let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
 tw.bindToController(world.getPlayer(), playerMoves)
 scene.cameraFollowSprite(world.getPlayer())
-
-// predicates (sets)
 
 function isWall(value: number) {
     return value == codes.Wall || value == codes.StrongWall
