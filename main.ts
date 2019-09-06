@@ -185,13 +185,16 @@ namespace art {
     `
 }
 
+let SpriteRock = SpriteKind.create()
+let SpriteWall = SpriteKind.create()
+
 let spriteDescriptions: tw.Description[] = [
-    { c: codes.Boulder, a: art.Boulder, sk: SpriteKind.Projectile, t: codes.Space },
-    { c: codes.Diamond, a: art.Diamond, sk: SpriteKind.Food, t: codes.Space },
+    { c: codes.Boulder, a: art.Boulder, sk: SpriteRock, t: codes.Space },
+    { c: codes.Diamond, a: art.Diamond, sk: SpriteRock, t: codes.Space },
     { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: codes.Space },
     { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: codes.Space },
-    { c: codes.Wall, a: art.Wall, sk: undefined, t: undefined },
-    { c: codes.StrongWall, a: art.Wall, sk: undefined, t: undefined },
+    { c: codes.Wall, a: art.Wall, sk: SpriteWall, t: undefined },
+    { c: codes.StrongWall, a: art.Wall, sk: SpriteWall, t: undefined },
     { c: codes.Space, a: art.Space, sk: undefined, t: undefined },
     { c: codes.Dirt, a: art.Dirt, sk: undefined, t: undefined }
 ];
@@ -270,10 +273,13 @@ function rockfallRight(rock: tw.TileSprite) {
     return false;
 }
 
-// start a rockfall
-function rockfall(s: tw.TileSprite) {
-    return rockfallDown(s) || rockfallLeft(s) || rockfallRight(s)
-}
+// TODO: unify treatment
+world.onTileStationary(codes.Boulder, rockfallDown)
+world.onTileStationary(codes.Boulder, rockfallLeft)
+world.onTileStationary(codes.Boulder, rockfallRight)
+world.onTileStationary(codes.Diamond, rockfallDown)
+world.onTileStationary(codes.Diamond, rockfallLeft)
+world.onTileStationary(codes.Diamond, rockfallRight)
 
 function rockfallMoving(s: tw.TileSprite) {
     // if we are moving left, right, need to watch for hole
@@ -287,8 +293,6 @@ function rockfallMoving(s: tw.TileSprite) {
     }
 }
 
-world.onTileStationary(codes.Boulder, rockfall)
-world.onTileStationary(codes.Diamond, rockfall)
 world.onTileArrived(codes.Boulder, rockfallMoving)
 world.onTileArrived(codes.Diamond, rockfallMoving)
 

@@ -304,6 +304,8 @@ namespace TileWorld {
         private multiples: Image;
         private spritesInTile: TileSprite[][][];
         private tileHandler: (colliding: TileSprite[]) => void;
+        private arrivalHandlers: ((ts: TileSprite) => void)[][];
+        private stationaryHandlers: ((ts: TileSprite) => void)[][];
         // exclusion sets
         private exclusionSets: SpriteSet[];
 
@@ -315,11 +317,13 @@ namespace TileWorld {
             this.multiples = tileMap.clone();
             this.spritesInTile = [];
             this.tileHandler = undefined;
+            this.arrivalHandlers = []
+            this.stationaryHandlers = []
             scene.setTileMap(this.tileMap)
 
             for (let sd of spriteDescriptions) {
                 let tiles = scene.getTilesByType(sd.c)
-                scene.setTile(sd.c, sd.sk == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
+                scene.setTile(sd.c, sd.t == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
                 if (sd.sk != undefined) {
                     this.sprites[sd.c] = []
                     this.spriteCodes.push(sd.c);
@@ -341,46 +345,54 @@ namespace TileWorld {
             }
         }
 
-        private getAllSprites(col: number, row: number) {
-            let res: TileSprite[] = []
-            this.sprites.forEach((arr, code) => {
-                if (arr) {
-                    arr.forEach((sprite) => {
-                        if (col == sprite.getColumn() && row == sprite.getRow())
-                            res.push(sprite);
-                    })
-                }
-            })
-            return res;
-        }
-
-        private addSprites(col: number, row: number) {
-            if (this.spritesInTile[col] && this.spritesInTile[col][row]) {
-                return;
-            } else {
-                this.spritesInTile[col] = [];
+        onTileStationary(code: number, h: (ts: TileSprite) => void) {
+            if (!this.stationaryHandlers[code]) {
+                this.stationaryHandlers[code] = []
+                let process = (s: TileSprite) => this.stationaryHandlers[s.code].forEach((h) => h(s));
+                this.sprites[code].forEach((spr) => spr.onTileStationary(process));
             }
-            this.spritesInTile[col][row] = this.getAllSprites(col, row)
+            this.stationaryHandlers[code].push(h);
         }
 
-        public onTileStationary(code: number, h: (ts: TileSprite) => void) {
-            this.sprites[code].forEach((spr) => {
-                spr.onTileStationary(h);
-            })
-        }
 
-        public onTileArrived(code: number, h: (ts: TileSprite) => void) {
-            this.sprites[code].forEach((spr) => {
-                spr.onTileArrived(h);
-            })
+        onTileArrived(code: number, h: (ts: TileSprite) => void) {
+            if (!this.arrivalHandlers[code]) {
+                this.arrivalHandlers[code] = []
+                let process = (s: TileSprite) => this.arrivalHandlers[s.code].forEach((h) => h(s));
+                this.sprites[code].forEach((spr) => spr.onTileArrived(process));
+            }
+            this.arrivalHandlers[code].push(h);
         }
 
         onSpritesInTile(h: (collision: TileSprite[]) => void) {
             this.tileHandler = h;
         }
 
-        getSpritesWithCode(code: number) {
-            return this.sprites[code];
+        getPlayer() {
+            return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
+        }
+
+        setCode(curs: Tile, code: number) {
+            this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
+        }
+
+        getCode(orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.getTile(cursor)
+        }
+
+        private getTile(curs: Cursor) {
+            if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
+                return -1
+            } else {
+                return this.spriteMap.getPixel(curs.getColumn(), curs.getRow())
+            }
+        }
+
+        getSprite(code: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.sprites[code].find((t: Tile) =>
+                t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
         }
 
         // TODO: need to handle multiple actions on sprite
@@ -432,31 +444,26 @@ namespace TileWorld {
             }
         }
 
-        getPlayer() {
-            return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
+        private getAllSprites(col: number, row: number) {
+            let res: TileSprite[] = []
+            this.sprites.forEach((arr, code) => {
+                if (arr) {
+                    arr.forEach((sprite) => {
+                        if (col == sprite.getColumn() && row == sprite.getRow())
+                            res.push(sprite);
+                    })
+                }
+            })
+            return res;
         }
 
-        setCode(curs: Tile, code: number) {
-            this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
-        }
-
-        getCode(orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
-            return this.getTile(cursor)
-        }
-
-        getSprite(code: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
-            return this.sprites[code].find((t: Tile) =>
-                t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
-        }
-
-        private getTile(curs: Cursor) {
-            if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                return -1
+        private addSprites(col: number, row: number) {
+            if (this.spritesInTile[col] && this.spritesInTile[col][row]) {
+                return;
             } else {
-                return this.spriteMap.getPixel(curs.getColumn(), curs.getRow())
+                this.spritesInTile[col] = [];
             }
+            this.spritesInTile[col][row] = this.getAllSprites(col, row)
         }
     }
 }
