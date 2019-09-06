@@ -383,10 +383,36 @@ namespace TileWorld {
             return this.getTile(cursor)
         }
 
+        inSet(set: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.memberOf(this.getTile(cursor), set)
+        }
+
         createSet(...args: number[]) {
             let newSet = SpriteKind.create()
             this.sets[newSet] = args;
             return newSet;
+        }
+
+        // TODO: occurs check
+        private memberOf(n: number, set: number) {
+            if (this.sets[set]) {
+                if (this.sets[set].find(i => i == n)) {
+                    return true;
+                } else {
+                    let ret = false;
+                    this.sets[set].forEach((s2) => {
+                        if (this.sets[s2]) {
+                            ret = ret || this.memberOf(n, s2)
+                            return ret
+                        } else
+                            return false;
+                    })
+                    return false;
+                }
+            } else {
+                return n == set;
+            }
         }
 
         private getTile(curs: Cursor) {

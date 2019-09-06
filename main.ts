@@ -200,7 +200,7 @@ let spriteDescriptions: tw.Description[] = [
     { c: codes.Player, a: art.Player, t: codes.Space },
     { c: codes.Wall, a: art.Wall, t: undefined },
     { c: codes.StrongWall, a: art.Wall, t: undefined },
-    { c: codes.Space, a: art.Space,  t: undefined },
+    { c: codes.Space, a: art.Space, t: undefined },
     { c: codes.Dirt, a: art.Dirt, t: undefined }
 ];
 world.setSprites(spriteDescriptions)
