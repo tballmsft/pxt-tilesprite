@@ -383,6 +383,11 @@ namespace TileWorld {
             }
         }
 
+        removeSprite(s: TileSprite) {
+            this.sprites[s.code].removeElement(s)
+            s.destroy()
+        }
+
         getSprite(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
