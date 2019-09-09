@@ -403,6 +403,7 @@ namespace TileWorld {
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
             this.multipleSprites = []
+            // TODO: should select one target for multiple sprites in a tile
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {

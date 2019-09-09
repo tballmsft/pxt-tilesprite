@@ -298,7 +298,9 @@ game.onUpdate(function () { world.update(); })
 player.onTileTransition(function (sprite: tw.TileSprite) {
     if (world.getCode(sprite, tw.Dir.None) == -1) {
         let diamond = world.getSprite(codes.Diamond, sprite)
-        world.removeSprite(diamond);
+        if (diamond) {
+            world.removeSprite(diamond);
+        }
     }
 })
 
