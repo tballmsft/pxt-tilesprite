@@ -185,13 +185,8 @@ namespace art {
     `
 }
 
-
-let world = new tw.TileWorldState(levels.level1)
-
-let wallSet = world.createSet(codes.Wall, codes.StrongWall)
-let rockSet = world.createSet(codes.Boulder, codes.Diamond)
-let stopsRockSet = world.createSet(rockSet, wallSet, codes.Dirt)
-let stopsPlayerSet = world.createSet(wallSet, codes.Boulder)
+let isRockPred = SpriteKind.create()
+let isWallPred = SpriteKind.create()
 
 let spriteDescriptions: tw.Description[] = [
     { c: codes.Boulder, a: art.Boulder, t: codes.Space },
@@ -203,11 +198,10 @@ let spriteDescriptions: tw.Description[] = [
     { c: codes.Space, a: art.Space, t: undefined },
     { c: codes.Dirt, a: art.Dirt, t: undefined }
 ];
-world.setSprites(spriteDescriptions)
 
-let player = world.getSprite(codes.Player)
-tw.bindToController(player, playerMoves)
-scene.cameraFollowSprite(player)
+let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
+tw.bindToController(world.getPlayer(), playerMoves)
+scene.cameraFollowSprite(world.getPlayer())
 
 function isWall(value: number) {
     return value == codes.Wall || value == codes.StrongWall
@@ -223,6 +217,10 @@ function stopsRocks(value: number) {
 
 function stopsPlayer(value: number) {
     return isWall(value) || value == codes.Boulder
+}
+
+function isSpace(value: number) {
+    return value == codes.Space
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
@@ -299,7 +297,7 @@ world.onTileArrived(codes.Diamond, rockfallMoving)
 game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
-player.onTileTransition(function (sprite: tw.TileSprite) {
+world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
     if (world.getCode(sprite, tw.Dir.None) == -1) {
         let diamond = world.getSprite(codes.Diamond, sprite)
         if (diamond != null) {
@@ -309,7 +307,7 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
     }
 })
 
-player.onTileArrived(function (player: tw.TileSprite) {
+world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
