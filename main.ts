@@ -185,23 +185,29 @@ namespace art {
     `
 }
 
-let isRockPred = SpriteKind.create()
-let isWallPred = SpriteKind.create()
+
+let world = new tw.TileWorldState(levels.level1)
+
+let wallSet = world.createSet(codes.Wall, codes.StrongWall)
+let rockSet = world.createSet(codes.Boulder, codes.Diamond)
+let stopsRockSet = world.createSet(rockSet, wallSet, codes.Dirt)
+let stopsPlayerSet = world.createSet(wallSet, codes.Boulder)
 
 let spriteDescriptions: tw.Description[] = [
-    { c: codes.Boulder, a: art.Boulder, sk: isRockPred, t: codes.Space },
-    { c: codes.Diamond, a: art.Diamond, sk: isRockPred, t: codes.Space },
-    { c: codes.Enemy, a: art.Enemy, sk: SpriteKind.Enemy, t: codes.Space },
-    { c: codes.Player, a: art.Player, sk: SpriteKind.Player, t: codes.Space },
-    { c: codes.Wall, a: art.Wall, sk: isWallPred, t: undefined },
-    { c: codes.StrongWall, a: art.Wall, sk: isWallPred, t: undefined },
-    { c: codes.Space, a: art.Space, sk: undefined, t: undefined },
-    { c: codes.Dirt, a: art.Dirt, sk: undefined, t: undefined }
+    { c: codes.Boulder, a: art.Boulder, t: codes.Space },
+    { c: codes.Diamond, a: art.Diamond, t: codes.Space },
+    { c: codes.Enemy, a: art.Enemy, t: codes.Space },
+    { c: codes.Player, a: art.Player, t: codes.Space },
+    { c: codes.Wall, a: art.Wall, t: undefined },
+    { c: codes.StrongWall, a: art.Wall, t: undefined },
+    { c: codes.Space, a: art.Space, t: undefined },
+    { c: codes.Dirt, a: art.Dirt, t: undefined }
 ];
+world.setSprites(spriteDescriptions)
 
-let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
-tw.bindToController(world.getPlayer(), playerMoves)
-scene.cameraFollowSprite(world.getPlayer())
+let player = world.getSprite(codes.Player)
+tw.bindToController(player, playerMoves)
+scene.cameraFollowSprite(player)
 
 function isWall(value: number) {
     return value == codes.Wall || value == codes.StrongWall
@@ -217,10 +223,6 @@ function stopsRocks(value: number) {
 
 function stopsPlayer(value: number) {
     return isWall(value) || value == codes.Boulder
-}
-
-function isSpace(value: number) {
-    return value == codes.Space
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
@@ -297,7 +299,7 @@ world.onTileArrived(codes.Diamond, rockfallMoving)
 game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
-world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
+player.onTileTransition(function (sprite: tw.TileSprite) {
     if (world.getCode(sprite, tw.Dir.None) == -1) {
         let diamond = world.getSprite(codes.Diamond, sprite)
         if (diamond != null) {
@@ -307,7 +309,7 @@ world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
     }
 })
 
-world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
+player.onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))

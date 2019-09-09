@@ -31,10 +31,9 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(code: number, image: Image, sk: number, bits: number = 4) {
+        constructor(code: number, image: Image, bits: number = 4) {
             super(image);
             this.code = code;
-            this.setKind(sk);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
             this.tileBits = bits;
@@ -290,7 +289,11 @@ namespace TileWorld {
     }
 
     // description of sprites
-    export type Description = { c: number, a: Image, sk: number, t: number }
+    export type Description = { c: number, a: Image, t: number }
+
+    interface SparseArray<T> {
+        [index: number]: T;
+    }
 
     export class TileWorldState {
         private spriteCodes: number[];
@@ -308,8 +311,9 @@ namespace TileWorld {
         private stationaryHandlers: ((ts: TileSprite) => void)[][];
         // exclusion sets
         private exclusionSets: SpriteSet[];
+        private sets: SparseArray<number[]>;
 
-        constructor(tileMap: Image, spriteDescriptions: Description[]) {
+        constructor(tileMap: Image) {
             this.sprites = []
             this.spriteCodes = []
             this.tileMap = tileMap.clone();
@@ -317,18 +321,21 @@ namespace TileWorld {
             this.multiples = tileMap.clone();
             this.multipleSprites = [];
             this.tileHandler = undefined;
-            this.arrivalHandlers = []
-            this.stationaryHandlers = []
+            this.arrivalHandlers = [];
+            this.stationaryHandlers = [];
+            this.sets = {}
             scene.setTileMap(this.tileMap)
+        }
 
+        setSprites(spriteDescriptions: Description[]) {
             for (let sd of spriteDescriptions) {
                 let tiles = scene.getTilesByType(sd.c)
                 scene.setTile(sd.c, sd.t == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
-                if (sd.sk != undefined) {
+                if (sd.t != undefined) {
                     this.sprites[sd.c] = []
                     this.spriteCodes.push(sd.c);
                     for (let value of tiles) {
-                        let tileSprite = new TileSprite(sd.c, sd.a, sd.sk)
+                        let tileSprite = new TileSprite(sd.c, sd.a)
                         this.sprites[sd.c].push(tileSprite)
                         value.place(tileSprite)
                     }
@@ -336,11 +343,11 @@ namespace TileWorld {
             }
 
             // now that we have created sprites, remove them from the tile map
-            for (let y = 0; y < tileMap.height; y++) {
-                for (let x = 0; x < tileMap.width; x++) {
+            for (let y = 0; y < this.tileMap.height; y++) {
+                for (let x = 0; x < this.tileMap.width; x++) {
                     let pixel = this.tileMap.getPixel(x, y)
                     let r = spriteDescriptions.find(r => r.c == pixel)
-                    if (r && r.sk) this.tileMap.setPixel(x, y, r.t)
+                    if (r && r.t) this.tileMap.setPixel(x, y, r.t)
                 }
             }
         }
@@ -367,10 +374,6 @@ namespace TileWorld {
             this.tileHandler = h;
         }
 
-        getPlayer() {
-            return <TileSprite>game.currentScene().spritesByKind[SpriteKind.Player].sprites()[0]
-        }
-
         setCode(curs: Tile, code: number) {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
@@ -378,6 +381,38 @@ namespace TileWorld {
         getCode(orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.getTile(cursor)
+        }
+
+        inSet(set: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.memberOf(this.getTile(cursor), set)
+        }
+
+        createSet(...args: number[]) {
+            let newSet = SpriteKind.create()
+            this.sets[newSet] = args;
+            return newSet;
+        }
+
+        // TODO: occurs check
+        private memberOf(n: number, set: number) {
+            if (this.sets[set]) {
+                if (this.sets[set].find(i => i == n)) {
+                    return true;
+                } else {
+                    let ret = false;
+                    this.sets[set].forEach((s2) => {
+                        if (this.sets[s2]) {
+                            ret = ret || this.memberOf(n, s2)
+                            return ret
+                        } else
+                            return false;
+                    })
+                    return false;
+                }
+            } else {
+                return n == set;
+            }
         }
 
         private getTile(curs: Cursor) {
@@ -388,10 +423,14 @@ namespace TileWorld {
             }
         }
 
-        getSprite(code: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
-            return this.sprites[code].find((t: Tile) =>
-                t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+        getSprite(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            if (orig) {
+                let cursor = new Cursor(this, orig, dir, dir2, dir3);
+                return this.sprites[code].find((t: Tile) =>
+                    t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+            } else {
+                return this.sprites[code][0]
+            }
         }
 
         update() {
