@@ -185,9 +185,6 @@ namespace art {
     `
 }
 
-let isRockPred = SpriteKind.create()
-let isWallPred = SpriteKind.create()
-
 let spriteDescriptions: tw.Description[] = [
     { c: codes.Boulder, a: art.Boulder, t: codes.Space },
     { c: codes.Diamond, a: art.Diamond, t: codes.Space },
@@ -200,8 +197,9 @@ let spriteDescriptions: tw.Description[] = [
 ];
 
 let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
-tw.bindToController(world.getPlayer(), playerMoves)
-scene.cameraFollowSprite(world.getPlayer())
+let player = world.getSprite(codes.Player)
+tw.bindToController(player, playerMoves)
+scene.cameraFollowSprite(player)
 
 function isWall(value: number) {
     return value == codes.Wall || value == codes.StrongWall
@@ -297,7 +295,7 @@ world.onTileArrived(codes.Diamond, rockfallMoving)
 game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
-world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
+player.onTileTransition(function (sprite: tw.TileSprite) {
     if (world.getCode(sprite, tw.Dir.None) == -1) {
         let diamond = world.getSprite(codes.Diamond, sprite)
         if (diamond != null) {
@@ -307,7 +305,7 @@ world.getPlayer().onTileTransition(function (sprite: tw.TileSprite) {
     }
 })
 
-world.getPlayer().onTileArrived(function (player: tw.TileSprite) {
+player.onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
