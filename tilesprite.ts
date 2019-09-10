@@ -253,7 +253,6 @@ namespace TileWorld {
         }
         public getColumn() { return this.col }
         public getRow() { return this.row }
-        public getCode() { return this.world.getCode(this, Dir.None) }
     }
 
     // basic movement for player sprite
@@ -370,16 +369,16 @@ namespace TileWorld {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
 
-        getCode(orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        hasCode(code:number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
-            return this.getTile(cursor)
+            return this.checkTile(code,cursor)
         }
 
-        private getTile(curs: Cursor) {
+        private checkTile(code: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                return -1
+                return this.getSprite(code, curs) != null
             } else {
-                return this.spriteMap.getPixel(curs.getColumn(), curs.getRow())
+                return this.spriteMap.getPixel(curs.getColumn(), curs.getRow()) == code
             }
         }
 

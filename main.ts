@@ -201,32 +201,31 @@ let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
 
-function isWall(value: number) {
-    return value == codes.Wall || value == codes.StrongWall
+function hasWall(s: tw.TileSprite, dir: tw.Dir) {
+    return world.hasCode(codes.Wall, s, dir) || 
+           world.hasCode(codes.StrongWall, s, dir)
 }
 
-function isRock(value: number) {
-    return value == codes.Boulder || value == codes.Diamond
+function hasRock(s: tw.TileSprite, dir: tw.Dir) {
+    return world.hasCode(codes.Boulder, s, dir) ||
+        world.hasCode(codes.Diamond, s, dir)
 }
 
-function stopsRocks(value: number) {
-    return isWall(value) || isRock(value) || value == codes.Dirt
+function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
+    return hasWall(s, dir) || hasRock(s, dir) || 
+        world.hasCode(codes.Dirt, s, dir)
 }
 
-function stopsPlayer(value: number) {
-    return isWall(value) || value == codes.Boulder
-}
-
-function isSpace(value: number) {
-    return value == codes.Space
+function stopsPlayer(s: tw.TileSprite, dir: tw.Dir) {
+    return hasWall(s, dir) || world.hasCode(codes.Boulder, s, dir) 
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!stopsPlayer(world.getCode(player, dir)))
+    if (!stopsPlayer(player, dir))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
-        if (world.getCode(player, dir) == codes.Boulder &&
-            world.getCode(player, dir, dir) == codes.Space) {
+        if (world.hasCode(codes.Boulder, player, dir) &&
+            world.hasCode(codes.Space, player, dir, dir)) {
             let rock = world.getSprite(codes.Boulder, player, dir)
             rock.move(dir, false)
             return true
@@ -236,7 +235,7 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
 }
 
 function rockfallDown(rock: tw.TileSprite) {
-    if (world.getCode(rock, tw.Dir.Down) == codes.Space) {
+    if (world.hasCode(codes.Space, rock, tw.Dir.Down)) {
         rock.move(tw.Dir.Down, false)
         return true;
     }
@@ -244,13 +243,12 @@ function rockfallDown(rock: tw.TileSprite) {
 }
 
 function rockOnTopofStack(rock: tw.TileSprite) {
-    return isRock(world.getCode(rock, tw.Dir.Down)) &&
-        !isRock(world.getCode(rock, tw.Dir.Up))
+    return hasRock(rock, tw.Dir.Down) && !hasRock(rock, tw.Dir.Up)
 }
 
 function spaceToFallOff(rock: tw.TileSprite, dir: tw.Dir) {
-    return world.getCode(rock, dir) == codes.Space &&
-        world.getCode(rock, dir, tw.Dir.Down) == codes.Space
+    return world.hasCode(codes.Space, rock, dir) &&
+           world.hasCode(codes.Space, rock, dir, tw.Dir.Down)
 }
 
 function rockfallLeft(rock: tw.TileSprite) {
@@ -281,7 +279,7 @@ function rockfallMoving(s: tw.TileSprite) {
     // if we are moving left, right, need to watch for hole
     if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
         // horizontally moving rock
-        if (!stopsRocks(world.getCode(s, tw.Dir.Down))) {
+        if (!stopsRock(s, tw.Dir.Down)) {
             // falls if there's a hole
             s.deadStop();
             s.move(tw.Dir.Down, false)
@@ -296,11 +294,9 @@ game.onUpdate(function () { world.update(); })
 
 // TODO: this will go away
 player.onTileTransition(function (sprite: tw.TileSprite) {
-    if (world.getCode(sprite, tw.Dir.None) == -1) {
+    if (world.hasCode(codes.Diamond, sprite)) {
         let diamond = world.getSprite(codes.Diamond, sprite)
-        if (diamond) {
-            world.removeSprite(diamond);
-        }
+        world.removeSprite(diamond);
     }
 })
 
@@ -321,7 +317,7 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     // there's also the question of the code of the sprite, and its kind
 
     // let's first deal with moving rocks
-    let onlyMovingRocks = collision.every((spr) => isRock(spr.code))
+    let onlyMovingRocks = collision.every((spr) => spr.code == codes.Boulder || spr.code == codes.Diamond)
     if (onlyMovingRocks) {
         let choose = collision.pop()
         choose.knockBack(true)
