@@ -296,6 +296,7 @@ namespace TileWorld {
         private sprites: TileSprite[][];
         // the current tile map (no sprites)  
         private tileMap: Image;
+        private tileToArt: Image[];
         // fill in with sprites
         private spriteMap: Image;
         // note tiles with more than one sprite
@@ -307,10 +308,11 @@ namespace TileWorld {
         // exclusion sets
         private exclusionSets: SpriteSet[];
 
-        constructor(tileMap: Image, spriteDescriptions: Description[]) {
+        constructor(tileMap: Image) {
             this.sprites = []
             this.spriteCodes = []
             this.tileMap = tileMap.clone();
+            this.tileToArt = []
             this.spriteMap = tileMap.clone();
             this.multiples = tileMap.clone();
             this.multipleSprites = [];
@@ -318,27 +320,29 @@ namespace TileWorld {
             this.arrivalHandlers = []
             this.stationaryHandlers = []
             scene.setTileMap(this.tileMap)
+        }
 
-            for (let sd of spriteDescriptions) {
-                let tiles = scene.getTilesByType(sd.c)
-                scene.setTile(sd.c, sd.t == undefined ? sd.a : spriteDescriptions.find(s => sd.t == s.c).a)
-                if (sd.t != undefined) {
-                    this.sprites[sd.c] = []
-                    this.spriteCodes.push(sd.c);
-                    for (let value of tiles) {
-                        let tileSprite = new TileSprite(sd.c, sd.a)
-                        this.sprites[sd.c].push(tileSprite)
-                        value.place(tileSprite)
-                    }
-                }
+        addTile(code: number, art: Image, exclusive: boolean = false) {
+            let tiles = scene.getTilesByType(code)
+            scene.setTile(code, art)
+            this.tileToArt[code] = art;
+        }
+
+        addSprite(code: number, art:Image, tile: number, exclusive: boolean = false) {
+            let tiles = scene.getTilesByType(code)
+            scene.setTile(code, this.tileToArt[tile]);
+            this.sprites[code] = []
+            this.spriteCodes.push(code);
+            for (let value of tiles) {
+                let tileSprite = new TileSprite(code, art)
+                this.sprites[code].push(tileSprite)
+                value.place(tileSprite)
             }
-
-            // now that we have created sprites, remove them from the tile map
-            for (let y = 0; y < tileMap.height; y++) {
-                for (let x = 0; x < tileMap.width; x++) {
+            // remove from tile map
+            for (let y = 0; y < this.tileMap.height; y++) {
+                for (let x = 0; x < this.tileMap.width; x++) {
                     let pixel = this.tileMap.getPixel(x, y)
-                    let r = spriteDescriptions.find(r => r.c == pixel)
-                    if (r && r.t) this.tileMap.setPixel(x, y, r.t)
+                    if (code == pixel) this.tileMap.setPixel(x, y, tile)
                 }
             }
         }

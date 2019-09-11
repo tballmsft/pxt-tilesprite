@@ -185,18 +185,17 @@ namespace art {
     `
 }
 
-let spriteDescriptions: tw.Description[] = [
-    { c: codes.Boulder, a: art.Boulder, t: codes.Space },
-    { c: codes.Diamond, a: art.Diamond, t: codes.Space },
-    { c: codes.Enemy, a: art.Enemy, t: codes.Space },
-    { c: codes.Player, a: art.Player, t: codes.Space },
-    { c: codes.Wall, a: art.Wall, t: undefined },
-    { c: codes.StrongWall, a: art.Wall, t: undefined },
-    { c: codes.Space, a: art.Space, t: undefined },
-    { c: codes.Dirt, a: art.Dirt, t: undefined }
-];
+let world = new tw.TileWorldState(levels.level1)
 
-let world = new tw.TileWorldState(levels.level1, spriteDescriptions)
+world.addTile(codes.StrongWall, art.Wall)
+world.addTile(codes.Wall, art.Wall)
+world.addTile(codes.Space, art.Space)
+world.addTile(codes.Dirt, art.Dirt)
+world.addSprite(codes.Boulder, art.Boulder, codes.Space)
+world.addSprite(codes.Diamond, art.Diamond, codes.Space)
+world.addSprite(codes.Enemy, art.Enemy, codes.Space)
+world.addSprite(codes.Player, art.Player, codes.Space)
+
 let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
