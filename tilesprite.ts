@@ -376,7 +376,10 @@ namespace TileWorld {
 
         private checkTile(code: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                return this.getSprite(code, curs) != null
+                if (this.spriteCodes.find(c => c == code))
+                    return this.getSprite(code, curs) != null
+                else
+                    return false
             } else {
                 return this.spriteMap.getPixel(curs.getColumn(), curs.getRow()) == code
             }
