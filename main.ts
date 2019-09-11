@@ -236,7 +236,7 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
 
 function rockfallDown(rock: tw.TileSprite) {
     if (world.hasCode(codes.Space, rock, tw.Dir.Down)) {
-        rock.move(tw.Dir.Down, false)
+        rock.move(tw.Dir.Down)
         return true;
     }
     return false;
@@ -276,8 +276,11 @@ world.onTileStationary(codes.Diamond, rockfallLeft)
 world.onTileStationary(codes.Diamond, rockfallRight)
 
 function rockfallMoving(s: tw.TileSprite) {
+    if (s.inMotion() == tw.Dir.Down) {
+        if (stopsRock(s, tw.Dir.Down))
+            s.deadStop();
     // if we are moving left, right, need to watch for hole
-    if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
+    } else if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
         // horizontally moving rock
         if (!stopsRock(s, tw.Dir.Down)) {
             // falls if there's a hole
