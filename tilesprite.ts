@@ -12,6 +12,7 @@ namespace TileWorld {
     export class TileSprite extends Sprite implements Tile {
         public tileBits: number;
         public code: number;
+        private parent: TileWorldState;
         // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
         private moving: boolean;
@@ -31,8 +32,9 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(code: number, image: Image, bits: number = 4) {
+        constructor(world: TileWorldState, code: number, image: Image, bits: number = 4) {
             super(image);
+            this.parent = world;
             this.code = code
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
@@ -56,6 +58,8 @@ namespace TileWorld {
         }
         // request sprite to move in specified direction
         move(dir: Dir, moving: boolean = true) {
+            if (!this.parent.spriteCanMove(this, dir))
+                return;
             if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir, moving)
             else if (dir == Dir.Up || dir == Dir.Down)
@@ -334,7 +338,7 @@ namespace TileWorld {
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
-                let tileSprite = new TileSprite(code, art)
+                let tileSprite = new TileSprite(this, code, art)
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
@@ -402,6 +406,10 @@ namespace TileWorld {
             } else {
                 return this.sprites[code][0]
             }
+        }
+
+        spriteCanMove(s: TileSprite, dir: Dir) {
+            return true;
         }
 
         update() {

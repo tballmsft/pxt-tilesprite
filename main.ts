@@ -187,12 +187,12 @@ namespace art {
 
 let world = new tw.TileWorldState(levels.level1)
 
-world.addTile(codes.StrongWall, art.Wall)
-world.addTile(codes.Wall, art.Wall)
+world.addTile(codes.StrongWall, art.Wall, true)
+world.addTile(codes.Wall, art.Wall, true)
 world.addTile(codes.Space, art.Space)
 world.addTile(codes.Dirt, art.Dirt)
-world.addSprite(codes.Boulder, art.Boulder, codes.Space)
-world.addSprite(codes.Diamond, art.Diamond, codes.Space)
+world.addSprite(codes.Boulder, art.Boulder, codes.Space, true)
+world.addSprite(codes.Diamond, art.Diamond, codes.Space, true)
 world.addSprite(codes.Enemy, art.Enemy, codes.Space)
 world.addSprite(codes.Player, art.Player, codes.Space)
 
@@ -200,6 +200,7 @@ let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
 
+// TODO: this should go away
 function hasWall(s: tw.TileSprite, dir: tw.Dir) {
     return world.hasCode(codes.Wall, s, dir) || 
            world.hasCode(codes.StrongWall, s, dir)
