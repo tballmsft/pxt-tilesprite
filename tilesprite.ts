@@ -310,7 +310,7 @@ namespace TileWorld {
         private arrivalHandlers: ((ts: TileSprite) => void)[][];
         private stationaryHandlers: ((ts: TileSprite) => void)[][];
         // exclusion sets
-        private exclusionSets: SpriteSet[];
+        private exclusionList: number[];
 
         constructor(tileMap: Image) {
             this.sprites = []
@@ -323,6 +323,7 @@ namespace TileWorld {
             this.tileHandler = undefined;
             this.arrivalHandlers = []
             this.stationaryHandlers = []
+            this.exclusionList = []
             scene.setTileMap(this.tileMap)
         }
 
@@ -330,6 +331,7 @@ namespace TileWorld {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art)
             this.tileToArt[code] = art;
+            if (exclusive) this.exclusionList.push(code)
         }
 
         addSprite(code: number, art:Image, tile: number, exclusive: boolean = false) {
@@ -342,6 +344,7 @@ namespace TileWorld {
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
+            if (exclusive) this.exclusionList.push(code)
             // remove from tile map
             for (let y = 0; y < this.tileMap.height; y++) {
                 for (let x = 0; x < this.tileMap.width; x++) {
@@ -409,6 +412,7 @@ namespace TileWorld {
         }
 
         spriteCanMove(s: TileSprite, dir: Dir) {
+            // can never move into something exclusive
             return true;
         }
 

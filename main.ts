@@ -200,28 +200,17 @@ let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
 
-// TODO: this should go away
-function hasWall(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Wall, s, dir) || 
-           world.hasCode(codes.StrongWall, s, dir)
-}
-
 function hasRock(s: tw.TileSprite, dir: tw.Dir) {
     return world.hasCode(codes.Boulder, s, dir) ||
         world.hasCode(codes.Diamond, s, dir)
 }
 
 function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
-    return hasWall(s, dir) || hasRock(s, dir) || 
-        world.hasCode(codes.Dirt, s, dir)
-}
-
-function stopsPlayer(s: tw.TileSprite, dir: tw.Dir) {
-    return hasWall(s, dir) || world.hasCode(codes.Boulder, s, dir) 
+    return world.hasCode(codes.Dirt, s, dir)
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!stopsPlayer(player, dir))
+    if (!world.hasCode(codes.Boulder, player, dir))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.hasCode(codes.Boulder, player, dir) &&
@@ -306,7 +295,7 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 player.onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
-    if (!playerMoves(player, player.getDirection()))
+    if (world.hasCode(codes.Boulder, player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);
