@@ -185,32 +185,38 @@ namespace art {
     `
 }
 
-let world = new tw.TileWorldState(levels.level1)
+let world = new tw.TileWorldState(levels.level1, codes.Space)
 
-world.addTile(codes.StrongWall, art.Wall, true)
-world.addTile(codes.Wall, art.Wall, true)
+world.addTile(codes.StrongWall, art.Wall)
+world.addTile(codes.Wall, art.Wall)
 world.addTile(codes.Space, art.Space)
 world.addTile(codes.Dirt, art.Dirt)
-world.addSprite(codes.Boulder, art.Boulder, codes.Space, true)
-world.addSprite(codes.Diamond, art.Diamond, codes.Space, true)
-world.addSprite(codes.Enemy, art.Enemy, codes.Space)
-world.addSprite(codes.Player, art.Player, codes.Space)
+world.addSprite(codes.Boulder, art.Boulder)
+world.addSprite(codes.Diamond, art.Diamond)
+world.addSprite(codes.Enemy, art.Enemy)
+world.addSprite(codes.Player, art.Player)
 
 let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
 
+function hasWall(s: tw.TileSprite, dir: tw.Dir) {
+    return world.hasCode(codes.Wall, s, dir) ||
+        world.hasCode(codes.StrongWall, s, dir)
+}
+
 function hasRock(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Boulder, s, dir) ||
+    return world.hasCode(codes.Boulder, s, dir) ||	    
         world.hasCode(codes.Diamond, s, dir)
 }
 
 function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Dirt, s, dir)
+    return hasWall(s, dir) || hasRock(s, dir) ||
+        world.hasCode(codes.Dirt, s, dir)
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!world.hasCode(codes.Boulder, player, dir))
+    if (!hasWall(player,dir) && !world.hasCode(codes.Boulder, player, dir))
         return true
     if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.hasCode(codes.Boulder, player, dir) &&
@@ -295,7 +301,8 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 player.onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
-    if (world.hasCode(codes.Boulder, player, player.getDirection()))
+    if (hasWall(player, player.getDirection()) || 
+        world.hasCode(codes.Boulder, player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);

@@ -58,8 +58,6 @@ namespace TileWorld {
         }
         // request sprite to move in specified direction
         move(dir: Dir, moving: boolean = true) {
-            if (!this.parent.spriteCanMove(this, dir))
-                return;
             if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir, moving)
             else if (dir == Dir.Up || dir == Dir.Down)
@@ -300,7 +298,6 @@ namespace TileWorld {
         private sprites: TileSprite[][];
         // the current tile map (no sprites)  
         private tileMap: Image;
-        private tileToArt: Image[];
         // fill in with sprites
         private spriteMap: Image;
         // note tiles with more than one sprite
@@ -309,34 +306,30 @@ namespace TileWorld {
         private tileHandler: (colliding: TileSprite[]) => void;
         private arrivalHandlers: ((ts: TileSprite) => void)[][];
         private stationaryHandlers: ((ts: TileSprite) => void)[][];
-        // exclusion sets
-        private exclusionList: number[];
+        private backgroundTile: number;
 
-        constructor(tileMap: Image) {
+        constructor(tileMap: Image, backgroundTile: number) {
+            this.backgroundTile = backgroundTile
             this.sprites = []
             this.spriteCodes = []
             this.tileMap = tileMap.clone();
-            this.tileToArt = []
             this.spriteMap = tileMap.clone();
             this.multiples = tileMap.clone();
             this.multipleSprites = [];
             this.tileHandler = undefined;
             this.arrivalHandlers = []
             this.stationaryHandlers = []
-            this.exclusionList = []
             scene.setTileMap(this.tileMap)
         }
 
-        addTile(code: number, art: Image, exclusive: boolean = false) {
+        addTile(code: number, art: Image) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art)
-            this.tileToArt[code] = art;
-            if (exclusive) this.exclusionList.push(code)
         }
 
-        addSprite(code: number, art:Image, tile: number, exclusive: boolean = false) {
+        addSprite(code: number, art:Image) {
             let tiles = scene.getTilesByType(code)
-            scene.setTile(code, this.tileToArt[tile]);
+            scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
@@ -344,12 +337,11 @@ namespace TileWorld {
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
-            if (exclusive) this.exclusionList.push(code)
             // remove from tile map
             for (let y = 0; y < this.tileMap.height; y++) {
                 for (let x = 0; x < this.tileMap.width; x++) {
                     let pixel = this.tileMap.getPixel(x, y)
-                    if (code == pixel) this.tileMap.setPixel(x, y, tile)
+                    if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
                 }
             }
         }
@@ -409,11 +401,6 @@ namespace TileWorld {
             } else {
                 return this.sprites[code][0]
             }
-        }
-
-        spriteCanMove(s: TileSprite, dir: Dir) {
-            // can never move into something exclusive
-            return true;
         }
 
         update() {
