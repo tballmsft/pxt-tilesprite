@@ -192,6 +192,7 @@ namespace TileWorld {
             // determine what comes next
             this.x = x
             if (this.moving || this.final && this.next != this.final) {
+                console.log(x)
                 this.next += step
             } else {
                 this.dir = Dir.None

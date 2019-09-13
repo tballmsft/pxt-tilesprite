@@ -202,17 +202,18 @@ scene.cameraFollowSprite(player)
 
 function hasWall(s: tw.TileSprite, dir: tw.Dir) {
     return world.hasCode(codes.Wall, s, dir) ||
-        world.hasCode(codes.StrongWall, s, dir)
+           world.hasCode(codes.StrongWall, s, dir)
 }
 
 function hasRock(s: tw.TileSprite, dir: tw.Dir) {
     return world.hasCode(codes.Boulder, s, dir) ||	    
-        world.hasCode(codes.Diamond, s, dir)
+           world.hasCode(codes.Diamond, s, dir)
 }
 
 function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
-    return hasWall(s, dir) || hasRock(s, dir) ||
-        world.hasCode(codes.Dirt, s, dir)
+    return hasWall(s, dir) || 
+           hasRock(s, dir) ||
+           world.hasCode(codes.Dirt, s, dir)
 }
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
@@ -229,14 +230,6 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     return false
 }
 
-function rockfallDown(rock: tw.TileSprite) {
-    if (world.hasCode(codes.Space, rock, tw.Dir.Down)) {
-        rock.move(tw.Dir.Down)
-        return true;
-    }
-    return false;
-}
-
 function rockOnTopofStack(rock: tw.TileSprite) {
     return hasRock(rock, tw.Dir.Down) && !hasRock(rock, tw.Dir.Up)
 }
@@ -247,19 +240,18 @@ function spaceToFallOff(rock: tw.TileSprite, dir: tw.Dir) {
 }
 
 function rockfallLeft(rock: tw.TileSprite) {
-    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Left)) {
+    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Left))
         rock.move(tw.Dir.Left, false);
-        return true;
-    }
-    return false;
 }
 
 function rockfallRight(rock: tw.TileSprite) {
-    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Right)) {
+    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Right))
         rock.move(tw.Dir.Right, false);
-        return true;
-    }
-    return false;
+}
+
+function rockfallDown(rock: tw.TileSprite) {
+    if (world.hasCode(codes.Space, rock, tw.Dir.Down))
+        rock.move(tw.Dir.Down)
 }
 
 // TODO: unify treatment
@@ -301,8 +293,7 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 player.onTileArrived(function (player: tw.TileSprite) {
     player.doQueued()
     // try to keep moving in current direction
-    if (hasWall(player, player.getDirection()) || 
-        world.hasCode(codes.Boulder, player, player.getDirection()))
+    if (!playerMoves(player, player.getDirection()))
         player.deadStop()
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);
