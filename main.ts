@@ -200,6 +200,20 @@ let player = world.getSprite(codes.Player)
 tw.bindToController(player, playerMoves)
 scene.cameraFollowSprite(player)
 
+// can raise the level of abstraction - three sets of rules
+
+// 1. prevent motion
+
+// world.cantMoveOnto(Anything, codes.Wall)
+// world.cantMoveOnto(Anything, codes.Boulder)
+// world.cantMoveOntoExcept(Anything, codes.Diamond, codes.Player)
+// world.cantMoveOnto(codes.Boulder, codes.Dirt)
+
+// 2. start motion 
+
+// 3. stop motion
+
+
 function hasWall(s: tw.TileSprite, dir: tw.Dir) {
     return world.hasCode(codes.Wall, s, dir) ||
            world.hasCode(codes.StrongWall, s, dir)
