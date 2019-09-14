@@ -143,8 +143,9 @@ namespace TileWorld {
             let size = 1 << this.tileBits
             let opDir = dir == Dir.Left ? Dir.Right : Dir.Left
             let sign = dir == Dir.Left ? -1 : 1
-            if (this.dir == dir && !moving) {
+            if (this.dir == dir) {
                 this.final += sign * size;
+                this.moving = moving
                 return;
             } else if (this.dir == opDir) {
                 // switching 180 doesn't require queuing
@@ -154,6 +155,7 @@ namespace TileWorld {
                 // player.x is aligned, so use it
                 this.next = this.x + sign * size;
             } else {
+                // direction is 90 to current direction, so queue it
                 this.queue_dir = dir;
                 this.queue_moving = moving
                 return;
@@ -168,8 +170,9 @@ namespace TileWorld {
             let size = 1 << this.tileBits
             let opDir = dir == Dir.Up ? Dir.Down : Dir.Up
             let sign = dir == Dir.Up ? -1 : 1
-            if (this.dir == dir && !moving) {
+            if (this.dir == dir) {
                 this.final += sign * size;
+                this.moving = moving;
                 return;
             } else if (this.dir == opDir) {
                 // next_x is defined, so use it
@@ -178,6 +181,7 @@ namespace TileWorld {
                 // player.x is aligned, so use it
                 this.next = this.y + sign * size;
             } else {
+                // direction is 90 to current direction, so queue it
                 this.queue_dir = dir;
                 this.queue_moving = moving
                 return;
@@ -201,6 +205,8 @@ namespace TileWorld {
             // notify
             if (this.onArrived && reentrant) {
                 this.onArrived(this)
+                if (this.dir == Dir.None)
+                    this.doQueued()
             }
             this.queue_dir = Dir.None
             this.old = this.getColumn()
@@ -216,6 +222,8 @@ namespace TileWorld {
             // notify
             if (this.onArrived && reentrant) {
                 this.onArrived(this)
+                if (this.dir == Dir.None)
+                    this.doQueued()
             }
             this.queue_dir = Dir.None
             this.old = this.getRow()

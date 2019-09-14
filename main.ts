@@ -291,7 +291,6 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 })
 
 player.onTileArrived(function (player: tw.TileSprite) {
-    player.doQueued()
     // try to keep moving in current direction
     if (!playerMoves(player, player.getDirection()))
         player.deadStop()
