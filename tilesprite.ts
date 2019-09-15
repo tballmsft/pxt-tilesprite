@@ -11,7 +11,7 @@ namespace TileWorld {
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
         public tileBits: number;
-        public code: number;
+        private code: number;
         private parent: TileWorldState;
         // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
@@ -32,8 +32,9 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(world: TileWorldState, code: number, image: Image, bits: number = 4) {
+        constructor(world: TileWorldState, code: number, image: Image, sk: number = -1, bits: number = 4) {
             super(image);
+            this.setKind(sk)
             this.parent = world;
             this.code = code
             const scene = game.currentScene();
@@ -47,6 +48,7 @@ namespace TileWorld {
             this.onTransition = undefined;
         }
 
+        getCode() { return this.code }
         getColumn() { return this.x >> this.tileBits }
         getRow() { return this.y >> this.tileBits }
         inMotion() {
@@ -57,7 +59,13 @@ namespace TileWorld {
             else return Dir.None;
         }
         // request sprite to move in specified direction
-        move(dir: Dir, moving: boolean = true) {
+        moveOne(dir: Dir) {
+            this.move(dir, false)
+        }
+        moveForever(dir: Dir) {
+            this.move(dir, true)
+        }
+        private move(dir: Dir, moving: boolean = true) {
             if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir, moving)
             else if (dir == Dir.Up || dir == Dir.Down)
@@ -196,7 +204,6 @@ namespace TileWorld {
             // determine what comes next
             this.x = x
             if (this.moving || this.final && this.next != this.final) {
-                console.log(x)
                 this.next += step
             } else {
                 this.dir = Dir.None
@@ -270,28 +277,28 @@ namespace TileWorld {
     export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: Dir) => boolean) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
             if (canMove(sprite, Dir.Left))
-                sprite.move(Dir.Left)
+                sprite.moveForever(Dir.Left)
         })
         controller.left.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Left)
         })
         controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
             if (canMove(sprite, Dir.Right))
-                sprite.move(Dir.Right)
+                sprite.moveForever(Dir.Right)
         })
         controller.right.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Right)
         })
         controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
             if (canMove(sprite, Dir.Up))
-                sprite.move(Dir.Up)
+                sprite.moveForever(Dir.Up)
         })
         controller.up.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Up)
         })
         controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
             if (canMove(sprite, Dir.Down))
-                sprite.move(Dir.Down)
+                sprite.moveForever(Dir.Down)
         })
         controller.down.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Down)
@@ -302,6 +309,7 @@ namespace TileWorld {
     export type Description = { c: number, a: Image, t: number }
 
     export class TileWorldState {
+        private tileKinds: number[];
         private spriteCodes: number[];
         // the sprites, divided up by category
         private sprites: TileSprite[][];
@@ -320,6 +328,7 @@ namespace TileWorld {
         constructor(tileMap: Image, backgroundTile: number) {
             this.backgroundTile = backgroundTile
             this.sprites = []
+            this.tileKinds = []
             this.spriteCodes = []
             this.tileMap = tileMap.clone();
             this.spriteMap = tileMap.clone();
@@ -331,18 +340,19 @@ namespace TileWorld {
             scene.setTileMap(this.tileMap)
         }
 
-        addTile(code: number, art: Image) {
+        addTile(code: number, art: Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
+            this.tileKinds[code] = kind;
             scene.setTile(code, art)
         }
 
-        addSprite(code: number, art:Image) {
+        addSprite(code: number, art:Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
-                let tileSprite = new TileSprite(this, code, art)
+                let tileSprite = new TileSprite(this, code, art, kind)
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
@@ -358,7 +368,7 @@ namespace TileWorld {
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
             if (!this.stationaryHandlers[code]) {
                 this.stationaryHandlers[code] = []
-                let process = (s: TileSprite) => this.stationaryHandlers[s.code].forEach((h) => h(s));
+                let process = (s: TileSprite) => this.stationaryHandlers[s.getCode()].forEach((h) => h(s));
                 this.sprites[code].forEach((spr) => spr.onTileStationary(process));
             }
             this.stationaryHandlers[code].push(h);
@@ -367,7 +377,7 @@ namespace TileWorld {
         onTileArrived(code: number, h: (ts: TileSprite) => void) {
             if (!this.arrivalHandlers[code]) {
                 this.arrivalHandlers[code] = []
-                let process = (s: TileSprite) => this.arrivalHandlers[s.code].forEach((h) => h(s));
+                let process = (s: TileSprite) => this.arrivalHandlers[s.getCode()].forEach((h) => h(s));
                 this.sprites[code].forEach((spr) => spr.onTileArrived(process));
             }
             this.arrivalHandlers[code].push(h);
@@ -398,7 +408,7 @@ namespace TileWorld {
         }
 
         removeSprite(s: TileSprite) {
-            this.sprites[s.code].removeElement(s)
+            this.sprites[s.getCode()].removeElement(s)
             s.destroy()
         }
 

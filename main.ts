@@ -187,12 +187,16 @@ namespace art {
 
 let world = new tw.TileWorldState(levels.level1, codes.Space)
 
-world.addTile(codes.StrongWall, art.Wall)
-world.addTile(codes.Wall, art.Wall)
+let wallKind = SpriteKind.create()
+let rockKind = SpriteKind.create()
+
+world.addTile(codes.StrongWall, art.Wall, wallKind)
+world.addTile(codes.Wall, art.Wall, wallKind)
 world.addTile(codes.Space, art.Space)
 world.addTile(codes.Dirt, art.Dirt)
-world.addSprite(codes.Boulder, art.Boulder)
-world.addSprite(codes.Diamond, art.Diamond)
+
+world.addSprite(codes.Boulder, art.Boulder, rockKind)
+world.addSprite(codes.Diamond, art.Diamond, rockKind)
 world.addSprite(codes.Enemy, art.Enemy)
 world.addSprite(codes.Player, art.Player)
 
@@ -204,12 +208,14 @@ scene.cameraFollowSprite(player)
 
 // 1. prevent motion
 
-// world.cantMoveOnto(Anything, codes.Wall)
-// world.cantMoveOnto(Anything, codes.Boulder)
-// world.cantMoveOntoExcept(Anything, codes.Diamond, codes.Player)
-// world.cantMoveOnto(codes.Boulder, codes.Dirt)
+// world.stopsAll(codes.Wall)
+// world.stopsAll(codes.StrongWall)
+// world.stopsAllBut(codes.Boulder)
+// world.stopAllBut(codes.Diamond, codes.Player)
+// world.stops(codes.Dirt, codes.Boulder)
 
-// 2. start motion 
+// 2. wants to move 
+// - rocks always want to move down, can if there is an unoccupied space
 
 // 3. stop motion
 
@@ -237,44 +243,28 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
         if (world.hasCode(codes.Boulder, player, dir) &&
             world.hasCode(codes.Space, player, dir, dir)) {
             let rock = world.getSprite(codes.Boulder, player, dir)
-            rock.move(dir, false)
+            rock.moveOne(dir)
             return true
         }
     }
     return false
 }
 
-function rockOnTopofStack(rock: tw.TileSprite) {
-    return hasRock(rock, tw.Dir.Down) && !hasRock(rock, tw.Dir.Up)
-}
-
-function spaceToFallOff(rock: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Space, rock, dir) &&
-           world.hasCode(codes.Space, rock, dir, tw.Dir.Down)
-}
-
-function rockfallLeft(rock: tw.TileSprite) {
-    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Left))
-        rock.move(tw.Dir.Left, false);
-}
-
-function rockfallRight(rock: tw.TileSprite) {
-    if (rockOnTopofStack(rock) && spaceToFallOff(rock, tw.Dir.Right))
-        rock.move(tw.Dir.Right, false);
-}
-
-function rockfallDown(rock: tw.TileSprite) {
+function rockfall(rock: tw.TileSprite) {
     if (world.hasCode(codes.Space, rock, tw.Dir.Down))
-        rock.move(tw.Dir.Down)
+        rock.moveOne(tw.Dir.Down)
+    else if (hasRock(rock, tw.Dir.Down) && !hasRock(rock, tw.Dir.Up)) {
+        if (world.hasCode(codes.Space, rock, tw.Dir.Right) &&
+            world.hasCode(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
+            rock.moveOne(tw.Dir.Right);
+        else if (world.hasCode(codes.Space, rock, tw.Dir.Left) &&
+                 world.hasCode(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
+            rock.moveOne(tw.Dir.Left);
+    }
 }
 
-// TODO: unify treatment
-world.onTileStationary(codes.Boulder, rockfallDown)
-world.onTileStationary(codes.Boulder, rockfallLeft)
-world.onTileStationary(codes.Boulder, rockfallRight)
-world.onTileStationary(codes.Diamond, rockfallDown)
-world.onTileStationary(codes.Diamond, rockfallLeft)
-world.onTileStationary(codes.Diamond, rockfallRight)
+world.onTileStationary(codes.Boulder, rockfall)
+world.onTileStationary(codes.Diamond, rockfall)
 
 function rockfallMoving(s: tw.TileSprite) {
     if (s.inMotion() == tw.Dir.Down) {
@@ -286,7 +276,7 @@ function rockfallMoving(s: tw.TileSprite) {
         if (!stopsRock(s, tw.Dir.Down)) {
             // falls if there's a hole
             s.deadStop();
-            s.move(tw.Dir.Down, false)
+            s.moveOne(tw.Dir.Down)
         }
     }
 }
@@ -320,7 +310,7 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     // there's also the question of the code of the sprite, and its kind
 
     // let's first deal with moving rocks
-    let onlyMovingRocks = collision.every((spr) => spr.code == codes.Boulder || spr.code == codes.Diamond)
+    let onlyMovingRocks = collision.every((spr) => spr.kind() == rockKind )
     if (onlyMovingRocks) {
         let choose = collision.pop()
         choose.knockBack(true)
