@@ -12,7 +12,7 @@ namespace TileWorld {
     export class TileSprite extends Sprite implements Tile {
         public tileBits: number;
         private code: number;
-        private parent: TileWorldState;
+        private parent: TileWorld;
         // trie iff the user is requesting motion and nothing has stopped
         // the sprite from moving
         private moving: boolean;
@@ -32,7 +32,7 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(world: TileWorldState, code: number, image: Image, sk: number = -1, bits: number = 4) {
+        constructor(world: TileWorld, code: number, image: Image, sk: number = -1, bits: number = 4) {
             super(image);
             this.setKind(sk)
             this.parent = world;
@@ -252,10 +252,10 @@ namespace TileWorld {
 
     // a cursor is just a coordinate
     class Cursor implements Tile {
-        private world: TileWorldState;
+        private world: TileWorld;
         private col: number;
         private row: number;
-        constructor(w: TileWorldState, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        constructor(w: TileWorld, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             this.world = w;
             this.col = s.getColumn();
             this.row = s.getRow();
@@ -304,7 +304,7 @@ namespace TileWorld {
     // description of sprites
     export type Description = { c: number, a: Image, t: number }
 
-    export class TileWorldState {
+    export class TileWorld {
         private codeToKind: number[];
         private spriteCodes: number[];
         // the sprites, divided up by code
@@ -336,13 +336,13 @@ namespace TileWorld {
             scene.setTileMap(this.tileMap)
         }
 
-        addTile(code: number, art: Image, kind: number = 0) {
+        addTiles(code: number, art: Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
             this.codeToKind[code] = kind;
             scene.setTile(code, art)
         }
 
-        addSprite(code: number, art:Image, kind: number = 0) {
+        addTileSprites(code: number, art:Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
@@ -456,7 +456,7 @@ namespace TileWorld {
                         if (this.spriteCodes.find((code) => code == here) &&
                             !this.multiples.getPixel(col, row)) {
                             // we have more than 1 sprite at (col,row)
-                            this.addSprites(col, row);
+                            this.addMultipleSprites(col, row);
                             this.multiples.setPixel(col, row, 1)
                         } else {
                             // no sprite at this tile yet
@@ -489,7 +489,7 @@ namespace TileWorld {
             }
         }
 
-        private addSprites(col: number, row: number) {
+        private addMultipleSprites(col: number, row: number) {
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {
