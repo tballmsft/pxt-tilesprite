@@ -243,8 +243,7 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 function rockfall(rock: tw.TileSprite) {
     if (world.hasCode(codes.Space, rock, tw.Dir.Down))
         rock.moveOne(tw.Dir.Down)
-    else if (world.hasKind(rockKind, rock, tw.Dir.Down) && 
-            !world.hasKind(rockKind, rock, tw.Dir.Up)) {
+    else if (world.hasKind(rockKind, rock, tw.Dir.Down)) { 
         if (world.hasCode(codes.Space, rock, tw.Dir.Right) &&
             world.hasCode(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
             rock.moveOne(tw.Dir.Right);
