@@ -200,60 +200,33 @@ world.addSprite(codes.Diamond, art.Diamond, rockKind)
 world.addSprite(codes.Enemy, art.Enemy)
 world.addSprite(codes.Player, art.Player)
 
-let player = world.getSprite(codes.Player)
-tw.bindToController(player, playerMoves)
+let player = world.getSpriteByCode(codes.Player)
 scene.cameraFollowSprite(player)
 
-// can raise the level of abstraction - three sets of rules
-
-// 1. prevent motion
-
-// world.stopsAll(codes.Wall)
-// world.stopsAll(codes.StrongWall)
-// world.stopsAllBut(codes.Boulder)
-// world.stopAllBut(codes.Diamond, codes.Player)
-// world.stops(codes.Dirt, codes.Boulder)
-
-// 2. wants to move 
-// - rocks always want to move down, can if there is an unoccupied space
-
-// 3. stop motion
-
-
-function hasWall(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Wall, s, dir) ||
-           world.hasCode(codes.StrongWall, s, dir)
-}
-
-function hasRock(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasCode(codes.Boulder, s, dir) ||	    
-           world.hasCode(codes.Diamond, s, dir)
-}
-
-function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
-    return hasWall(s, dir) || 
-           hasRock(s, dir) ||
-           world.hasCode(codes.Dirt, s, dir)
-}
+tw.bindToController(player, playerMoves)
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!hasWall(player,dir) && !world.hasCode(codes.Boulder, player, dir))
-        return true
-    if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
+    if (!world.hasKind(wallKind, player, dir) && 
+        !world.hasCode(codes.Boulder, player, dir)) {
+        player.moveForever(dir)
+        return;
+    } else if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.hasCode(codes.Boulder, player, dir) &&
             world.hasCode(codes.Space, player, dir, dir)) {
-            let rock = world.getSprite(codes.Boulder, player, dir)
+            let rock = world.getSpriteByCode(codes.Boulder, player, dir)
             rock.moveOne(dir)
-            return true
+            player.moveForever(dir)
+            return;
         }
     }
-    return false
+    player.deadStop()
 }
 
 function rockfall(rock: tw.TileSprite) {
     if (world.hasCode(codes.Space, rock, tw.Dir.Down))
         rock.moveOne(tw.Dir.Down)
-    else if (hasRock(rock, tw.Dir.Down) && !hasRock(rock, tw.Dir.Up)) {
+    else if (world.hasKind(rockKind, rock, tw.Dir.Down) && 
+            !world.hasKind(rockKind, rock, tw.Dir.Up)) {
         if (world.hasCode(codes.Space, rock, tw.Dir.Right) &&
             world.hasCode(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
             rock.moveOne(tw.Dir.Right);
@@ -265,6 +238,12 @@ function rockfall(rock: tw.TileSprite) {
 
 world.onTileStationary(codes.Boulder, rockfall)
 world.onTileStationary(codes.Diamond, rockfall)
+
+function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
+    return world.hasKind(wallKind, player, dir) ||
+        world.hasKind(rockKind, player, dir) ||
+        world.hasCode(codes.Dirt, s, dir)
+}
 
 function rockfallMoving(s: tw.TileSprite) {
     if (s.inMotion() == tw.Dir.Down) {
@@ -289,15 +268,14 @@ game.onUpdate(function () { world.update(); })
 // TODO: this will go away
 player.onTileTransition(function (sprite: tw.TileSprite) {
     if (world.hasCode(codes.Diamond, sprite)) {
-        let diamond = world.getSprite(codes.Diamond, sprite)
+        let diamond = world.getSpriteByCode(codes.Diamond, sprite)
         world.removeSprite(diamond);
     }
 })
 
 player.onTileArrived(function (player: tw.TileSprite) {
     // try to keep moving in current direction
-    if (!playerMoves(player, player.getDirection()))
-        player.deadStop()
+    playerMoves(player, player.getDirection())
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);
 })

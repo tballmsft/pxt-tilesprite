@@ -59,6 +59,7 @@ namespace TileWorld {
             else return Dir.None;
         }
         // request sprite to move in specified direction
+        getDirection() { return this.dir; }
         moveOne(dir: Dir) {
             this.move(dir, false)
         }
@@ -71,7 +72,6 @@ namespace TileWorld {
             else if (dir == Dir.Up || dir == Dir.Down)
                 this.moveInY(dir, moving)
         }
-        getDirection() { return this.dir; }
 
         // stop at current tile
         deadStop(rentrant: boolean = false) { this.stopSprite(rentrant) }
@@ -274,31 +274,27 @@ namespace TileWorld {
     }
 
     // basic movement for player sprite
-    export function bindToController(sprite: TileSprite, canMove: (s: TileSprite, dir: Dir) => boolean) {
+    export function bindToController(sprite: TileSprite, move: (s: TileSprite, dir: Dir) => void) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, Dir.Left))
-                sprite.moveForever(Dir.Left)
+            move(sprite, Dir.Left)
         })
         controller.left.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Left)
         })
         controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, Dir.Right))
-                sprite.moveForever(Dir.Right)
+            move(sprite, Dir.Right)
         })
         controller.right.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Right)
         })
         controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, Dir.Up))
-                sprite.moveForever(Dir.Up)
+            move(sprite, Dir.Up)
         })
         controller.up.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Up)
         })
         controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            if (canMove(sprite, Dir.Down))
-                sprite.moveForever(Dir.Down)
+            move(sprite, Dir.Down)
         })
         controller.down.onEvent(ControllerButtonEvent.Released, function () {
             sprite.stop(Dir.Down)
@@ -309,9 +305,9 @@ namespace TileWorld {
     export type Description = { c: number, a: Image, t: number }
 
     export class TileWorldState {
-        private tileKinds: number[];
+        private codeToKind: number[];
         private spriteCodes: number[];
-        // the sprites, divided up by category
+        // the sprites, divided up by code
         private sprites: TileSprite[][];
         // the current tile map (no sprites)  
         private tileMap: Image;
@@ -328,7 +324,7 @@ namespace TileWorld {
         constructor(tileMap: Image, backgroundTile: number) {
             this.backgroundTile = backgroundTile
             this.sprites = []
-            this.tileKinds = []
+            this.codeToKind = []
             this.spriteCodes = []
             this.tileMap = tileMap.clone();
             this.spriteMap = tileMap.clone();
@@ -342,7 +338,7 @@ namespace TileWorld {
 
         addTile(code: number, art: Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
-            this.tileKinds[code] = kind;
+            this.codeToKind[code] = kind;
             scene.setTile(code, art)
         }
 
@@ -350,6 +346,7 @@ namespace TileWorld {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
+            this.codeToKind[code] = kind;
             this.spriteCodes.push(code);
             for (let value of tiles) {
                 let tileSprite = new TileSprite(this, code, art, kind)
@@ -396,14 +393,24 @@ namespace TileWorld {
             return this.checkTile(code,cursor)
         }
 
+        hasKind(kind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            return this.checkTileKind(kind, cursor)
+        }
+
         private checkTile(code: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                if (this.spriteCodes.find(c => c == code))
-                    return this.getSprite(code, curs) != null
-                else
-                    return false
+                return this.getSpriteByCode(code, curs) != null
             } else {
                 return this.spriteMap.getPixel(curs.getColumn(), curs.getRow()) == code
+            }
+        }
+
+        private checkTileKind(kind: number, curs: Cursor) {
+            if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
+                return this.getSpriteByKind(kind, curs) != null
+            } else {
+                return this.codeToKind[this.spriteMap.getPixel(curs.getColumn(), curs.getRow())] == kind
             }
         }
 
@@ -412,13 +419,26 @@ namespace TileWorld {
             s.destroy()
         }
 
-        getSprite(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        getSpriteByCode(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
                 return this.sprites[code].find((t: Tile) =>
                     t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
             } else {
                 return this.sprites[code][0]
+            }
+        }
+
+        getSpriteByKind(kind: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let ss = game.currentScene().spritesByKind[kind].sprites()
+            if (orig) {
+                let cursor = new Cursor(this, orig, dir, dir2, dir3);
+                return ss.find(function (s: Sprite, index: number) {
+                    return ((<TileSprite>s).getColumn() == cursor.getColumn()) &&
+                           ((<TileSprite>s).getRow() == cursor.getRow())
+                })
+            } else {
+                return ss[0]
             }
         }
 
