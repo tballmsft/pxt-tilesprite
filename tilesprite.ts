@@ -390,6 +390,16 @@ namespace TileWorld {
             this.transitionHandlers[code].push(h);
         }
 
+        onCanIMove(kind: number, h: (ts: TileSprite, dir: Dir) => boolean) {
+            let process = (s: TileSprite, d: Dir) => {
+                if (h(s,d)) {
+                    s.moveOne(d)
+                    return true
+                } else
+                    return false
+            }
+        }
+
         onSpritesInTile(h: (collision: TileSprite[]) => void) {
             this.tileHandler = h;
         }
