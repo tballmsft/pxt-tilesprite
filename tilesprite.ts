@@ -285,7 +285,8 @@ namespace TileWorld {
         private multiples: Image;
         private multipleSprites: TileSprite[];
         private tileHandler: (colliding: TileSprite[]) => void;
-        private arrivalHandlers: ((ts: TileSprite, d: Dir) => void)[][];
+        private arrivalHandlers: { [index:number]: ((ts: TileSprite, d: Dir) => void)[] };
+        private transitionHandlers: { [index:number]: ((ts: TileSprite, prevCol: number, prevRow: number) => void)[] };
         private stationaryHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private backgroundTile: number;
         private tileKind: number;
@@ -300,10 +301,12 @@ namespace TileWorld {
             this.multiples = tileMap.clone();
             this.multipleSprites = [];
             this.tileHandler = undefined;
-            this.arrivalHandlers = []
+            this.arrivalHandlers = {}
+            this.transitionHandlers = {}
             this.stationaryHandlers = {}
             scene.setTileMap(this.tileMap)
             this.tileKind = SpriteKind.create()
+            game.onUpdate(() => { this.update(); })
         }
 
         addTiles(code: number, art: Image, kind: number = 0) {
@@ -370,6 +373,21 @@ namespace TileWorld {
                 }
             }
             this.arrivalHandlers[code].push(h);
+        }
+
+        onTileTransition(code: number, h: (ts: TileSprite) => void) {
+            if (!this.transitionHandlers[code]) {
+                this.transitionHandlers[code] = [];
+                if (code < this.tileKind) {
+                    let process = (s: TileSprite, c: number, r: number) => this.transitionHandlers[s.getCode()].forEach((h) => h(s, c, r));
+                    this.sprites[code].forEach((spr) => spr.onTileTransition(process))
+                } else {
+                    let process = (s: TileSprite, c: number, r: number) => this.transitionHandlers[s.kind()].forEach((h) => h(s, c, r));
+                    let sprites = game.currentScene().spritesByKind[code].sprites()
+                    sprites.forEach((spr) => (<TileSprite>spr).onTileTransition(process));
+                }
+            }
+            this.transitionHandlers[code].push(h);
         }
 
         onSpritesInTile(h: (collision: TileSprite[]) => void) {

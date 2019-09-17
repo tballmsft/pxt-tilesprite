@@ -186,27 +186,18 @@ namespace art {
 }
 
 let world = new tw.TileWorld(levels.level1, codes.Space)
-
 let wallKind = world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall, wallKind)
-
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
-
 let rockKind = world.addTileSprites(codes.Boulder, art.Boulder)
 world.addTileSprites(codes.Diamond, art.Diamond, rockKind)
-
 world.addTileSprites(codes.Enemy, art.Enemy)
 world.addTileSprites(codes.Player, art.Player)
 
-let player = world.getSpriteByCode(codes.Player)
-scene.cameraFollowSprite(player)
+scene.cameraFollowSprite(world.getSpriteByCode(codes.Player))
 
-// player logic
-
-// TODO: a move event is a good idea, so it can be queued
-tw.bindToController(player, playerMoves)
-
+tw.bindToController(world.getSpriteByCode(codes.Player), playerMoves)
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (!world.hasKind(wallKind, player, dir) && 
         !world.hasCode(codes.Boulder, player, dir)) {
@@ -221,18 +212,20 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     }
 }
 
-world.onTileArrived(codes.Player, (player, dir) => {
-    // whereever player goes, replace with space
+// whereever player goes, replace with space
+world.onTileArrived(codes.Player, (player) => {
     world.setCode(player, codes.Space);
-    if (dir != tw.Dir.None) {
-        // no stop yet
-        playerMoves(player, dir);
-    }
 })
 
-player.onTileTransition(function (sprite: tw.TileSprite) {
-    if (world.hasCode(codes.Diamond, sprite)) {
-        let diamond = world.getSpriteByCode(codes.Diamond, sprite)
+// if the player hasn't received a stop command, try to keep moving
+world.onTileArrived(codes.Player, (player, dir) => {
+    if (dir != tw.Dir.None) playerMoves(player, dir);
+})
+
+// if the player is moving into a tile with a diamond, eat it
+world.onTileTransition(codes.Player, (player) => {
+    if (world.hasCode(codes.Diamond, player)) {
+        let diamond = world.getSpriteByCode(codes.Diamond, player)
         world.removeSprite(diamond);
     }
 })
@@ -254,8 +247,8 @@ world.onTileStationary(rockKind, (rock) => {
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
     let stopDown = world.hasKind(wallKind, s, tw.Dir.Down) ||
-                world.hasKind(rockKind, s, tw.Dir.Down) ||
-                world.hasCode(codes.Dirt, s, tw.Dir.Down)
+                   world.hasKind(rockKind, s, tw.Dir.Down) ||
+                   world.hasCode(codes.Dirt, s, tw.Dir.Down)
     if (dir == tw.Dir.Down && stopDown) {
         s.deadStop();
     } else if (!stopDown) {
@@ -264,8 +257,6 @@ world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
         s.moveOne(tw.Dir.Down)
     }
 })
-
-game.onUpdate(function () { world.update(); })
 
 world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     // there are a few cases here to consider:
