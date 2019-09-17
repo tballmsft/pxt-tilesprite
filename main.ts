@@ -205,28 +205,29 @@ scene.cameraFollowSprite(player)
 
 // player logic
 
+// TODO: keyboard events are delivered faster than sprite
+// TODO: can move between tiles, need to queue outside
+// TODO: off sprites
 tw.bindToController(player, playerMoves)
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (!world.hasKind(wallKind, player, dir) && 
         !world.hasCode(codes.Boulder, player, dir)) {
-        player.moveForever(dir)
-        return;
+        player.moveOne(dir)
     } else if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.hasCode(codes.Boulder, player, dir) &&
             world.hasCode(codes.Space, player, dir, dir)) {
             let rock = world.getSpriteByCode(codes.Boulder, player, dir)
             rock.moveOne(dir)
-            player.moveForever(dir)
-            return;
+            player.moveOne(dir)
         }
     }
-    player.deadStop()
 }
 
-player.onTileArrived(function (player: tw.TileSprite) {
-    // try to keep moving in current direction
-    playerMoves(player, player.getDirection())
+player.onTileArrived(function (player: tw.TileSprite, d: tw.Dir) {
+    if (d != tw.Dir.None) {
+        playerMoves(player, d);
+    }
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);
 })
@@ -264,17 +265,13 @@ function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
         world.hasCode(codes.Dirt, s, dir)
 }
 
-function rockfallMoving(s: tw.TileSprite) {
-    if (stopsRock(s, s.getDirection()))
+function rockfallMoving(s: tw.TileSprite, dir: tw.Dir) {
+    if (dir == tw.Dir.Down && stopsRock(s, dir)) {
         s.deadStop();
-    // if we are moving left, right, need to watch for hole
-    if (s.inMotion() == tw.Dir.Left || s.inMotion() == tw.Dir.Right) {
-        // horizontally moving rock
-        if (!stopsRock(s, tw.Dir.Down)) {
-            // falls if there's a hole
-            s.deadStop();
-            s.moveOne(tw.Dir.Down)
-        }
+    } else if (!stopsRock(s, tw.Dir.Down)) {
+        // stop any motion and fall if there's a hole
+        s.deadStop();
+        s.moveOne(tw.Dir.Down)
     }
 }
 
