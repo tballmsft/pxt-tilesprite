@@ -224,12 +224,13 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     }
 }
 
-player.onTileArrived(function (player: tw.TileSprite, d: tw.Dir) {
-    if (d != tw.Dir.None) {
-        playerMoves(player, d);
-    }
+world.onTileArrived(codes.Player, (player, dir) => {
     // whereever player goes, replace with space
     world.setCode(player, codes.Space);
+    if (dir != tw.Dir.None) {
+        // no stop yet
+        playerMoves(player, dir);
+    }
 })
 
 player.onTileTransition(function (sprite: tw.TileSprite) {
@@ -292,6 +293,6 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     let onlyMovingRocks = collision.every((spr) => spr.kind() == rockKind )
     if (onlyMovingRocks) {
         let choose = collision.pop()
-        choose.knockBack(true)
+        choose.knockBack()
     }
 })

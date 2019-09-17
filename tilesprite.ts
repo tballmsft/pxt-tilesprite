@@ -47,16 +47,18 @@ namespace TileWorld {
         getColumn() { return this.x >> this.tileBits }
         getRow() { return this.y >> this.tileBits }
         // request sprite to move in specified direction
-        getDirection() { return this.dir; }
         moveOne(dir: Dir) {
             if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir)
             else if (dir == Dir.Up || dir == Dir.Down)
                 this.moveInY(dir)
         }
+        // request sprite to stop moving when it reaches destination
+        requestStop() { this.final = 0; }
         // stop at current tile
         deadStop() { this.stopSprite(false) }
-        knockBack(rentrant: boolean = false) {
+        // back to previous tile
+        knockBack() {
             if ((this.dir == Dir.Left || this.dir == Dir.Right) &&
                 this.old != this.getColumn()) {
                 this.x = this.centerIt(this.old << this.tileBits)
@@ -64,12 +66,7 @@ namespace TileWorld {
                 this.old != this.getRow()) {
                 this.y = this.centerIt(this.old << this.tileBits)
             }
-            this.stopSprite(rentrant)
-        }
-        // request sprite to stop moving when it reaches destination
-        requestStop() {
-            this.final = 0;
-            // TODO: queued?
+            this.stopSprite(false)
         }
         // notify client on entering tile
         onTileArrived(handler: (ts: TileSprite, d: Dir) => void) {
@@ -371,7 +368,10 @@ namespace TileWorld {
 
         private checkTile(code: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                return this.getSpriteByCode(code, curs) != null
+                if (this.spriteCodes.find(c => code == c))
+                    return this.getSpriteByCode(code, curs) != null
+                else 
+                    return false
             } else {
                 return this.spriteMap.getPixel(curs.getColumn(), curs.getRow()) == code
             }
@@ -379,6 +379,7 @@ namespace TileWorld {
 
         private checkTileKind(kind: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
+                // TODO: need a similar check to check Tile?
                 return this.getSpriteByKind(kind, curs) != null
             } else {
                 return this.codeToKind[this.spriteMap.getPixel(curs.getColumn(), curs.getRow())] == kind
