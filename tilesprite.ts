@@ -398,12 +398,19 @@ namespace TileWorld {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
 
-        hasCode(code:number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        containsAt(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            if (codeKind < this.tileKind)
+                return this.hasCode(codeKind, orig, dir, dir2, dir3)
+            else
+                return this.hasKind(codeKind, orig, dir, dir2, dir3)
+        }
+
+        private hasCode(code:number, orig: Tile, dir: Dir, dir2: Dir, dir3: Dir) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.checkTile(code,cursor)
         }
 
-        hasKind(kind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        private hasKind(kind: number, orig: Tile, dir: Dir, dir2: Dir, dir3: Dir) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.checkTileKind(kind, cursor)
         }

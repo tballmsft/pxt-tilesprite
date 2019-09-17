@@ -199,12 +199,12 @@ scene.cameraFollowSprite(world.getSpriteByCode(codes.Player))
 
 tw.bindToController(world.getSpriteByCode(codes.Player), playerMoves)
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!world.hasKind(wallKind, player, dir) && 
-        !world.hasCode(codes.Boulder, player, dir)) {
+    if (!world.containsAt(wallKind, player, dir) && 
+        !world.containsAt(codes.Boulder, player, dir)) {
         player.moveOne(dir)
     } else if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
-        if (world.hasCode(codes.Boulder, player, dir) &&
-            world.hasCode(codes.Space, player, dir, dir)) {
+        if (world.containsAt(codes.Boulder, player, dir) &&
+            world.containsAt(codes.Space, player, dir, dir)) {
             let rock = world.getSpriteByCode(codes.Boulder, player, dir)
             rock.moveOne(dir)
             player.moveOne(dir)
@@ -224,7 +224,7 @@ world.onTileArrived(codes.Player, (player, dir) => {
 
 // if the player is moving into a tile with a diamond, eat it
 world.onTileTransition(codes.Player, (player) => {
-    if (world.hasCode(codes.Diamond, player)) {
+    if (world.containsAt(codes.Diamond, player)) {
         let diamond = world.getSpriteByCode(codes.Diamond, player)
         world.removeSprite(diamond);
     }
@@ -233,22 +233,22 @@ world.onTileTransition(codes.Player, (player) => {
 // rock logic
 
 world.onTileStationary(rockKind, (rock) => {
-    if (world.hasCode(codes.Space, rock, tw.Dir.Down))
+    if (world.containsAt(codes.Space, rock, tw.Dir.Down))
         rock.moveOne(tw.Dir.Down)
-    else if (world.hasKind(rockKind, rock, tw.Dir.Down)) {
-        if (world.hasCode(codes.Space, rock, tw.Dir.Right) &&
-            world.hasCode(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
+    else if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
+        if (world.containsAt(codes.Space, rock, tw.Dir.Right) &&
+            world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
             rock.moveOne(tw.Dir.Right);
-        else if (world.hasCode(codes.Space, rock, tw.Dir.Left) &&
-            world.hasCode(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
+        else if (world.containsAt(codes.Space, rock, tw.Dir.Left) &&
+            world.containsAt(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
             rock.moveOne(tw.Dir.Left);
     }
 })
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
-    let stopDown = world.hasKind(wallKind, s, tw.Dir.Down) ||
-                   world.hasKind(rockKind, s, tw.Dir.Down) ||
-                   world.hasCode(codes.Dirt, s, tw.Dir.Down)
+    let stopDown = world.containsAt(wallKind, s, tw.Dir.Down) ||
+        world.containsAt(rockKind, s, tw.Dir.Down) ||
+        world.containsAt(codes.Dirt, s, tw.Dir.Down)
     if (dir == tw.Dir.Down && stopDown) {
         s.deadStop();
     } else if (!stopDown) {
