@@ -314,22 +314,21 @@ namespace TileWorld {
 
         private trackKind(code: number, kind: number) {
             let retKind = kind
-            if (kind > this.tileKind) {
-                this.codeToKind[code] = kind;
-                retKind = kind
-            } else if (kind == 0) {
+            if (kind == 0) {
                 retKind = SpriteKind.create()
             }
+            this.codeToKind[code] = retKind;
             return retKind
         }
 
         addTileSprites(code: number, art:Image, kind: number = 0) {
+            let retKind = this.trackKind(code, kind)
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
-                let tileSprite = new TileSprite(this, code, art, kind)
+                let tileSprite = new TileSprite(this, code, art, retKind)
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
@@ -340,24 +339,35 @@ namespace TileWorld {
                     if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
                 }
             }
-            return this.trackKind(code, kind)
+            return retKind
         }
 
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
-            // code or kind switch???
             if (!this.stationaryHandlers[code]) {
                 this.stationaryHandlers[code] = []
-                let process = (s: TileSprite) => this.stationaryHandlers[s.getCode()].forEach((h) => h(s));
-                this.sprites[code].forEach((spr) => spr.onTileStationary(process));
+                if (code < this.tileKind) {
+                    let process = (s: TileSprite) => this.stationaryHandlers[s.getCode()].forEach((h) => h(s));
+                    this.sprites[code].forEach((spr) => spr.onTileStationary(process));
+                } else {
+                    let process = (s: TileSprite) => this.stationaryHandlers[s.kind()].forEach((h) => h(s));
+                    let sprites = game.currentScene().spritesByKind[code].sprites()
+                    sprites.forEach((spr) => (<TileSprite>spr).onTileStationary(process));
+                }
             }
             this.stationaryHandlers[code].push(h);
         }
 
         onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) {
             if (!this.arrivalHandlers[code]) {
-                this.arrivalHandlers[code] = []
-                let process = (s: TileSprite, d: Dir) => this.arrivalHandlers[s.getCode()].forEach((h) => h(s,d));
-                this.sprites[code].forEach((spr) => spr.onTileArrived(process));
+                this.arrivalHandlers[code] = [];
+                if (code < this.tileKind) {
+                    let process = (s: TileSprite, d: Dir) => this.arrivalHandlers[s.getCode()].forEach((h) => h(s, d));
+                    this.sprites[code].forEach((spr) => spr.onTileArrived(process))
+                } else {
+                    let process = (s: TileSprite, d: Dir) => this.arrivalHandlers[s.kind()].forEach((h) => h(s, d));
+                    let sprites = game.currentScene().spritesByKind[code].sprites()
+                    sprites.forEach((spr) => (<TileSprite>spr).onTileArrived(process));
+                }
             }
             this.arrivalHandlers[code].push(h);
         }

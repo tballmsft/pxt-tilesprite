@@ -187,15 +187,15 @@ namespace art {
 
 let world = new tw.TileWorld(levels.level1, codes.Space)
 
-
-
 let wallKind = world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall, wallKind)
+
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
 
 let rockKind = world.addTileSprites(codes.Boulder, art.Boulder)
 world.addTileSprites(codes.Diamond, art.Diamond, rockKind)
+
 world.addTileSprites(codes.Enemy, art.Enemy)
 world.addTileSprites(codes.Player, art.Player)
 
@@ -239,43 +239,31 @@ player.onTileTransition(function (sprite: tw.TileSprite) {
 
 // rock logic
 
-function rockfall(rock: tw.TileSprite) {
+world.onTileStationary(rockKind, (rock) => {
     if (world.hasCode(codes.Space, rock, tw.Dir.Down))
         rock.moveOne(tw.Dir.Down)
-    else if (world.hasKind(rockKind, rock, tw.Dir.Down)) { 
+    else if (world.hasKind(rockKind, rock, tw.Dir.Down)) {
         if (world.hasCode(codes.Space, rock, tw.Dir.Right) &&
             world.hasCode(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
             rock.moveOne(tw.Dir.Right);
         else if (world.hasCode(codes.Space, rock, tw.Dir.Left) &&
-                 world.hasCode(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
+            world.hasCode(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
             rock.moveOne(tw.Dir.Left);
     }
-}
+})
 
-// TODO: world.onTileStationary(rockKind, rockfall)
-
-world.onTileStationary(codes.Boulder, rockfall)
-world.onTileStationary(codes.Diamond, rockfall)
-
-function stopsRock(s: tw.TileSprite, dir: tw.Dir) {
-    return world.hasKind(wallKind, s, dir) ||
-        world.hasKind(rockKind, s, dir) ||
-        world.hasCode(codes.Dirt, s, dir)
-}
-
-function rockfallMoving(s: tw.TileSprite, dir: tw.Dir) {
-    if (dir == tw.Dir.Down && stopsRock(s, dir)) {
+world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
+    let stopDown = world.hasKind(wallKind, s, tw.Dir.Down) ||
+                world.hasKind(rockKind, s, tw.Dir.Down) ||
+                world.hasCode(codes.Dirt, s, tw.Dir.Down)
+    if (dir == tw.Dir.Down && stopDown) {
         s.deadStop();
-    } else if (!stopsRock(s, tw.Dir.Down)) {
+    } else if (!stopDown) {
         // stop any motion and fall if there's a hole
         s.deadStop();
         s.moveOne(tw.Dir.Down)
     }
-}
-
-// TODO: kind
-world.onTileArrived(codes.Boulder, rockfallMoving)
-world.onTileArrived(codes.Diamond, rockfallMoving)
+})
 
 game.onUpdate(function () { world.update(); })
 
