@@ -248,26 +248,42 @@ world.onTileTransition(codes.Player, (player) => {
 
 // rock logic
 
+// how to state that Down has higher priority than all other directions (for Rocks)
+
+// rock starts falling if there is a space below it
 world.onTileStationary(rockKind, (rock) => {
     if (world.containsAt(codes.Space, rock, tw.Dir.Down))
         rock.moveOne(tw.Dir.Down)
-    else if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
+})
+
+// rock falls to right
+world.onTileStationary(rockKind, (rock) => {
+    if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
         if (world.containsAt(codes.Space, rock, tw.Dir.Right) &&
             world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
             rock.moveOne(tw.Dir.Right);
-        else if (world.containsAt(codes.Space, rock, tw.Dir.Left) &&
+    }
+})
+
+// rock falls to left
+world.onTileStationary(rockKind, (rock) => {
+    if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
+        if (world.containsAt(codes.Space, rock, tw.Dir.Left) &&
             world.containsAt(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
             rock.moveOne(tw.Dir.Left);
     }
 })
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
-    let stopDown = world.containsAt(wallKind, s, tw.Dir.Down) ||
-        world.containsAt(rockKind, s, tw.Dir.Down) ||
-        world.containsAt(codes.Dirt, s, tw.Dir.Down)
-    if (dir == tw.Dir.Down && stopDown) {
-        s.deadStop();
-    } else if (!stopDown) {
+    if (dir == tw.Dir.Down) {
+        if (!world.tileIs(codes.Space, s, tw.Dir.Down) ||
+            world.containsAt(rockKind, s, tw.Dir.Down))
+            s.deadStop();
+    }
+})
+
+world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
+    if (dir != tw.Dir.Down && world.containsAt(codes.Space, s, tw.Dir.Down)) {
         // stop any motion and fall if there's a hole
         s.deadStop();
         s.moveOne(tw.Dir.Down)

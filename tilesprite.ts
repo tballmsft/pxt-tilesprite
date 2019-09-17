@@ -415,6 +415,14 @@ namespace TileWorld {
                 return this.hasKind(codeKind, orig, dir, dir2, dir3)
         }
 
+        tileIs(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+            if (codeKind < this.tileKind) 
+                return this.tileMap.getPixel(cursor.getColumn(), cursor.getRow()) == codeKind
+            else
+                return this.codeToKind[this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())] == codeKind
+        }
+
         private hasCode(code:number, orig: Tile, dir: Dir, dir2: Dir, dir3: Dir) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.checkTile(code,cursor)
