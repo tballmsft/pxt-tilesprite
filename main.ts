@@ -187,15 +187,14 @@ namespace art {
 
 let world = new tw.TileWorld(levels.level1, codes.Space)
 
-let wallKind = SpriteKind.create()
-let rockKind = SpriteKind.create()
 
-world.addTiles(codes.StrongWall, art.Wall, wallKind)
+
+let wallKind = world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall, wallKind)
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
 
-world.addTileSprites(codes.Boulder, art.Boulder, rockKind)
+let rockKind = world.addTileSprites(codes.Boulder, art.Boulder)
 world.addTileSprites(codes.Diamond, art.Diamond, rockKind)
 world.addTileSprites(codes.Enemy, art.Enemy)
 world.addTileSprites(codes.Player, art.Player)
@@ -205,9 +204,7 @@ scene.cameraFollowSprite(player)
 
 // player logic
 
-// TODO: keyboard events are delivered faster than sprite
-// TODO: can move between tiles, need to queue outside
-// TODO: off sprites
+// TODO: a move event is a good idea, so it can be queued
 tw.bindToController(player, playerMoves)
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {

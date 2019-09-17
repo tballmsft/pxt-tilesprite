@@ -286,8 +286,9 @@ namespace TileWorld {
         private multipleSprites: TileSprite[];
         private tileHandler: (colliding: TileSprite[]) => void;
         private arrivalHandlers: ((ts: TileSprite, d: Dir) => void)[][];
-        private stationaryHandlers: ((ts: TileSprite) => void)[][];
+        private stationaryHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private backgroundTile: number;
+        private tileKind: number;
 
         constructor(tileMap: Image, backgroundTile: number) {
             this.backgroundTile = backgroundTile
@@ -300,21 +301,32 @@ namespace TileWorld {
             this.multipleSprites = [];
             this.tileHandler = undefined;
             this.arrivalHandlers = []
-            this.stationaryHandlers = []
+            this.stationaryHandlers = {}
             scene.setTileMap(this.tileMap)
+            this.tileKind = SpriteKind.create()
         }
 
         addTiles(code: number, art: Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
-            this.codeToKind[code] = kind;
             scene.setTile(code, art)
+            return this.trackKind(code, kind);
+        }
+
+        private trackKind(code: number, kind: number) {
+            let retKind = kind
+            if (kind > this.tileKind) {
+                this.codeToKind[code] = kind;
+                retKind = kind
+            } else if (kind == 0) {
+                retKind = SpriteKind.create()
+            }
+            return retKind
         }
 
         addTileSprites(code: number, art:Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
-            this.codeToKind[code] = kind;
             this.spriteCodes.push(code);
             for (let value of tiles) {
                 let tileSprite = new TileSprite(this, code, art, kind)
@@ -328,9 +340,11 @@ namespace TileWorld {
                     if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
                 }
             }
+            return this.trackKind(code, kind)
         }
 
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
+            // code or kind switch???
             if (!this.stationaryHandlers[code]) {
                 this.stationaryHandlers[code] = []
                 let process = (s: TileSprite) => this.stationaryHandlers[s.getCode()].forEach((h) => h(s));
