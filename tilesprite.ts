@@ -71,6 +71,11 @@ namespace TileWorld {
         onTileArrived(handler: (ts: TileSprite, d: Dir) => void) {
             this.onArrived = handler
         }
+        notifyArrived(d: Dir) {
+            if (this.onArrived) {
+                this.onArrived(this, d)
+            }
+        }
         onTileStationary(handler: (ts: TileSprite) => void) {
             this.onStationary = handler
         }
@@ -240,34 +245,6 @@ namespace TileWorld {
         public getRow() { return this.row }
     }
 
-    // basic movement for player sprite
-    export function bindToController(sprite: TileSprite, move: (s: TileSprite, dir: Dir) => void) {
-        controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            move(sprite, Dir.Left)
-        })
-        controller.left.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            move(sprite, Dir.Right)
-        })
-        controller.right.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            move(sprite, Dir.Up)
-        })
-        controller.up.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            move(sprite, Dir.Down)
-        })
-        controller.down.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-    }
-
     // description of sprites
     export type Description = { c: number, a: Image, t: number }
 
@@ -298,6 +275,7 @@ namespace TileWorld {
             // TODO
         }
     }
+
     export class TileWorld {
         private codeToKind: number[];
         private spriteCodes: number[];
@@ -339,7 +317,6 @@ namespace TileWorld {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
         }
-
 
         addTileSprites(code: number, art:Image) {
             let tiles = scene.getTilesByType(code)
@@ -599,5 +576,33 @@ namespace TileWorld {
                 }
             })
         }
+    }
+
+    // basic movement for player sprite
+    export function bindToController(sprite: TileSprite) {
+        controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+            sprite.notifyArrived(Dir.Left)
+        })
+        controller.left.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.requestStop()
+        })
+        controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+            sprite.notifyArrived(Dir.Right)
+        })
+        controller.right.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.requestStop()
+        })
+        controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+            sprite.notifyArrived(Dir.Up)
+        })
+        controller.up.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.requestStop()
+        })
+        controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+            sprite.notifyArrived(Dir.Down)
+        })
+        controller.down.onEvent(ControllerButtonEvent.Released, function () {
+            sprite.requestStop()
+        })
     }
 }

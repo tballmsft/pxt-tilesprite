@@ -202,34 +202,9 @@ let rockKind = world.makeGroup(codes.Boulder, codes.Diamond)
 
 scene.cameraFollowSprite(world.getSprite(codes.Player))
 
-// TODO: put this in world and have it generate Arrived event on key down
-tw.bindToController(world.getSprite(codes.Player), playerMoves)
+tw.bindToController(world.getSprite(codes.Player))
 
-function movePlayer1(player: tw.TileSprite, dir: tw.Dir) {
-    world.check(dir != tw.Dir.None)
-    world.check(!world.containsAt(codes.Boulder, player, dir))  
-    world.check(!world.containsAt(wallKind, player, dir))
-    player.moveOne(dir)  
-}
-
-function movePlayer2(player: tw.TileSprite, dir: tw.Dir) {
-    world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
-    world.check(world.containsAt(codes.Boulder, player, dir))
-    world.check(world.containsAt(codes.Space, player, dir, dir))
-    world.getSprite(codes.Boulder, player, dir).moveOne(dir)
-    player.moveOne(dir)
-}
-
-function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    try {
-        movePlayer1(player, dir);
-        movePlayer2(player, dir);
-    } catch (e) {
-
-    }
-}
-
-// world.canMove(codes,Player (player,dir) => { }
+// player logic
 
 // whereever player goes, replace with space
 world.onTileArrived(codes.Player, (player) => {
@@ -237,11 +212,18 @@ world.onTileArrived(codes.Player, (player) => {
 })
 
 world.onTileArrived(codes.Player, (player, dir) => {
-    movePlayer1(player, dir)
+    world.check(dir != tw.Dir.None)
+    world.check(!world.containsAt(codes.Boulder, player, dir))
+    world.check(!world.containsAt(wallKind, player, dir))
+    player.moveOne(dir)  
 })
 
 world.onTileArrived(codes.Player, (player, dir) => {
-    movePlayer2(player, dir)
+    world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
+    world.check(world.containsAt(codes.Boulder, player, dir))
+    world.check(world.containsAt(codes.Space, player, dir, dir))
+    world.getSprite(codes.Boulder, player, dir).moveOne(dir)
+    player.moveOne(dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
