@@ -239,16 +239,15 @@ world.onTileArrived(codes.Player, (player) => {
 
 // if the player hasn't received a stop command, try to keep moving
 world.onTileArrived(codes.Player, (player, dir) => {
-    if (dir != tw.Dir.None) playerMoves(player, dir);
+    world.check(dir != tw.Dir.None)
+    playerMoves(player, dir);
     // world.tryToMove(player,dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
 world.onTileTransition(codes.Player, (player) => {
-    if (world.containsAt(codes.Diamond, player)) {
-        let diamond = world.getSprite(codes.Diamond, player)
-        world.removeSprite(diamond);
-    }
+    world.check(world.containsAt(codes.Diamond, player))
+    world.removeSprite(world.getSprite(codes.Diamond, player));
 })
 
 // rock logic
@@ -263,7 +262,7 @@ world.onTileStationary(rockKind, (rock) => {
 
 // rock falls to right
 world.onTileStationary(rockKind, (rock) => {
-    world.check(world.containsAt(rockKind, rock, tw.Dir.Down));
+    world.check(world.containsAt(rockKind, rock, tw.Dir.Down))
     world.check(world.containsAt(codes.Space, rock, tw.Dir.Right))
     world.check(world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
     rock.moveOne(tw.Dir.Right)
@@ -278,19 +277,17 @@ world.onTileStationary(rockKind, (rock) => {
 })
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
-    if (dir == tw.Dir.Down) {
-        if (!world.tileIs(codes.Space, s, tw.Dir.Down) ||
-            world.containsAt(rockKind, s, tw.Dir.Down))
-            s.deadStop();
-    }
+    world.check(dir == tw.Dir.Down);
+    world.check(!world.tileIs(codes.Space, s, tw.Dir.Down) ||
+                world.containsAt(rockKind, s, tw.Dir.Down))
+    s.deadStop();
 })
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
-    if (dir != tw.Dir.Down && world.containsAt(codes.Space, s, tw.Dir.Down)) {
-        // stop any motion and fall if there's a hole
-        s.deadStop();
-        s.moveOne(tw.Dir.Down)
-    }
+    world.check(dir != tw.Dir.Down)
+    world.check(world.containsAt(codes.Space, s, tw.Dir.Down))
+    s.deadStop();
+    s.moveOne(tw.Dir.Down)
 })
 
 world.onSpritesInTile(function (collision: tw.TileSprite[]) {

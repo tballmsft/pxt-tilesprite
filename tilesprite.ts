@@ -275,6 +275,29 @@ namespace TileWorld {
 
     }
 
+    let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
+        try {
+            h(s)
+        } catch (e) {
+            // TODO
+        }
+    }
+
+    let tryCatchDir = (h: (s: TileSprite, d: Dir) => void, s: TileSprite, d: Dir) => {
+        try {
+            h(s,d)
+        } catch (e) {
+            // TODO
+        }
+    }
+
+    let tryCatchColRow = (h: (s: TileSprite, c: number, r: number) => void, s: TileSprite, c: number, r: number) => {
+        try {
+            h(s, c, r)
+        } catch (e) {
+            // TODO
+        }
+    }
     export class TileWorld {
         private codeToKind: number[];
         private spriteCodes: number[];
@@ -360,13 +383,6 @@ namespace TileWorld {
         }
 
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
-            let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
-                    try {
-                        h(s)
-                    } catch (e) {
-                        // TODO
-                    } 
-                }
             if (!this.stationaryHandlers[code]) {
                 this.stationaryHandlers[code] = []
                 if (code < this.tileKind) {
@@ -387,10 +403,12 @@ namespace TileWorld {
             if (!this.arrivalHandlers[code]) {
                 this.arrivalHandlers[code] = [];
                 if (code < this.tileKind) {
-                    let process = (s: TileSprite, d: Dir) => this.arrivalHandlers[s.getCode()].forEach((h) => h(s, d));
+                    let process = (s: TileSprite, d: Dir) => 
+                        this.arrivalHandlers[s.getCode()].forEach((h) => tryCatchDir(h, s, d));
                     this.sprites[code].forEach((spr) => spr.onTileArrived(process))
                 } else {
-                    let process = (s: TileSprite, d: Dir) => this.arrivalHandlers[s.kind()].forEach((h) => h(s, d));
+                    let process = (s: TileSprite, d: Dir) => 
+                        this.arrivalHandlers[s.kind()].forEach((h) => tryCatchDir(h, s, d));
                     let sprites = game.currentScene().spritesByKind[code].sprites()
                     sprites.forEach((spr) => (<TileSprite>spr).onTileArrived(process));
                 }
@@ -398,14 +416,16 @@ namespace TileWorld {
             this.arrivalHandlers[code].push(h);
         }
 
-        onTileTransition(code: number, h: (ts: TileSprite) => void) {
+        onTileTransition(code: number, h: (ts: TileSprite, r: number, c: number) => void) {
             if (!this.transitionHandlers[code]) {
                 this.transitionHandlers[code] = [];
                 if (code < this.tileKind) {
-                    let process = (s: TileSprite, c: number, r: number) => this.transitionHandlers[s.getCode()].forEach((h) => h(s, c, r));
+                    let process = (s: TileSprite, c: number, r: number) => 
+                        this.transitionHandlers[s.getCode()].forEach((h) => tryCatchColRow(h, s, c, r));
                     this.sprites[code].forEach((spr) => spr.onTileTransition(process))
                 } else {
-                    let process = (s: TileSprite, c: number, r: number) => this.transitionHandlers[s.kind()].forEach((h) => h(s, c, r));
+                    let process = (s: TileSprite, c: number, r: number) => 
+                        this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
                     let sprites = game.currentScene().spritesByKind[code].sprites()
                     sprites.forEach((spr) => (<TileSprite>spr).onTileTransition(process));
                 }
