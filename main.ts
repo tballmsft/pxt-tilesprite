@@ -204,6 +204,16 @@ scene.cameraFollowSprite(world.getSprite(codes.Player))
 
 tw.bindToController(world.getSprite(codes.Player))
 
+// we have a nice playground for logic here (no arithmetic, just fixed predicates)
+
+// interesting issues that arise in our semantics:
+// 1. multiple rules for S could fire and succeed on S.
+// 2. a rule on A and a rule on B could both act on sprite S (S != A, S != B)
+
+// extensions: askToMove event
+
+// fun stuff: debugger
+
 // player logic
 
 // whereever player goes, replace with space
@@ -272,6 +282,11 @@ world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
     s.moveOne(tw.Dir.Down)
 })
 
+// TODO: observe that we only get multiple sprites in a tile
+// TODO: because AT LEAST ONE sprite transitioned into the tile,
+// TODO: so we don't need a special function like this.
+// TODO: Of course, we could see MORE THAN ONE sprite transitioning into the tile,
+// TODO: so there could be multiple firings.
 world.onSpritesInTile(function (collision: tw.TileSprite[]) {
     // there are a few cases here to consider:
     // 1. all sprites are moving
@@ -286,3 +301,11 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
         choose.knockBack()
     }
 })
+
+/*
+world.onTileTransition(rockKind, (player) => {
+    // we don't want to match against ourselves (need a checkMultiple predicate)
+    world.check(world.containsAt(codes.Diamond, player))
+    world.removeSprite(world.getSprite(codes.Diamond, player));
+})
+*/
