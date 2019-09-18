@@ -186,14 +186,19 @@ namespace art {
 }
 
 let world = new tw.TileWorld(levels.level1, codes.Space)
-let wallKind = world.addTiles(codes.StrongWall, art.Wall)
-world.addTiles(codes.Wall, art.Wall, wallKind)
+
+world.addTiles(codes.StrongWall, art.Wall)
+world.addTiles(codes.Wall, art.Wall)
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
-let rockKind = world.addTileSprites(codes.Boulder, art.Boulder)
-world.addTileSprites(codes.Diamond, art.Diamond, rockKind)
+world.addTileSprites(codes.Boulder, art.Boulder)
+world.addTileSprites(codes.Diamond, art.Diamond)
 world.addTileSprites(codes.Enemy, art.Enemy)
 world.addTileSprites(codes.Player, art.Player)
+
+// names for sets
+let wallKind = world.makeGroup(codes.Wall, codes.StrongWall)
+let rockKind = world.makeGroup(codes.Boulder, codes.Diamond)
 
 scene.cameraFollowSprite(world.getSprite(codes.Player))
 

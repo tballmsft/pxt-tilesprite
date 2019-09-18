@@ -28,9 +28,8 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(world: TileWorld, code: number, image: Image, sk: number = -1, bits: number = 4) {
+        constructor(world: TileWorld, code: number, image: Image, bits: number = 4) {
             super(image);
-            this.setKind(sk)
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
             this.parent = world;
@@ -313,29 +312,19 @@ namespace TileWorld {
             game.onUpdate(() => { this.update(); })
         }
 
-        addTiles(code: number, art: Image, kind: number = 0) {
+        addTiles(code: number, art: Image) {
             let tiles = scene.getTilesByType(code)
-            scene.setTile(code, art)
-            return this.trackKind(code, kind);
+            scene.setTile(code, art);
         }
 
-        private trackKind(code: number, kind: number) {
-            let retKind = kind
-            if (kind == 0) {
-                retKind = SpriteKind.create()
-            }
-            this.codeToKind[code] = retKind;
-            return retKind
-        }
 
-        addTileSprites(code: number, art:Image, kind: number = 0) {
-            let retKind = this.trackKind(code, kind)
+        addTileSprites(code: number, art:Image) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
-                let tileSprite = new TileSprite(this, code, art, retKind)
+                let tileSprite = new TileSprite(this, code, art)
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }
@@ -346,7 +335,28 @@ namespace TileWorld {
                     if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
                 }
             }
-            return retKind
+        }
+
+        private setKind(code: number, kind: number) {
+            if (this.spriteCodes.find(c => c == code)) {
+                this.sprites[code].forEach((s) => { s.setKind(kind) })
+            }
+        }
+
+        makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
+            let kind = SpriteKind.create()
+            this.codeToKind[code] = kind;
+            this.codeToKind[code2] = kind;
+            this.setKind(code, kind); this.setKind(code2, kind)
+            if (code3 != 0xff) {
+                this.codeToKind[code3] = kind;
+                this.setKind(code3, kind);
+            }
+            if (code4 != 0xff) {
+                this.codeToKind[code4] = kind;
+                this.setKind(code4, kind);
+            }
+            return kind;
         }
 
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
