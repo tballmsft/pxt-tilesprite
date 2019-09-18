@@ -202,46 +202,46 @@ let rockKind = world.makeGroup(codes.Boulder, codes.Diamond)
 
 scene.cameraFollowSprite(world.getSprite(codes.Player))
 
+// TODO: put this in world and have it generate Arrived event on key down
 tw.bindToController(world.getSprite(codes.Player), playerMoves)
 
+function movePlayer1(player: tw.TileSprite, dir: tw.Dir) {
+    world.check(dir != tw.Dir.None)
+    world.check(!world.containsAt(codes.Boulder, player, dir))  
+    world.check(!world.containsAt(wallKind, player, dir))
+    player.moveOne(dir)  
+}
+
+function movePlayer2(player: tw.TileSprite, dir: tw.Dir) {
+    world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
+    world.check(world.containsAt(codes.Boulder, player, dir))
+    world.check(world.containsAt(codes.Space, player, dir, dir))
+    world.getSprite(codes.Boulder, player, dir).moveOne(dir)
+    player.moveOne(dir)
+}
+
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
-    if (!world.containsAt(wallKind, player, dir) && 
-        !world.containsAt(codes.Boulder, player, dir)) {
-        player.moveOne(dir)
-    } else if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
-        if (world.containsAt(codes.Boulder, player, dir) &&
-            world.containsAt(codes.Space, player, dir, dir)) {
-            let rock = world.getSprite(codes.Boulder, player, dir)
-            rock.moveOne(dir)
-            player.moveOne(dir)
-        }
+    try {
+        movePlayer1(player, dir);
+        movePlayer2(player, dir);
+    } catch (e) {
+
     }
 }
 
-// get rid of conditionals!
-
-// world.canMove(codes,Player (player,dir) => { 
-//   check(!world.containsAt(wallKind, player, dir))
-//   check(!world.containsAt(codes.Boulder, player, dir))
-// }
-
-// world.canMove(codes.Player, (player,dir) => {
-//   check (dir == tw.Dir.Left || dir == tw.Dir.Right);
-//   check (world.containsAt(codes.Boulder, player, dir));
-//   let rock = world.getSpriteByCode(codes.Boulder, player, dir)
-//   check (rock.canMove(dir))
-// }
+// world.canMove(codes,Player (player,dir) => { }
 
 // whereever player goes, replace with space
 world.onTileArrived(codes.Player, (player) => {
     world.setCode(player, codes.Space);
 })
 
-// if the player hasn't received a stop command, try to keep moving
 world.onTileArrived(codes.Player, (player, dir) => {
-    world.check(dir != tw.Dir.None)
-    playerMoves(player, dir);
-    // world.tryToMove(player,dir)
+    movePlayer1(player, dir)
+})
+
+world.onTileArrived(codes.Player, (player, dir) => {
+    movePlayer2(player, dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
