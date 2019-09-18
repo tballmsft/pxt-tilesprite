@@ -360,13 +360,22 @@ namespace TileWorld {
         }
 
         onTileStationary(code: number, h: (ts: TileSprite) => void) {
+            let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
+                    try {
+                        h(s)
+                    } catch (e) {
+                        // TODO
+                    } 
+                }
             if (!this.stationaryHandlers[code]) {
                 this.stationaryHandlers[code] = []
                 if (code < this.tileKind) {
-                    let process = (s: TileSprite) => this.stationaryHandlers[s.getCode()].forEach((h) => h(s));
+                    let process = (s: TileSprite) => 
+                        this.stationaryHandlers[s.getCode()].forEach((h) => tryCatch(h,s));
                     this.sprites[code].forEach((spr) => spr.onTileStationary(process));
                 } else {
-                    let process = (s: TileSprite) => this.stationaryHandlers[s.kind()].forEach((h) => h(s));
+                    let process = (s: TileSprite) => 
+                        this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h,s));
                     let sprites = game.currentScene().spritesByKind[code].sprites()
                     sprites.forEach((spr) => (<TileSprite>spr).onTileStationary(process));
                 }

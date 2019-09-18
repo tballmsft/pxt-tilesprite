@@ -257,26 +257,24 @@ world.onTileTransition(codes.Player, (player) => {
 
 // rock starts falling if there is a space below it
 world.onTileStationary(rockKind, (rock) => {
-    if (world.containsAt(codes.Space, rock, tw.Dir.Down))
-        rock.moveOne(tw.Dir.Down)
+    world.check(world.containsAt(codes.Space, rock, tw.Dir.Down))
+    rock.moveOne(tw.Dir.Down)
 })
 
 // rock falls to right
 world.onTileStationary(rockKind, (rock) => {
-    if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
-        if (world.containsAt(codes.Space, rock, tw.Dir.Right) &&
-            world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
-            rock.moveOne(tw.Dir.Right);
-    }
+    world.check(world.containsAt(rockKind, rock, tw.Dir.Down));
+    world.check(world.containsAt(codes.Space, rock, tw.Dir.Right))
+    world.check(world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
+    rock.moveOne(tw.Dir.Right)
 })
 
 // rock falls to left
 world.onTileStationary(rockKind, (rock) => {
-    if (world.containsAt(rockKind, rock, tw.Dir.Down)) {
-        if (world.containsAt(codes.Space, rock, tw.Dir.Left) &&
-            world.containsAt(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
-            rock.moveOne(tw.Dir.Left);
-    }
+    world.check(world.containsAt(rockKind, rock, tw.Dir.Down))
+    world.check(world.containsAt(codes.Space, rock, tw.Dir.Left))
+    world.check(world.containsAt(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
+    rock.moveOne(tw.Dir.Left)
 })
 
 world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
