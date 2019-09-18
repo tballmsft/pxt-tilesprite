@@ -195,9 +195,9 @@ world.addTileSprites(codes.Diamond, art.Diamond, rockKind)
 world.addTileSprites(codes.Enemy, art.Enemy)
 world.addTileSprites(codes.Player, art.Player)
 
-scene.cameraFollowSprite(world.getSpriteByCode(codes.Player))
+scene.cameraFollowSprite(world.getSprite(codes.Player))
 
-tw.bindToController(world.getSpriteByCode(codes.Player), playerMoves)
+tw.bindToController(world.getSprite(codes.Player), playerMoves)
 
 function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     if (!world.containsAt(wallKind, player, dir) && 
@@ -206,7 +206,7 @@ function playerMoves(player: tw.TileSprite, dir: tw.Dir) {
     } else if (dir == tw.Dir.Left || dir == tw.Dir.Right) {
         if (world.containsAt(codes.Boulder, player, dir) &&
             world.containsAt(codes.Space, player, dir, dir)) {
-            let rock = world.getSpriteByCode(codes.Boulder, player, dir)
+            let rock = world.getSprite(codes.Boulder, player, dir)
             rock.moveOne(dir)
             player.moveOne(dir)
         }
@@ -241,7 +241,7 @@ world.onTileArrived(codes.Player, (player, dir) => {
 // if the player is moving into a tile with a diamond, eat it
 world.onTileTransition(codes.Player, (player) => {
     if (world.containsAt(codes.Diamond, player)) {
-        let diamond = world.getSpriteByCode(codes.Diamond, player)
+        let diamond = world.getSprite(codes.Diamond, player)
         world.removeSprite(diamond);
     }
 })

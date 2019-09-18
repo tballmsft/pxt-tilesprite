@@ -272,6 +272,10 @@ namespace TileWorld {
     // description of sprites
     export type Description = { c: number, a: Image, t: number }
 
+    class CheckFailed {
+
+    }
+
     export class TileWorld {
         private codeToKind: number[];
         private spriteCodes: number[];
@@ -390,13 +394,24 @@ namespace TileWorld {
             this.transitionHandlers[code].push(h);
         }
 
-        onCanIMove(kind: number, h: (ts: TileSprite, dir: Dir) => boolean) {
+        check(expr: boolean) {
+            if (!expr) {
+                throw new CheckFailed();
+            }
+        }
+
+        onCanIMove(kind: number, h: (ts: TileSprite, dir: Dir) => void) {
             let process = (s: TileSprite, d: Dir) => {
-                if (h(s,d)) {
-                    s.moveOne(d)
-                    return true
-                } else
-                    return false
+                try {
+                    if (d != Dir.None) {
+                        h(s, d);
+                        s.moveOne(d)
+                    }
+                } catch (e) {
+                    // re-raise?
+                } finally {
+
+                }
             }
         }
 
@@ -436,7 +451,7 @@ namespace TileWorld {
         private checkTile(code: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
                 if (this.spriteCodes.find(c => code == c))
-                    return this.getSpriteByCode(code, curs) != null
+                    return this.getSprite(code, curs) != null
                 else 
                     return false
             } else {
@@ -447,7 +462,7 @@ namespace TileWorld {
         private checkTileKind(kind: number, curs: Cursor) {
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
                 // TODO: need a similar check to check Tile?
-                return this.getSpriteByKind(kind, curs) != null
+                return this.getSprite(kind, curs) != null
             } else {
                 return this.codeToKind[this.spriteMap.getPixel(curs.getColumn(), curs.getRow())] == kind
             }
@@ -458,7 +473,14 @@ namespace TileWorld {
             s.destroy()
         }
 
-        getSpriteByCode(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        getSprite(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            if (code < this.tileKind)
+                return this.getSpriteByCode(code, orig, dir, dir2, dir3)
+            else
+                return this.getSpriteByKind(code, orig, dir, dir2, dir3)
+        }
+
+        private getSpriteByCode(code: number, orig: Tile = null, dir: Dir, dir2: Dir, dir3: Dir) {
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
                 return this.sprites[code].find((t: Tile) =>
@@ -468,20 +490,20 @@ namespace TileWorld {
             }
         }
 
-        getSpriteByKind(kind: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        private getSpriteByKind(kind: number, orig: Tile = null, dir: Dir, dir2: Dir, dir3: Dir) {
             let ss = game.currentScene().spritesByKind[kind].sprites()
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
-                return ss.find(function (s: Sprite, index: number) {
+                return <TileSprite>ss.find(function (s: Sprite, index: number) {
                     return ((<TileSprite>s).getColumn() == cursor.getColumn()) &&
                            ((<TileSprite>s).getRow() == cursor.getRow())
                 })
             } else {
-                return ss[0]
+                return <TileSprite>ss[0]
             }
         }
 
-        update() {
+        private update() {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
