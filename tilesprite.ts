@@ -1,12 +1,14 @@
 namespace TileWorld {
 
     // which direction is the sprite moving
-    export enum Dir { None, Left, Right, Up, Down }
-
-    export interface Tile {
-        getColumn(): number;
-        getRow(): number;
+    export enum Dir { 
+        None, 
+        Left, 
+        Right, 
+        Up, 
+        Down 
     }
+
 
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
@@ -222,63 +224,12 @@ namespace TileWorld {
         }
     }
 
-    // a cursor is just a coordinate
-    class Cursor implements Tile {
-        private world: TileWorld;
-        private col: number;
-        private row: number;
-        constructor(w: TileWorld, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
-            this.world = w;
-            this.col = s.getColumn();
-            this.row = s.getRow();
-            this.move(dir); this.move(dir2); this.move(dir3)
-        }
-        private move(dir: Dir) {
-            switch (dir) {
-                case Dir.Left: this.col--; break;
-                case Dir.Right: this.col++; break;
-                case Dir.Up: this.row--; break;
-                case Dir.Down: this.row++; break;
-            }
-        }
-        public getColumn() { return this.col }
-        public getRow() { return this.row }
-    }
-
-    // description of sprites
-    export type Description = { c: number, a: Image, t: number }
-
-    class CheckFailed {
-
-    }
-
-    let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
-        try {
-            h(s)
-        } catch (e) {
-            // TODO
-        }
-    }
-
-    let tryCatchDir = (h: (s: TileSprite, d: Dir) => void, s: TileSprite, d: Dir) => {
-        try {
-            h(s,d)
-        } catch (e) {
-            // TODO
-        }
-    }
-
-    let tryCatchColRow = (h: (s: TileSprite, c: number, r: number) => void, s: TileSprite, c: number, r: number) => {
-        try {
-            h(s, c, r)
-        } catch (e) {
-            // TODO
-        }
-    }
-
+    // the tile world manages tile sprites
     export class TileWorld {
-        private codeToKind: number[];
+        // which codes map to sprites?
         private spriteCodes: number[];
+        // map codes to kinds
+        private codeToKind: number[];
         // the sprites, divided up by code
         private sprites: TileSprite[][];
         // the current tile map (no sprites)  
@@ -412,7 +363,7 @@ namespace TileWorld {
 
         check(expr: boolean) {
             if (!expr) {
-                throw new CheckFailed();
+                throw checkFailed;
             }
         }
 
@@ -578,7 +529,7 @@ namespace TileWorld {
         }
     }
 
-    // basic movement for player sprite
+    // basic movement for tile sprite
     export function bindToController(sprite: TileSprite) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
             sprite.notifyArrived(Dir.Left)
@@ -604,5 +555,65 @@ namespace TileWorld {
         controller.down.onEvent(ControllerButtonEvent.Released, function () {
             sprite.requestStop()
         })
+    }
+
+    // helpers
+
+    interface Tile {
+        getColumn(): number;
+        getRow(): number;
+    }
+
+    // a cursor is just a coordinate
+    class Cursor implements Tile {
+        private world: TileWorld;
+        private col: number;
+        private row: number;
+        constructor(w: TileWorld, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            this.world = w;
+            this.col = s.getColumn();
+            this.row = s.getRow();
+            this.move(dir); this.move(dir2); this.move(dir3)
+        }
+        private move(dir: Dir) {
+            switch (dir) {
+                case Dir.Left: this.col--; break;
+                case Dir.Right: this.col++; break;
+                case Dir.Up: this.row--; break;
+                case Dir.Down: this.row++; break;
+            }
+        }
+        public getColumn() { return this.col }
+        public getRow() { return this.row }
+    }
+
+    class CheckFailed {
+
+    }
+
+    let checkFailed = new CheckFailed();
+
+    let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
+        try {
+            h(s)
+        } catch (e) {
+            // TODO
+        }
+    }
+
+    let tryCatchDir = (h: (s: TileSprite, d: Dir) => void, s: TileSprite, d: Dir) => {
+        try {
+            h(s, d)
+        } catch (e) {
+            // TODO
+        }
+    }
+
+    let tryCatchColRow = (h: (s: TileSprite, c: number, r: number) => void, s: TileSprite, c: number, r: number) => {
+        try {
+            h(s, c, r)
+        } catch (e) {
+            // TODO
+        }
     }
 }

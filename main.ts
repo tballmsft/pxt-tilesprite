@@ -191,6 +191,7 @@ world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall)
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
+
 world.addTileSprites(codes.Boulder, art.Boulder)
 world.addTileSprites(codes.Diamond, art.Diamond)
 world.addTileSprites(codes.Enemy, art.Enemy)
@@ -213,6 +214,10 @@ tw.bindToController(world.getSprite(codes.Player))
 // extensions: askToMove event
 
 // fun stuff: debugger
+
+//  - - - 
+//  - R -  =>  R(D) 
+//  - S -
 
 // player logic
 
