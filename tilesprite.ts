@@ -372,6 +372,15 @@ namespace TileWorld {
             this.transitionHandlers[code].push(h);
         }
 
+        isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) {
+            this.check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d==c3) )
+        }
+
+        isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) {
+            this.check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
+        }
+
+
         check(expr: boolean) {
             if (!expr) {
                 throw checkFailed;

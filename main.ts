@@ -234,15 +234,14 @@ world.onTileArrived(codes.Player, (tile) => {
 })
 
 world.onTileArrived(codes.Player, (tile, dir) => {
-    // API for checking dir
-    world.check(dir != tw.Dir.None)
+    world.isNotOneOf(dir, tw.Dir.None)
     tile.hasNo(codes.Boulder, dir)
     tile.hasNo(wallKind, dir)
     tile.moveOne(dir)  
 })
 
 world.onTileArrived(codes.Player, (tile, dir) => {
-    world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
+    world.isOneOf(dir, tw.Dir.Left, tw.Dir.Right)
     tile.has(codes.Space, dir, dir)
     tile.has(codes.Boulder, dir)
     tile.get(codes.Boulder, dir).moveOne(dir)
@@ -282,14 +281,19 @@ world.onTileStationary(rockKind, (tile) => {
 })
 
 world.onTileArrived(rockKind, (tile, dir) => {
-    world.check(dir == tw.Dir.Down);
-    world.check(!world.tileIs(codes.Space, tile, tw.Dir.Down) ||
-        world.containsAt(rockKind, tile, tw.Dir.Down))
+    world.isOneOf(dir, tw.Dir.Down);
+    world.check(!world.tileIs(codes.Space, tile, tw.Dir.Down))
     tile.deadStop();
 })
 
 world.onTileArrived(rockKind, (tile, dir) => {
-    world.check(dir != tw.Dir.Down)
+    world.isOneOf(dir, tw.Dir.Down);
+    tile.has(rockKind, tw.Dir.Down)
+    tile.deadStop();
+})
+
+world.onTileArrived(rockKind, (tile, dir) => {
+    world.isNotOneOf(dir, tw.Dir.Down);
     tile.has(codes.Space, tw.Dir.Down)
     tile.deadStop();
     tile.moveOne(tw.Dir.Down)
@@ -319,6 +323,5 @@ world.onSpritesInTile(function (collision: tw.TileSprite[]) {
 world.onTileTransition(rockKind, (player) => {
     // we don't want to match against ourselves (need a checkMultiple predicate)
     world.check(world.containsAt(codes.Diamond, player))
-    world.removeSprite(world.getSprite(codes.Diamond, player));
 })
 */
