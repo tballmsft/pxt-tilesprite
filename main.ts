@@ -218,6 +218,8 @@ tw.bindToController(world.getSprite(codes.Player))
 // 1. multiple rules for S could fire and succeed on S.
 // 2. a rule on A and a rule on B could both act on sprite S (S != A, S != B)
 
+// how to state that Down has higher priority than all other directions (for Rocks)
+
 // extensions: askToMove event
 
 // fun stuff: debugger
@@ -255,8 +257,6 @@ world.onTileTransition(codes.Player, (tile) => {
 })
 
 // rock logic
-
-// how to state that Down has higher priority than all other directions (for Rocks)
 
 // rock starts falling if there is a space below it
 world.onTileStationary(rockKind, (tile) => {
@@ -299,29 +299,8 @@ world.onTileArrived(rockKind, (tile, dir) => {
     tile.moveOne(tw.Dir.Down)
 })
 
-// TODO: observe that we only get multiple sprites in a tile
-// TODO: because AT LEAST ONE sprite transitioned into the tile,
-// TODO: so we don't need a special function like this.
-// TODO: Of course, we could see MORE THAN ONE sprite transitioning into the tile,
-// TODO: so there could be multiple firings.
-world.onSpritesInTile(function (collision: tw.TileSprite[]) {
-    // there are a few cases here to consider:
-    // 1. all sprites are moving
-    // 2. some are stationary, some are moving
-    // 3. all are stationary (currently, won't happen)
-    // there's also the question of the code of the sprite, and its kind
-
-    // let's first deal with moving rocks
-    let onlyMovingRocks = collision.every((spr) => spr.kind() == rockKind )
-    if (onlyMovingRocks) {
-        let choose = collision.pop()
-        choose.knockBack()
-    }
+world.onTileTransition(rockKind, (tile) => {
+    // TODO: need to generalize this to work with kinds as well
+    tile.hasMultiple(codes.Boulder)
+    tile.knockBack()
 })
-
-/*
-world.onTileTransition(rockKind, (player) => {
-    // we don't want to match against ourselves (need a checkMultiple predicate)
-    world.check(world.containsAt(codes.Diamond, player))
-})
-*/

@@ -45,6 +45,9 @@ namespace TileWorld {
         has(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
+        hasMultiple(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            this.parent.check(this.parent.hasMultiple(code, this, dir, dir2, dir3))
+        }
         get(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             return this.parent.getSprite(code, this, dir, dir2, dir3)
         }
@@ -380,30 +383,10 @@ namespace TileWorld {
             this.check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
         }
 
-
         check(expr: boolean) {
             if (!expr) {
                 throw checkFailed;
             }
-        }
-
-        onCanIMove(kind: number, h: (ts: TileSprite, dir: Dir) => void) {
-            let process = (s: TileSprite, d: Dir) => {
-                try {
-                    if (d != Dir.None) {
-                        h(s, d);
-                        s.moveOne(d)
-                    }
-                } catch (e) {
-                    // re-raise?
-                } finally {
-
-                }
-            }
-        }
-
-        onSpritesInTile(h: (collision: TileSprite[]) => void) {
-            this.tileHandler = h;
         }
 
         setCode(curs: Tile, code: number) {
@@ -415,6 +398,18 @@ namespace TileWorld {
                 return this.hasCode(codeKind, orig, dir, dir2, dir3)
             else
                 return this.hasKind(codeKind, orig, dir, dir2, dir3)
+        }
+
+        hasMultiple(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            if (codeKind < this.tileKind && this.spriteCodes.find(c => c == codeKind)) {
+                let cnt = 0
+                this.sprites[codeKind].forEach((s) => {
+                    if (s.getColumn() == orig.getColumn() && s.getRow() == orig.getRow())
+                        cnt++
+                })
+                return cnt > 1
+            }
+            return false;
         }
 
         tileIs(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
