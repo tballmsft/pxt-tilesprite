@@ -42,6 +42,18 @@ namespace TileWorld {
             this.onStationary = undefined;
             this.onTransition = undefined;
         }
+        has(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
+        }
+        get(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            return this.parent.getSprite(code, this, dir, dir2, dir3)
+        }
+        hasNo(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+            this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
+        }
+        remove() {
+            this.parent.removeSprite(this)
+        }
         //
         getCode() { return this.code }
         getColumn() { return this.x >> this.tileBits }

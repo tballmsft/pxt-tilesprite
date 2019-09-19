@@ -236,25 +236,23 @@ world.onTileArrived(codes.Player, (tile) => {
 world.onTileArrived(codes.Player, (tile, dir) => {
     // API for checking dir
     world.check(dir != tw.Dir.None)
-    // tile.has(dir, codes.Boulder)
-    world.check(!world.containsAt(codes.Boulder, tile, dir))
-    // tile.has(dir, codes.Wall, codes.Strongwall)
-    world.check(!world.containsAt(wallKind, tile, dir))
+    tile.hasNo(codes.Boulder, dir)
+    tile.hasNo(wallKind, dir)
     tile.moveOne(dir)  
 })
 
 world.onTileArrived(codes.Player, (tile, dir) => {
     world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
-    world.check(world.containsAt(codes.Boulder, tile, dir))
-    world.check(world.containsAt(codes.Space, tile, dir, dir))
-    world.getSprite(codes.Boulder, tile, dir).moveOne(dir)
+    tile.has(codes.Space, dir, dir)
+    tile.has(codes.Boulder, dir)
+    tile.get(codes.Boulder, dir).moveOne(dir)
     tile.moveOne(dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
 world.onTileTransition(codes.Player, (tile) => {
-    world.check(world.containsAt(codes.Diamond, tile))
-    world.removeSprite(world.getSprite(codes.Diamond, tile));
+    tile.has(codes.Diamond)
+    tile.get(codes.Diamond).remove()
 })
 
 // rock logic
@@ -263,23 +261,23 @@ world.onTileTransition(codes.Player, (tile) => {
 
 // rock starts falling if there is a space below it
 world.onTileStationary(rockKind, (tile) => {
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Down))
+    tile.has(codes.Space, tw.Dir.Down)
     tile.moveOne(tw.Dir.Down)
 })
 
 // rock falls to right
 world.onTileStationary(rockKind, (tile) => {
-    world.check(world.containsAt(rockKind, tile, tw.Dir.Down))
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Right))
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Right, tw.Dir.Down))
+    tile.has(rockKind, tw.Dir.Down)
+    tile.has(codes.Space, tw.Dir.Right)
+    tile.has(codes.Space, tw.Dir.Right, tw.Dir.Down)
     tile.moveOne(tw.Dir.Right)
 })
 
 // rock falls to left
 world.onTileStationary(rockKind, (tile) => {
-    world.check(world.containsAt(rockKind, tile, tw.Dir.Down))
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Left))
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Left, tw.Dir.Down))
+    tile.has(rockKind, tw.Dir.Down)
+    tile.has(codes.Space, tw.Dir.Left)
+    tile.has(codes.Space, tw.Dir.Left, tw.Dir.Down)
     tile.moveOne(tw.Dir.Left)
 })
 
@@ -292,7 +290,7 @@ world.onTileArrived(rockKind, (tile, dir) => {
 
 world.onTileArrived(rockKind, (tile, dir) => {
     world.check(dir != tw.Dir.Down)
-    world.check(world.containsAt(codes.Space, tile, tw.Dir.Down))
+    tile.has(codes.Space, tw.Dir.Down)
     tile.deadStop();
     tile.moveOne(tw.Dir.Down)
 })
