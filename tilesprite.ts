@@ -9,7 +9,6 @@ namespace TileWorld {
         Down 
     }
 
-
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
         public tileBits: number;

@@ -205,6 +205,13 @@ scene.cameraFollowSprite(world.getSprite(codes.Player))
 
 tw.bindToController(world.getSprite(codes.Player))
 
+// TODOs: 
+// 0. remove the need for boolean expressions and check call
+//    - has, lacks
+// 1. Defining conflicting actions.
+// 2. Run all rules and collect actions, but defer actual execution. 
+// 3. add agent as layer on top
+
 // we have a nice playground for logic here (no arithmetic, just fixed predicates)
 
 // interesting issues that arise in our semantics:
@@ -215,36 +222,39 @@ tw.bindToController(world.getSprite(codes.Player))
 
 // fun stuff: debugger
 
-//  - - - 
-//  - R -  =>  R(D) 
-//  - S -
+//  - - -      - - -
+//  - R -  =>  - - -
+//  - S -      - R - 
 
 // player logic
 
 // whereever player goes, replace with space
-world.onTileArrived(codes.Player, (player) => {
-    world.setCode(player, codes.Space);
+world.onTileArrived(codes.Player, (tile) => {
+    world.setCode(tile, codes.Space);
 })
 
-world.onTileArrived(codes.Player, (player, dir) => {
+world.onTileArrived(codes.Player, (tile, dir) => {
+    // API for checking dir
     world.check(dir != tw.Dir.None)
-    world.check(!world.containsAt(codes.Boulder, player, dir))
-    world.check(!world.containsAt(wallKind, player, dir))
-    player.moveOne(dir)  
+    // tile.has(dir, codes.Boulder)
+    world.check(!world.containsAt(codes.Boulder, tile, dir))
+    // tile.has(dir, codes.Wall, codes.Strongwall)
+    world.check(!world.containsAt(wallKind, tile, dir))
+    tile.moveOne(dir)  
 })
 
-world.onTileArrived(codes.Player, (player, dir) => {
+world.onTileArrived(codes.Player, (tile, dir) => {
     world.check(dir == tw.Dir.Left || dir == tw.Dir.Right)
-    world.check(world.containsAt(codes.Boulder, player, dir))
-    world.check(world.containsAt(codes.Space, player, dir, dir))
-    world.getSprite(codes.Boulder, player, dir).moveOne(dir)
-    player.moveOne(dir)
+    world.check(world.containsAt(codes.Boulder, tile, dir))
+    world.check(world.containsAt(codes.Space, tile, dir, dir))
+    world.getSprite(codes.Boulder, tile, dir).moveOne(dir)
+    tile.moveOne(dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
-world.onTileTransition(codes.Player, (player) => {
-    world.check(world.containsAt(codes.Diamond, player))
-    world.removeSprite(world.getSprite(codes.Diamond, player));
+world.onTileTransition(codes.Player, (tile) => {
+    world.check(world.containsAt(codes.Diamond, tile))
+    world.removeSprite(world.getSprite(codes.Diamond, tile));
 })
 
 // rock logic
@@ -252,39 +262,39 @@ world.onTileTransition(codes.Player, (player) => {
 // how to state that Down has higher priority than all other directions (for Rocks)
 
 // rock starts falling if there is a space below it
-world.onTileStationary(rockKind, (rock) => {
-    world.check(world.containsAt(codes.Space, rock, tw.Dir.Down))
-    rock.moveOne(tw.Dir.Down)
+world.onTileStationary(rockKind, (tile) => {
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Down))
+    tile.moveOne(tw.Dir.Down)
 })
 
 // rock falls to right
-world.onTileStationary(rockKind, (rock) => {
-    world.check(world.containsAt(rockKind, rock, tw.Dir.Down))
-    world.check(world.containsAt(codes.Space, rock, tw.Dir.Right))
-    world.check(world.containsAt(codes.Space, rock, tw.Dir.Right, tw.Dir.Down))
-    rock.moveOne(tw.Dir.Right)
+world.onTileStationary(rockKind, (tile) => {
+    world.check(world.containsAt(rockKind, tile, tw.Dir.Down))
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Right))
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Right, tw.Dir.Down))
+    tile.moveOne(tw.Dir.Right)
 })
 
 // rock falls to left
-world.onTileStationary(rockKind, (rock) => {
-    world.check(world.containsAt(rockKind, rock, tw.Dir.Down))
-    world.check(world.containsAt(codes.Space, rock, tw.Dir.Left))
-    world.check(world.containsAt(codes.Space, rock, tw.Dir.Left, tw.Dir.Down))
-    rock.moveOne(tw.Dir.Left)
+world.onTileStationary(rockKind, (tile) => {
+    world.check(world.containsAt(rockKind, tile, tw.Dir.Down))
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Left))
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Left, tw.Dir.Down))
+    tile.moveOne(tw.Dir.Left)
 })
 
-world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
+world.onTileArrived(rockKind, (tile, dir) => {
     world.check(dir == tw.Dir.Down);
-    world.check(!world.tileIs(codes.Space, s, tw.Dir.Down) ||
-                world.containsAt(rockKind, s, tw.Dir.Down))
-    s.deadStop();
+    world.check(!world.tileIs(codes.Space, tile, tw.Dir.Down) ||
+        world.containsAt(rockKind, tile, tw.Dir.Down))
+    tile.deadStop();
 })
 
-world.onTileArrived(rockKind, (s: tw.TileSprite, dir: tw.Dir) => {
+world.onTileArrived(rockKind, (tile, dir) => {
     world.check(dir != tw.Dir.Down)
-    world.check(world.containsAt(codes.Space, s, tw.Dir.Down))
-    s.deadStop();
-    s.moveOne(tw.Dir.Down)
+    world.check(world.containsAt(codes.Space, tile, tw.Dir.Down))
+    tile.deadStop();
+    tile.moveOne(tw.Dir.Down)
 })
 
 // TODO: observe that we only get multiple sprites in a tile
