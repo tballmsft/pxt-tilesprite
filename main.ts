@@ -185,7 +185,10 @@ namespace art {
     `
 }
 
-let world = new tw.TileWorld(levels.level1, codes.Space)
+let world = new tw.TileWorld()
+
+world.setMap(levels.level1)
+world.setBackgroundTile(codes.Space)
 
 world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall)

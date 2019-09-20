@@ -1,3 +1,4 @@
+// block
 namespace TileWorld {
 
     // which direction is the sprite moving
@@ -8,6 +9,19 @@ namespace TileWorld {
         Up, 
         Down 
     }
+
+    // blocks for these
+    export function setDefaultTile(code: number) { }
+    export function setCode(ts: TileSprite, code: number) { }
+    export function addTile(code: number, image: Image) {  }
+    export function addTileSprite(code: number, image: Image) { }
+    export function getTileSprite(code: number) { }
+    export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) { }
+    export function onTileStationary(code: number, h: (ts: TileSprite) => void) { }
+    export function onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) { }
+    export function onTileTransition(code: number, h: (ts: TileSprite, col: number, row: number) => void) { }
+    export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
+    export function isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
 
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
@@ -42,26 +56,28 @@ namespace TileWorld {
             this.onStationary = undefined;
             this.onTransition = undefined;
         }
+        // block
         has(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
+        // block
         hasMultiple(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             this.parent.check(this.parent.hasMultiple(code, this, dir, dir2, dir3))
         }
+        // block
         get(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             return this.parent.getSprite(code, this, dir, dir2, dir3)
         }
+        // block
         hasNo(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
             this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
-        }
+        }        
+        // block
         remove() {
             this.parent.removeSprite(this)
         }
-        //
-        getCode() { return this.code }
-        getColumn() { return this.x >> this.tileBits }
-        getRow() { return this.y >> this.tileBits }
         // request sprite to move in specified direction
+        // block
         moveOne(dir: Dir) {
             if (dir == Dir.Left || dir == Dir.Right)
                 this.moveInX(dir)
@@ -69,10 +85,13 @@ namespace TileWorld {
                 this.moveInY(dir)
         }
         // request sprite to stop moving when it reaches destination
+        // block
         requestStop() { this.final = 0; }
         // stop at current tile
+        // block
         deadStop() { this.stopSprite(false) }
         // back to previous tile
+        // block
         knockBack() {
             if ((this.dir == Dir.Left || this.dir == Dir.Right) &&
                 this.old != this.getColumn()) {
@@ -83,6 +102,12 @@ namespace TileWorld {
             }
             this.stopSprite(false)
         }
+
+        // most of the rest is for internal use
+        getCode() { return this.code }
+        getColumn() { return this.x >> this.tileBits }
+        getRow() { return this.y >> this.tileBits }
+
         // notify client on entering tile
         onTileArrived(handler: (ts: TileSprite, d: Dir) => void) {
             this.onArrived = handler
@@ -260,22 +285,29 @@ namespace TileWorld {
         private backgroundTile: number;
         private tileKind: number;
 
-        constructor(tileMap: Image, backgroundTile: number) {
-            this.backgroundTile = backgroundTile
+        constructor() {
+            this.backgroundTile = 0
             this.sprites = []
             this.codeToKind = []
             this.spriteCodes = []
-            this.tileMap = tileMap.clone();
-            this.spriteMap = tileMap.clone();
-            this.multiples = tileMap.clone();
             this.multipleSprites = [];
             this.tileHandler = undefined;
             this.arrivalHandlers = {}
             this.transitionHandlers = {}
             this.stationaryHandlers = {}
-            scene.setTileMap(this.tileMap)
             this.tileKind = SpriteKind.create()
             game.onUpdate(() => { this.update(); })
+        }
+
+        setMap(tileMap: Image) {
+            this.tileMap = tileMap.clone();
+            this.spriteMap = tileMap.clone();
+            this.multiples = tileMap.clone();
+            scene.setTileMap(this.tileMap)
+        }
+
+        setBackgroundTile(backgroundTile: number) {
+            this.backgroundTile = backgroundTile
         }
 
         addTiles(code: number, art: Image) {
