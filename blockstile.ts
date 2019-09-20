@@ -89,13 +89,32 @@ namespace TileWorld {
     }
     
     // checks
-    export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
+
+    /**
+     * Make a set of values and return the value representing the set
+     */
+    //% group="Conditions"
+    //% blockId=TWmakeset block="make set from %code %code2|| %code3 %code4"
+    //% inlineInputMode=inline
+    export function makeSet(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
         return myWorld.makeGroup(code, code2, code3, code4)
     }
-    export function isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
+    /**
+     * Check if a direction is one of several values.
+     */
+    //% group="Conditions"
+    //% blockId=TWisoneof block="is %d one of %c1 %c2 || %c3"
+    //% inlineInputMode=inline
+    export function isOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isOneOf(d, c1, c2, c3)
     }
-    export function isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
+    /**
+     * Check if a direction is not one of several values.
+     */
+    //% group="Conditions"
+    //% blockId=TWisnotoneof block="is %d not one of %c1 %c2 || %c3"
+    //% inlineInputMode=inline
+    export function isNotOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isNotOneOf(d, c1, c2, c3)
     }
 
