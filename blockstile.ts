@@ -63,7 +63,7 @@ namespace TileWorld {
      */
     //% group="Events"
     //% blockId=TWontilestationary block="on %code=colorindexpicker at rest"
-    //% blockAllowMultiple=1
+    //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileStationary(code: number, h: (tile: TileSprite) => void) {
         myWorld.onTileStationary(code, h);
     }
@@ -73,7 +73,7 @@ namespace TileWorld {
      */
     //% group="Events"
     //% blockId=TWontilearrived block="on %code=colorindexpicker arrived"
-    //% blockAllowMultiple=1
+    //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileArrived(code: number, h: (tile: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(code, h)
     }
@@ -83,7 +83,7 @@ namespace TileWorld {
      */
     //% group="Events"
     //% blockId=TWontiletransition block="on %code=colorindexpicker transition"
-    //% blockAllowMultiple=1
+    //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileTransition(code: number, h: (tile: TileSprite, col: number, row: number) => void) { 
         myWorld.onTileTransition(code, h)
     }
@@ -119,6 +119,9 @@ namespace TileWorld {
     }
 
     // actions
+    //% blockId=TWsettilecode block="set code %ts to %code"
+    //% draggableParameters = "reporter"
+    //% group="Actions"
     export function setTileCode(ts: TileSprite, code: number) {
         myWorld.setCode(ts, code)
     }
