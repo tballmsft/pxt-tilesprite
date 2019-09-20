@@ -52,13 +52,23 @@ namespace TileWorld {
     
     // notifications
     //% group="Events"
-    export function onTileStationary(code: number, h: (ts: TileSprite) => void) { }
-    export function onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) { }
-    export function onTileTransition(code: number, h: (ts: TileSprite, col: number, row: number) => void) { }
+    export function onTileStationary(code: number, h: (ts: TileSprite) => void) {
+        myWorld.onTileStationary(code, h);
+    }
+    export function onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) { 
+        myWorld.onTileArrived(code, h)
+    }
+    export function onTileTransition(code: number, h: (ts: TileSprite, col: number, row: number) => void) { 
+        myWorld.onTileTransition(code, h)
+    }
     
     // checks
-    export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
-    export function isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
+    export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { 
+        myWorld.isOneOf(d, c1, c2, c3)
+    }
+    export function isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { 
+        myWorld.isNotOneOf(d, c1, c2, c3)
+    }
 
     // actions
     export function setTileCode(ts: TileSprite, code: number) {
