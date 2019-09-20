@@ -56,13 +56,35 @@ namespace TileWorld {
     
     // notifications
     //% group="Events"
-    export function onTileStationary(code: number, h: (ts: TileSprite) => void) {
+
+    /**
+     * Act on a sprite that is resting on a tile
+     * @param body code to execute
+     */
+    //% group="Events"
+    //% blockId=TWontilestationary block="on %code=colorindexpicker at rest"
+    //% blockAllowMultiple=1
+    export function onTileStationary(code: number, h: (tile: TileSprite) => void) {
         myWorld.onTileStationary(code, h);
     }
-    export function onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) { 
+    /**
+     * Act on a sprite that has moved to center of tile
+     * @param body code to execute
+     */
+    //% group="Events"
+    //% blockId=TWontilearrived block="on %code=colorindexpicker arrived"
+    //% blockAllowMultiple=1
+    export function onTileArrived(code: number, h: (tile: TileSprite, direction: Dir) => void) { 
         myWorld.onTileArrived(code, h)
     }
-    export function onTileTransition(code: number, h: (ts: TileSprite, col: number, row: number) => void) { 
+    /**
+     * Act on a sprite that has just moved into new tile
+     * @param body code to execute
+     */
+    //% group="Events"
+    //% blockId=TWontiletransition block="on %code=colorindexpicker transition"
+    //% blockAllowMultiple=1
+    export function onTileTransition(code: number, h: (tile: TileSprite, col: number, row: number) => void) { 
         myWorld.onTileTransition(code, h)
     }
     
