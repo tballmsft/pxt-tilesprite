@@ -1,16 +1,21 @@
+// which direction is the sprite moving
+enum TileDir {
+    //% block="None"
+    None,
+    //% block="Left"
+    Left,
+    //% block="Right"
+    Right,
+    //% block="Up"
+    Up,
+    //% block="Down"
+    Down
+}
+
 //% weight=1000 color="#442255" icon="\uf45c"
 //% groups='["Tiles", "Events", "Logic"]'
 //% blockGap=8
 namespace TileWorld {
-
-    // which direction is the sprite moving
-    export enum Dir { 
-        None, 
-        Left, 
-        Right, 
-        Up, 
-        Down 
-    }
 
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
@@ -18,7 +23,7 @@ namespace TileWorld {
         private code: number;
         private parent: TileWorld;
         // which direction is the target 
-        private dir: Dir;
+        private dir: TileDir;
         // previous sprite coord value
         private old: number;
         // the next tile target
@@ -26,9 +31,9 @@ namespace TileWorld {
         // the final tile target
         private final: number;
         // the next direction to go
-        private queue_dir: Dir;
+        private queue_dir: TileDir;
         // notification
-        private onArrived: (ts: TileSprite, d: Dir) => void
+        private onArrived: (ts: TileSprite, d: TileDir) => void
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
@@ -39,26 +44,26 @@ namespace TileWorld {
             this.parent = world;
             this.code = code
             this.tileBits = bits;
-            this.dir = Dir.None;
-            this.queue_dir = Dir.None;
+            this.dir = TileDir.None;
+            this.queue_dir = TileDir.None;
             this.onArrived = undefined;
             this.onStationary = undefined;
             this.onTransition = undefined;
         }
         // block
-        has(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        has(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
         // block
-        hasMultiple(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        hasMultiple(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.hasMultiple(code, this, dir, dir2, dir3))
         }
         // block
-        get(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             return this.parent.getSprite(code, this, dir, dir2, dir3)
         }
         // block
-        hasNo(code: number, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        hasNo(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
         }        
         // block
@@ -67,10 +72,10 @@ namespace TileWorld {
         }
         // request sprite to move in specified direction
         // block
-        moveOne(dir: Dir) {
-            if (dir == Dir.Left || dir == Dir.Right)
+        moveOne(dir: TileDir) {
+            if (dir == TileDir.Left || dir == TileDir.Right)
                 this.moveInX(dir)
-            else if (dir == Dir.Up || dir == Dir.Down)
+            else if (dir == TileDir.Up || dir == TileDir.Down)
                 this.moveInY(dir)
         }
         // request sprite to stop moving when it reaches destination
@@ -82,10 +87,10 @@ namespace TileWorld {
         // back to previous tile
         // block
         knockBack() {
-            if ((this.dir == Dir.Left || this.dir == Dir.Right) &&
+            if ((this.dir == TileDir.Left || this.dir == TileDir.Right) &&
                 this.old != this.getColumn()) {
                 this.x = this.centerIt(this.old << this.tileBits)
-            } else if ((this.dir == Dir.Up || this.dir == Dir.Down) &&
+            } else if ((this.dir == TileDir.Up || this.dir == TileDir.Down) &&
                 this.old != this.getRow()) {
                 this.y = this.centerIt(this.old << this.tileBits)
             }
@@ -98,10 +103,10 @@ namespace TileWorld {
         getRow() { return this.y >> this.tileBits }
 
         // notify client on entering tile
-        onTileArrived(handler: (ts: TileSprite, d: Dir) => void) {
+        onTileArrived(handler: (ts: TileSprite, d: TileDir) => void) {
             this.onArrived = handler
         }
-        notifyArrived(d: Dir) {
+        notifyArrived(d: TileDir) {
             if (this.onArrived) {
                 this.onArrived(this, d)
             }
@@ -114,16 +119,16 @@ namespace TileWorld {
         }
         // call from game update loop
         updateInMotion() {
-            if (this.dir == Dir.None)
+            if (this.dir == TileDir.None)
                 return;
             // have we crossed into a new tile?
             if (this.onTransition) {
-                if (this.dir == Dir.Left || this.dir == Dir.Right) {
+                if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
                     if (this.old != this.getColumn()) {
                         this.onTransition(this, this.old, this.getRow())
                     }
                     this.old = this.getColumn()
-                } else if (this.dir == Dir.Up || this.dir == Dir.Down) {
+                } else if (this.dir == TileDir.Up || this.dir == TileDir.Down) {
                     if (this.old != this.getRow()) {
                         this.onTransition(this, this.getColumn(), this.old)
                     }
@@ -132,33 +137,33 @@ namespace TileWorld {
             }
             // have we reached the target?
             let size = 1 << this.tileBits
-            if (this.dir == Dir.Left && this.x <= this.next) {
+            if (this.dir == TileDir.Left && this.x <= this.next) {
                 this.reachedTargetX(this.next, -size)
-            } else if (this.dir == Dir.Right && this.x >= this.next) {
+            } else if (this.dir == TileDir.Right && this.x >= this.next) {
                 this.reachedTargetX(this.next, size)
-            } else if (this.dir == Dir.Up && this.y <= this.next) {
+            } else if (this.dir == TileDir.Up && this.y <= this.next) {
                 this.reachedTargetY(this.next, -size)
-            } else if (this.dir == Dir.Down && this.y >= this.next) {
+            } else if (this.dir == TileDir.Down && this.y >= this.next) {
                 this.reachedTargetY(this.next, size)
             }
         }
         updateStationary() {
-            if (this.onStationary && this.dir == Dir.None) {
+            if (this.onStationary && this.dir == TileDir.None) {
                 this.onStationary(this)
             }
         }
-        private moveInX(dir: Dir) {
+        private moveInX(dir: TileDir) {
             let size = 1 << this.tileBits
-            let opDir = dir == Dir.Left ? Dir.Right : Dir.Left
-            let sign = dir == Dir.Left ? -1 : 1
+            let opTileDir = dir == TileDir.Left ? TileDir.Right : TileDir.Left
+            let sign = dir == TileDir.Left ? -1 : 1
             if (this.dir == dir) {
                 this.final += sign * size;
                 return;
-            } else if (this.dir == opDir) {
+            } else if (this.dir == opTileDir) {
                 // switching 180 doesn't require queuing
                 // next_x is defined, so use it
                 this.next += sign * size
-            } else if (this.dir == Dir.None) {
+            } else if (this.dir == TileDir.None) {
                 // player.x is aligned, so use it
                 this.next = this.x + sign * size;
             } else {
@@ -171,17 +176,17 @@ namespace TileWorld {
             this.final = this.next;
             this.vx = sign * 100
         }
-        private moveInY(dir: Dir) {
+        private moveInY(dir: TileDir) {
             let size = 1 << this.tileBits
-            let opDir = dir == Dir.Up ? Dir.Down : Dir.Up
-            let sign = dir == Dir.Up ? -1 : 1
+            let opTileDir = dir == TileDir.Up ? TileDir.Down : TileDir.Up
+            let sign = dir == TileDir.Up ? -1 : 1
             if (this.dir == dir) {
                 this.final += sign * size;
                 return;
-            } else if (this.dir == opDir) {
+            } else if (this.dir == opTileDir) {
                 // next_x is defined, so use it
                 this.next += sign * size
-            } else if (this.dir == Dir.None) {
+            } else if (this.dir == TileDir.None) {
                 // player.x is aligned, so use it
                 this.next = this.y + sign * size;
             } else {
@@ -196,44 +201,44 @@ namespace TileWorld {
         }
         // process queued movement (client must invoke)
         private doQueued() {
-            if (this.dir == Dir.None) {
-                if (this.queue_dir != Dir.None) {
+            if (this.dir == TileDir.None) {
+                if (this.queue_dir != TileDir.None) {
                     this.moveOne(this.queue_dir)
                 }
-                this.queue_dir = Dir.None;
+                this.queue_dir = TileDir.None;
             }
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             // determine what comes next
             this.x = x
-            let keepDir = Dir.None
+            let keepTileDir = TileDir.None
             if (this.final && this.next != this.final) {
                 this.next += step
             } else {
-                if (this.final) keepDir = this.dir
-                this.dir = Dir.None
+                if (this.final) keepTileDir = this.dir
+                this.dir = TileDir.None
                 this.vx = 0
             }
             // notify
             if (this.onArrived && reentrant) {
-                this.onArrived(this, keepDir)
+                this.onArrived(this, keepTileDir)
             }
             this.doQueued()
             this.old = this.getColumn()
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
             this.y = y
-            let keepDir = Dir.None
+            let keepTileDir = TileDir.None
             if (this.final && this.next != this.final) {
                 this.next += step
             } else {
-                if (this.final) keepDir = this.dir
-                this.dir = Dir.None
+                if (this.final) keepTileDir = this.dir
+                this.dir = TileDir.None
                 this.vy = 0
             }
             // notify
             if (this.onArrived && reentrant) {
-                this.onArrived(this, keepDir)
+                this.onArrived(this, keepTileDir)
             }
             this.doQueued()
             this.old = this.getRow()
@@ -243,8 +248,8 @@ namespace TileWorld {
         }
         private stopSprite(reentrant: boolean) {
             this.final = 0
-            this.queue_dir = Dir.None
-            if (this.dir == Dir.Left || this.dir == Dir.Right) {
+            this.queue_dir = TileDir.None
+            if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
                 this.reachedTargetX(this.centerIt(this.x), 0, reentrant)
             } else {
                 this.reachedTargetY(this.centerIt(this.y), 0, reentrant)
@@ -268,7 +273,7 @@ namespace TileWorld {
         private multiples: Image;
         private multipleSprites: TileSprite[];
         private tileHandler: (colliding: TileSprite[]) => void;
-        private arrivalHandlers: { [index:number]: ((ts: TileSprite, d: Dir) => void)[] };
+        private arrivalHandlers: { [index:number]: ((ts: TileSprite, d: TileDir) => void)[] };
         private transitionHandlers: { [index:number]: ((ts: TileSprite, prevCol: number, prevRow: number) => void)[] };
         private stationaryHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private backgroundTile: number;
@@ -362,16 +367,16 @@ namespace TileWorld {
             this.stationaryHandlers[code].push(h);
         }
 
-        onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) {
+        onTileArrived(code: number, h: (ts: TileSprite, d: TileDir) => void) {
             if (!this.arrivalHandlers[code]) {
                 this.arrivalHandlers[code] = [];
                 if (code < this.tileKind) {
-                    let process = (s: TileSprite, d: Dir) => 
-                        this.arrivalHandlers[s.getCode()].forEach((h) => tryCatchDir(h, s, d));
+                    let process = (s: TileSprite, d: TileDir) => 
+                        this.arrivalHandlers[s.getCode()].forEach((h) => tryCatchTileDir(h, s, d));
                     this.sprites[code].forEach((spr) => spr.onTileArrived(process))
                 } else {
-                    let process = (s: TileSprite, d: Dir) => 
-                        this.arrivalHandlers[s.kind()].forEach((h) => tryCatchDir(h, s, d));
+                    let process = (s: TileSprite, d: TileDir) => 
+                        this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
                     let sprites = game.currentScene().spritesByKind[code].sprites()
                     sprites.forEach((spr) => (<TileSprite>spr).onTileArrived(process));
                 }
@@ -396,11 +401,11 @@ namespace TileWorld {
             this.transitionHandlers[code].push(h);
         }
 
-        isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) {
+        isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
             this.check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d==c3) )
         }
 
-        isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) {
+        isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
             this.check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
         }
 
@@ -414,14 +419,14 @@ namespace TileWorld {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
 
-        containsAt(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        containsAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             if (codeKind < this.tileKind)
                 return this.hasCode(codeKind, orig, dir, dir2, dir3)
             else
                 return this.hasKind(codeKind, orig, dir, dir2, dir3)
         }
 
-        hasMultiple(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        hasMultiple(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             if (codeKind < this.tileKind && this.spriteCodes.find(c => c == codeKind)) {
                 let cnt = 0
                 this.sprites[codeKind].forEach((s) => {
@@ -433,7 +438,7 @@ namespace TileWorld {
             return false;
         }
 
-        tileIs(codeKind: number, orig: Tile, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             if (codeKind < this.tileKind) 
                 return this.tileMap.getPixel(cursor.getColumn(), cursor.getRow()) == codeKind
@@ -441,12 +446,12 @@ namespace TileWorld {
                 return this.codeToKind[this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())] == codeKind
         }
 
-        private hasCode(code:number, orig: Tile, dir: Dir, dir2: Dir, dir3: Dir) {
+        private hasCode(code:number, orig: Tile, dir: TileDir, dir2: TileDir, dir3: TileDir) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.checkTile(code,cursor)
         }
 
-        private hasKind(kind: number, orig: Tile, dir: Dir, dir2: Dir, dir3: Dir) {
+        private hasKind(kind: number, orig: Tile, dir: TileDir, dir2: TileDir, dir3: TileDir) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
             return this.checkTileKind(kind, cursor)
         }
@@ -476,14 +481,14 @@ namespace TileWorld {
             s.destroy()
         }
 
-        getSprite(code: number, orig: Tile = null, dir: Dir = Dir.None, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        getSprite(code: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             if (code < this.tileKind)
                 return this.getSpriteByCode(code, orig, dir, dir2, dir3)
             else
                 return this.getSpriteByKind(code, orig, dir, dir2, dir3)
         }
 
-        private getSpriteByCode(code: number, orig: Tile = null, dir: Dir, dir2: Dir, dir3: Dir) {
+        private getSpriteByCode(code: number, orig: Tile = null, dir: TileDir, dir2: TileDir, dir3: TileDir) {
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
                 return this.sprites[code].find((t: Tile) =>
@@ -493,7 +498,7 @@ namespace TileWorld {
             }
         }
 
-        private getSpriteByKind(kind: number, orig: Tile = null, dir: Dir, dir2: Dir, dir3: Dir) {
+        private getSpriteByKind(kind: number, orig: Tile = null, dir: TileDir, dir2: TileDir, dir3: TileDir) {
             let ss = game.currentScene().spritesByKind[kind].sprites()
             if (orig) {
                 let cursor = new Cursor(this, orig, dir, dir2, dir3);
@@ -568,25 +573,25 @@ namespace TileWorld {
     // basic movement for tile sprite
     export function bindToController(sprite: TileSprite) {
         controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(Dir.Left)
+            sprite.notifyArrived(TileDir.Left)
         })
         controller.left.onEvent(ControllerButtonEvent.Released, function () {
             sprite.requestStop()
         })
         controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(Dir.Right)
+            sprite.notifyArrived(TileDir.Right)
         })
         controller.right.onEvent(ControllerButtonEvent.Released, function () {
             sprite.requestStop()
         })
         controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(Dir.Up)
+            sprite.notifyArrived(TileDir.Up)
         })
         controller.up.onEvent(ControllerButtonEvent.Released, function () {
             sprite.requestStop()
         })
         controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(Dir.Down)
+            sprite.notifyArrived(TileDir.Down)
         })
         controller.down.onEvent(ControllerButtonEvent.Released, function () {
             sprite.requestStop()
@@ -605,18 +610,18 @@ namespace TileWorld {
         private world: TileWorld;
         private col: number;
         private row: number;
-        constructor(w: TileWorld, s: Tile, dir: Dir, dir2: Dir = Dir.None, dir3: Dir = Dir.None) {
+        constructor(w: TileWorld, s: Tile, dir: TileDir, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.world = w;
             this.col = s.getColumn();
             this.row = s.getRow();
             this.move(dir); this.move(dir2); this.move(dir3)
         }
-        private move(dir: Dir) {
+        private move(dir: TileDir) {
             switch (dir) {
-                case Dir.Left: this.col--; break;
-                case Dir.Right: this.col++; break;
-                case Dir.Up: this.row--; break;
-                case Dir.Down: this.row++; break;
+                case TileDir.Left: this.col--; break;
+                case TileDir.Right: this.col++; break;
+                case TileDir.Up: this.row--; break;
+                case TileDir.Down: this.row++; break;
             }
         }
         public getColumn() { return this.col }
@@ -637,7 +642,7 @@ namespace TileWorld {
         }
     }
 
-    let tryCatchDir = (h: (s: TileSprite, d: Dir) => void, s: TileSprite, d: Dir) => {
+    let tryCatchTileDir = (h: (s: TileSprite, d: TileDir) => void, s: TileSprite, d: TileDir) => {
         try {
             h(s, d)
         } catch (e) {

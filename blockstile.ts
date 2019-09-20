@@ -74,7 +74,7 @@ namespace TileWorld {
     //% group="Events"
     //% blockId=TWontilearrived block="on %code=colorindexpicker arrived"
     //% blockAllowMultiple=1
-    export function onTileArrived(code: number, h: (tile: TileSprite, direction: Dir) => void) { 
+    export function onTileArrived(code: number, h: (tile: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(code, h)
     }
     /**
@@ -92,10 +92,10 @@ namespace TileWorld {
     export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
         return myWorld.makeGroup(code, code2, code3, code4)
     }
-    export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { 
+    export function isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isOneOf(d, c1, c2, c3)
     }
-    export function isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { 
+    export function isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isNotOneOf(d, c1, c2, c3)
     }
 

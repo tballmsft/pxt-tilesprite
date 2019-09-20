@@ -239,14 +239,14 @@ world.onTileArrived(codes.Player, (tile) => {
 })
 
 world.onTileArrived(codes.Player, (tile, dir) => {
-    world.isNotOneOf(dir, tw.Dir.None)
+    world.isNotOneOf(dir, TileDir.None)
     tile.hasNo(codes.Boulder, dir)
     tile.hasNo(wallKind, dir)
     tile.moveOne(dir)  
 })
 
 world.onTileArrived(codes.Player, (tile, dir) => {
-    world.isOneOf(dir, tw.Dir.Left, tw.Dir.Right)
+    world.isOneOf(dir, TileDir.Left, TileDir.Right)
     tile.has(codes.Space, dir, dir)
     tile.has(codes.Boulder, dir)
     tile.get(codes.Boulder, dir).moveOne(dir)
@@ -263,43 +263,43 @@ world.onTileTransition(codes.Player, (tile) => {
 
 // rock starts falling if there is a space below it
 world.onTileStationary(rockKind, (tile) => {
-    tile.has(codes.Space, tw.Dir.Down)
-    tile.moveOne(tw.Dir.Down)
+    tile.has(codes.Space, TileDir.Down)
+    tile.moveOne(TileDir.Down)
 })
 
 // rock falls to right
 world.onTileStationary(rockKind, (tile) => {
-    tile.has(rockKind, tw.Dir.Down)
-    tile.has(codes.Space, tw.Dir.Right)
-    tile.has(codes.Space, tw.Dir.Right, tw.Dir.Down)
-    tile.moveOne(tw.Dir.Right)
+    tile.has(rockKind, TileDir.Down)
+    tile.has(codes.Space, TileDir.Right)
+    tile.has(codes.Space, TileDir.Right, TileDir.Down)
+    tile.moveOne(TileDir.Right)
 })
 
 // rock falls to left
 world.onTileStationary(rockKind, (tile) => {
-    tile.has(rockKind, tw.Dir.Down)
-    tile.has(codes.Space, tw.Dir.Left)
-    tile.has(codes.Space, tw.Dir.Left, tw.Dir.Down)
-    tile.moveOne(tw.Dir.Left)
+    tile.has(rockKind, TileDir.Down)
+    tile.has(codes.Space, TileDir.Left)
+    tile.has(codes.Space, TileDir.Left, TileDir.Down)
+    tile.moveOne(TileDir.Left)
 })
 
 world.onTileArrived(rockKind, (tile, dir) => {
-    world.isOneOf(dir, tw.Dir.Down);
-    world.check(!world.tileIs(codes.Space, tile, tw.Dir.Down))
+    world.isOneOf(dir, TileDir.Down);
+    world.check(!world.tileIs(codes.Space, tile, TileDir.Down))
     tile.deadStop();
 })
 
 world.onTileArrived(rockKind, (tile, dir) => {
-    world.isOneOf(dir, tw.Dir.Down);
-    tile.has(rockKind, tw.Dir.Down)
+    world.isOneOf(dir, TileDir.Down);
+    tile.has(rockKind, TileDir.Down)
     tile.deadStop();
 })
 
 world.onTileArrived(rockKind, (tile, dir) => {
-    world.isNotOneOf(dir, tw.Dir.Down);
-    tile.has(codes.Space, tw.Dir.Down)
+    world.isNotOneOf(dir, TileDir.Down);
+    tile.has(codes.Space, TileDir.Down)
     tile.deadStop();
-    tile.moveOne(tw.Dir.Down)
+    tile.moveOne(TileDir.Down)
 })
 
 world.onTileTransition(rockKind, (tile) => {
