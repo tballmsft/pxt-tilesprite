@@ -42,12 +42,16 @@ namespace TileWorld {
     export function addTileSprite(code: number, image: Image) { 
         myWorld.addTileSprites(code, image)
     }
-    
-    export function getTileSprite(code: number) { 
-        return myWorld.getSprite(code)
-    }
-    export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) { 
-        return myWorld.makeGroup(code, code2, code3, code4)
+     /**
+     * Set the player
+     * @param color
+     */
+    //% group="Tiles"
+    //% blockId=TWsetplayer block="set player to %color=colorindexpicker"
+    export function setPlayer(code: number) { 
+        let player = myWorld.getSprite(code)
+        bindToController(player)
+        scene.cameraFollowSprite(player)
     }
     
     // notifications
@@ -63,6 +67,9 @@ namespace TileWorld {
     }
     
     // checks
+    export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
+        return myWorld.makeGroup(code, code2, code3, code4)
+    }
     export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { 
         myWorld.isOneOf(d, c1, c2, c3)
     }
