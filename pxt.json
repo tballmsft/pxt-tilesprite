@@ -9,12 +9,13 @@
         "README.md",
         "tileworld.ts",
         "main.ts",
-        "tileagent.ts"
+        "tileagent.ts",
+        "blockstile.ts"
     ],
     "testFiles": [
         "test.ts"
     ],
     "public": false,
-    "installedVersion": "workspace:c830b56d-5a38-455b-5f89-cc88dcf9a522",
+    "installedVersion": "workspace:61b84db3-6c7a-4117-3e63-465e2303c6ff",
     "preferredEditor": "tsprj"
 }

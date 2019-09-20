@@ -1,4 +1,6 @@
-// block
+//% weight=1000 color="#442255" icon="\uf45c"
+//% groups='["Tiles", "Events", "Logic"]'
+//% blockGap=8
 namespace TileWorld {
 
     // which direction is the sprite moving
@@ -9,19 +11,6 @@ namespace TileWorld {
         Up, 
         Down 
     }
-
-    // blocks for these
-    export function setDefaultTile(code: number) { }
-    export function setCode(ts: TileSprite, code: number) { }
-    export function addTile(code: number, image: Image) {  }
-    export function addTileSprite(code: number, image: Image) { }
-    export function getTileSprite(code: number) { }
-    export function makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) { }
-    export function onTileStationary(code: number, h: (ts: TileSprite) => void) { }
-    export function onTileArrived(code: number, h: (ts: TileSprite, d: Dir) => void) { }
-    export function onTileTransition(code: number, h: (ts: TileSprite, col: number, row: number) => void) { }
-    export function isOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
-    export function isNotOneOf(d: Dir, c1: Dir, c2: Dir = 0xff, c3: Dir = 0xff) { }
 
     // a sprite that moves by tiles, but only in one of four directions
     export class TileSprite extends Sprite implements Tile {
@@ -296,7 +285,6 @@ namespace TileWorld {
             this.transitionHandlers = {}
             this.stationaryHandlers = {}
             this.tileKind = SpriteKind.create()
-            game.onUpdate(() => { this.update(); })
         }
 
         setMap(tileMap: Image) {
@@ -304,6 +292,7 @@ namespace TileWorld {
             this.spriteMap = tileMap.clone();
             this.multiples = tileMap.clone();
             scene.setTileMap(this.tileMap)
+            game.onUpdate(() => { this.update(); })
         }
 
         setBackgroundTile(backgroundTile: number) {
