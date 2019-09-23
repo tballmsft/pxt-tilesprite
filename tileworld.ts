@@ -50,16 +50,28 @@ namespace TileWorld {
         } 
         // conditions
 
-        //% blockId=TWhas block="%this(sprite) has %code=colorindexpicker at %dir || %dir2 %dir3"
+        //% blockId=TWhascode block="does %this(tile) have code %code=colorindexpicker at %dir || %dir2 %dir3"
         //% group="Conditions" color="#448844" inlineInputMode=inline
-        has(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+        hasCode(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
-        // block
-        hasNo(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+        //% blockId=TWhaskind block="does %this(tile) have kind $kind=spritekind at %dir || %dir2 %dir3"
+        //% group="Conditions" color="#448844" inlineInputMode=inline
+        hasKind(kind: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+            this.parent.check(this.parent.containsAt(kind, this, dir, dir2, dir3))
+        }
+        //% blockId=TWhasnocode block="%this(tile) has no code %code=colorindexpicker at %dir || %dir2 %dir3"
+        //% group="Conditions" color="#448844" inlineInputMode=inline
+        hasNoCode(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
         }
-        // block
+        //% blockId=TWhasnokind block="%this(tile) has no kind $kind=spritekind at %dir || %dir2 %dir3"
+        //% group="Conditions" color="#448844" inlineInputMode=inline
+        hasNoKind(kind: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+            this.parent.check(!this.parent.containsAt(kind, this, dir, dir2, dir3))
+        }
+        //% blockId=TWhasmultiple block="does %this(tile) have multiple $code=colorindexpicker at %dir || %dir2 %dir3"
+        //% group="Conditions" color="#448844" inlineInputMode=inline
         hasMultiple(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.hasMultiple(code, this, dir, dir2, dir3))
         }
@@ -70,7 +82,7 @@ namespace TileWorld {
         get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             return this.parent.getSprite(code, this, dir, dir2, dir3)
         }
-        //% blockId=TWsettilecode block="set tile at %this(sprite) to %code=colorindexpicker"
+        //% blockId=TWsettilecode block="set code at %this(tile) to %code=colorindexpicker"
         //% group="Actions" color="#88CC44"
         setCode(code: number) {
             this.parent.setCode(this, code)

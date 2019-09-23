@@ -61,9 +61,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on $sprite of kind $kind=spritekind at rest"
+    //% blockId=TWontilestationary block="on $tile of kind $kind=spritekind at rest"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileStationary(kind: number, h: (sprite: TileSprite) => void) {
+    export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
         myWorld.onTileStationary(kind, h);
     }
     /**
@@ -71,9 +71,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on $sprite of kind $kind=spritekind arrived"
+    //% blockId=TWontilearrived block="on $tile of kind $kind=spritekind arrived"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileArrived(kind: number, h: (sprite: TileSprite, direction: TileDir) => void) { 
+    export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(kind, h)
     }
     /**
@@ -81,9 +81,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on $sprite of kind $kind=spritekind transition"
+    //% blockId=TWontiletransition block="on $tile of kind $kind=spritekind transition"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileTransition(kind: number, h: (sprite: TileSprite, col: number, row: number) => void) { 
+    export function onTileTransition(kind: number, h: (tile: TileSprite, col: number, row: number) => void) { 
         myWorld.onTileTransition(kind, h)
     }
     

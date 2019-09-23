@@ -242,23 +242,23 @@ world.onTileArrived(SpriteKind.Player, (tile) => {
 
 world.onTileArrived(SpriteKind.Player, (tile, dir) => {
     world.isNotOneOf(dir, TileDir.None)
-    tile.hasNo(codes.Boulder, dir)
-    tile.hasNo(codes.Wall, dir)
-    tile.hasNo(codes.StrongWall, dir)
+    tile.hasNoCode(codes.Boulder, dir)
+    tile.hasNoCode(codes.Wall, dir)
+    tile.hasNoCode(codes.StrongWall, dir)
     tile.moveOne(dir)  
 })
 
 world.onTileArrived(SpriteKind.Player, (tile, dir) => {
     world.isOneOf(dir, TileDir.Left, TileDir.Right)
-    tile.has(codes.Space, dir, dir)
-    tile.has(codes.Boulder, dir)
+    tile.hasCode(codes.Space, dir, dir)
+    tile.hasCode(codes.Boulder, dir)
     tile.get(codes.Boulder, dir).moveOne(dir)
     tile.moveOne(dir)
 })
 
 // if the player is moving into a tile with a diamond, eat it
 world.onTileTransition(SpriteKind.Player, (tile) => {
-    tile.has(codes.Diamond)
+    tile.hasCode(codes.Diamond)
     tile.get(codes.Diamond).remove()
 })
 
@@ -266,23 +266,23 @@ world.onTileTransition(SpriteKind.Player, (tile) => {
 
 // rock starts falling if there is a space below it
 world.onTileStationary(SpriteKind.Rock, (tile) => {
-    tile.has(codes.Space, TileDir.Down)
+    tile.hasCode(codes.Space, TileDir.Down)
     tile.moveOne(TileDir.Down)
 })
 
 // rock falls to right
 world.onTileStationary(SpriteKind.Rock, (tile) => {
-    tile.has(codes.Space, TileDir.Right)
-    tile.has(codes.Space, TileDir.Right, TileDir.Down)
-    tile.has(SpriteKind.Rock, TileDir.Down)
+    tile.hasCode(codes.Space, TileDir.Right)
+    tile.hasCode(codes.Space, TileDir.Right, TileDir.Down)
+    tile.hasKind(SpriteKind.Rock, TileDir.Down)
     tile.moveOne(TileDir.Right)
 })
 
 // rock falls to left
 world.onTileStationary(SpriteKind.Rock, (tile) => {
-    tile.has(codes.Space, TileDir.Left)
-    tile.has(codes.Space, TileDir.Left, TileDir.Down)
-    tile.has(SpriteKind.Rock, TileDir.Down)
+    tile.hasCode(codes.Space, TileDir.Left)
+    tile.hasCode(codes.Space, TileDir.Left, TileDir.Down)
+    tile.hasKind(SpriteKind.Rock, TileDir.Down)
     tile.moveOne(TileDir.Left)
 })
 
@@ -294,13 +294,13 @@ world.onTileArrived(SpriteKind.Rock, (tile, dir) => {
 
 world.onTileArrived(SpriteKind.Rock, (tile, dir) => {
     world.isOneOf(dir, TileDir.Down);
-    tile.has(SpriteKind.Rock, TileDir.Down)
+    tile.hasKind(SpriteKind.Rock, TileDir.Down)
     tile.deadStop();
 })
 
 world.onTileArrived(SpriteKind.Rock, (tile, dir) => {
     world.isNotOneOf(dir, TileDir.Down);
-    tile.has(codes.Space, TileDir.Down)
+    tile.hasCode(codes.Space, TileDir.Down)
     tile.deadStop();
     tile.moveOne(TileDir.Down)
 })
