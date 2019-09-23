@@ -71,9 +71,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on $tile of kind $kind=spritekind at rest"
+    //% blockId=TWontilestationary block="on $sprite of kind $kind=spritekind at rest"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
+    export function onTileStationary(kind: number, h: (sprite: TileSprite) => void) {
         myWorld.onTileStationary(kind, h);
     }
     /**
@@ -81,9 +81,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on $tile of kind $kind=spritekind arrived"
+    //% blockId=TWontilearrived block="on $sprite of kind $kind=spritekind arrived"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
+    export function onTileArrived(kind: number, h: (sprite: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(kind, h)
     }
     /**
@@ -91,10 +91,10 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on $tile of kind $kind=spritekind transition"
+    //% blockId=TWontiletransition block="on $sprite of kind $kind=spritekind transition"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileTransition(code: number, h: (tile: TileSprite, col: number, row: number) => void) { 
-        myWorld.onTileTransition(code, h)
+    export function onTileTransition(kind: number, h: (sprite: TileSprite, col: number, row: number) => void) { 
+        myWorld.onTileTransition(kind, h)
     }
     
     // checks
@@ -103,18 +103,18 @@ namespace TileWorld {
      * Check if a direction is one of several values.
      */
     //% group="Conditions" color="#448844"
-    //% blockId=TWisoneof block="is %d one of %c1 %c2 || %c3"
-    //% inlineInputMode=inline
-    export function isOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
-        myWorld.isOneOf(d, c1, c2, c3)
+    //% blockId=TWisoneof block="is %dir=variables_get(direction) one of %c1 %c2 || %c3"
+    //% inlineInputMode=inline direction.shadow=tiledir
+    export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
+        myWorld.isOneOf(dir, c1, c2, c3)
     }
     /**
      * Check if a direction is not one of several values.
      */
     //% group="Conditions" color="#448844"
-    //% blockId=TWisnotoneof block="is %d not one of %c1 %c2 || %c3"
-    //% inlineInputMode=inline
-    export function isNotOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
-        myWorld.isNotOneOf(d, c1, c2, c3)
+    //% blockId=TWisnotoneof block="is %dir=variables_get(direction) not one of %c1 %c2 || %c3"
+    //% inlineInputMode=inline direction.shadow=tiledir
+    export function isNotOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
+        myWorld.isNotOneOf(dir, c1, c2, c3)
     }
 }

@@ -48,32 +48,36 @@ namespace TileWorld {
             this.onStationary = undefined;
             this.onTransition = undefined;
         } 
-        //% blockId=TWsettilecode block="set code at %tile(tile) to %code"
-        //% group="Actions" color="#88CC44"
-        setCode(code: number) {
-            this.parent.setCode(this, code)
-        }
+        // conditions
 
         // block
         has(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
         // block
+        hasNo(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+            this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
+        }
+        // block
         hasMultiple(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.hasMultiple(code, this, dir, dir2, dir3))
         }
+        
+        // actions
+
         // block
         get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             return this.parent.getSprite(code, this, dir, dir2, dir3)
         }
-        // block
-        hasNo(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
-        }        
+        //% blockId=TWsettilecode block="set tile at %this(sprite) to %code=colorindexpicker"
+        //% group="Actions" color="#88CC44"
+        setCode(code: number) {
+            this.parent.setCode(this, code)
+        }
         // block
         remove() {
             this.parent.removeSprite(this)
-        }
+        }       
         // request sprite to move in specified direction
         // block
         moveOne(dir: TileDir) {
