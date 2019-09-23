@@ -50,7 +50,8 @@ namespace TileWorld {
         } 
         // conditions
 
-        // block
+        //% blockId=TWhas block="%this(sprite) has %code=colorindexpicker at %dir || %dir2 %dir3"
+        //% group="Conditions" color="#448844" inlineInputMode=inline
         has(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
         }
@@ -322,6 +323,7 @@ namespace TileWorld {
             scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
+            this.codeToKind[code] = kind;
             for (let value of tiles) {
                 let tileSprite = new TileSprite(this, code, art, kind)
                 this.sprites[code].push(tileSprite)
@@ -340,22 +342,6 @@ namespace TileWorld {
             if (this.spriteCodes.find(c => c == code)) {
                 this.sprites[code].forEach((s) => { s.setKind(kind) })
             }
-        }
-
-        makeGroup(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
-            let kind = SpriteKind.create()
-            this.codeToKind[code] = kind;
-            this.codeToKind[code2] = kind;
-            this.setKind(code, kind); this.setKind(code2, kind)
-            if (code3 != 0xff) {
-                this.codeToKind[code3] = kind;
-                this.setKind(code3, kind);
-            }
-            if (code4 != 0xff) {
-                this.codeToKind[code4] = kind;
-                this.setKind(code4, kind);
-            }
-            return kind;
         }
 
         onTileStationary(kind: number, h: (ts: TileSprite) => void) {

@@ -190,22 +190,21 @@ let world = new tw.TileWorld()
 world.setMap(levels.level1)
 world.setBackgroundTile(codes.Space)
 
+// names for sets
+
+namespace SpriteKind {
+    export let Rock = SpriteKind.create()
+}
+
 world.addTiles(codes.StrongWall, art.Wall)
 world.addTiles(codes.Wall, art.Wall)
 world.addTiles(codes.Space, art.Space)
 world.addTiles(codes.Dirt, art.Dirt)
 
-world.addTileSprites(codes.Boulder, art.Boulder)
-world.addTileSprites(codes.Diamond, art.Diamond)
-world.addTileSprites(codes.Enemy, art.Enemy)
+world.addTileSprites(codes.Boulder, art.Boulder, SpriteKind.Rock)
+world.addTileSprites(codes.Diamond, art.Diamond, SpriteKind.Rock)
+world.addTileSprites(codes.Enemy, art.Enemy, SpriteKind.Enemy)
 world.addTileSprites(codes.Player, art.Player, SpriteKind.Player)
-
-// names for sets
-
-namespace SpriteKind {
-    export let Wall = world.makeGroup(codes.Wall, codes.StrongWall)
-    export let Rock = world.makeGroup(codes.Boulder, codes.Diamond)
-}
 
 scene.cameraFollowSprite(world.getSprite(codes.Player))
 
@@ -244,7 +243,8 @@ world.onTileArrived(SpriteKind.Player, (tile) => {
 world.onTileArrived(SpriteKind.Player, (tile, dir) => {
     world.isNotOneOf(dir, TileDir.None)
     tile.hasNo(codes.Boulder, dir)
-    tile.hasNo(SpriteKind.Wall, dir)
+    tile.hasNo(codes.Wall, dir)
+    tile.hasNo(codes.StrongWall, dir)
     tile.moveOne(dir)  
 })
 
@@ -272,17 +272,17 @@ world.onTileStationary(SpriteKind.Rock, (tile) => {
 
 // rock falls to right
 world.onTileStationary(SpriteKind.Rock, (tile) => {
-    tile.has(SpriteKind.Rock, TileDir.Down)
     tile.has(codes.Space, TileDir.Right)
     tile.has(codes.Space, TileDir.Right, TileDir.Down)
+    tile.has(SpriteKind.Rock, TileDir.Down)
     tile.moveOne(TileDir.Right)
 })
 
 // rock falls to left
 world.onTileStationary(SpriteKind.Rock, (tile) => {
-    tile.has(SpriteKind.Rock, TileDir.Down)
     tile.has(codes.Space, TileDir.Left)
     tile.has(codes.Space, TileDir.Left, TileDir.Down)
+    tile.has(SpriteKind.Rock, TileDir.Down)
     tile.moveOne(TileDir.Left)
 })
 

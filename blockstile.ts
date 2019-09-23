@@ -37,10 +37,10 @@ namespace TileWorld {
      * @param index
      * @param img
      */
-    //% blockId=TWsetsprite block="set sprite %index=colorindexpicker to %img=tile_image_picker"
+    //% blockId=TWsetsprite block="set sprite %index=colorindexpicker to %img=tile_image_picker with $kind=spritekind"
     //% group="Tiles"
-    export function addTileSprite(code: number, image: Image) { 
-        myWorld.addTileSprites(code, image)
+    export function addTileSprite(code: number, image: Image, kind: number) { 
+        myWorld.addTileSprites(code, image, kind)
     }
      /**
      * Set the player
@@ -53,18 +53,8 @@ namespace TileWorld {
         bindToController(player)
         scene.cameraFollowSprite(player)
     }
-    /**
-     * Make a set of values and return the value representing the set
-     */
-    //% group="Tiles"
-    //% blockId=TWmakeset block="make set from %code %code2|| %code3 %code4"
-    //% inlineInputMode=inline
-    export function makeSet(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
-        return myWorld.makeGroup(code, code2, code3, code4)
-    }
 
     // notifications
-    //% group="Events"
 
     /**
      * Act on a sprite that is resting on a tile
