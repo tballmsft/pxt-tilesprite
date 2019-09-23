@@ -34,10 +34,11 @@ namespace TileWorld {
         private onStationary: (ts: TileSprite) => void
         private onTransition: (ts: TileSprite, prevCol: number, prevRow: number) => void
 
-        constructor(world: TileWorld, code: number, image: Image, bits: number = 4) {
+        constructor(world: TileWorld, code: number, image: Image, kind: number, bits: number = 4) {
             super(image);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
+            this.setKind(kind)
             this.parent = world;
             this.code = code
             this.tileBits = bits;
@@ -306,13 +307,13 @@ namespace TileWorld {
             scene.setTile(code, art);
         }
 
-        addTileSprites(code: number, art:Image) {
+        addTileSprites(code: number, art:Image, kind: number = 0) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
             this.spriteCodes.push(code);
             for (let value of tiles) {
-                let tileSprite = new TileSprite(this, code, art)
+                let tileSprite = new TileSprite(this, code, art, kind)
                 this.sprites[code].push(tileSprite)
                 value.place(tileSprite)
             }

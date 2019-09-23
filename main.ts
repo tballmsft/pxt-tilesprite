@@ -198,11 +198,14 @@ world.addTiles(codes.Dirt, art.Dirt)
 world.addTileSprites(codes.Boulder, art.Boulder)
 world.addTileSprites(codes.Diamond, art.Diamond)
 world.addTileSprites(codes.Enemy, art.Enemy)
-world.addTileSprites(codes.Player, art.Player)
+world.addTileSprites(codes.Player, art.Player, SpriteKind.Player)
 
 // names for sets
-let wallKind = world.makeGroup(codes.Wall, codes.StrongWall)
-let rockKind = world.makeGroup(codes.Boulder, codes.Diamond)
+
+namespace SpriteKind {
+    export let wallKind = world.makeGroup(codes.Wall, codes.StrongWall)
+    export let rockKind = world.makeGroup(codes.Boulder, codes.Diamond)
+}
 
 scene.cameraFollowSprite(world.getSprite(codes.Player))
 
@@ -241,7 +244,7 @@ world.onTileArrived(codes.Player, (tile) => {
 world.onTileArrived(codes.Player, (tile, dir) => {
     world.isNotOneOf(dir, TileDir.None)
     tile.hasNo(codes.Boulder, dir)
-    tile.hasNo(wallKind, dir)
+    tile.hasNo(SpriteKind.wallKind, dir)
     tile.moveOne(dir)  
 })
 
@@ -262,47 +265,47 @@ world.onTileTransition(codes.Player, (tile) => {
 // rock logic
 
 // rock starts falling if there is a space below it
-world.onTileStationary(rockKind, (tile) => {
+world.onTileStationary(SpriteKind.rockKind, (tile) => {
     tile.has(codes.Space, TileDir.Down)
     tile.moveOne(TileDir.Down)
 })
 
 // rock falls to right
-world.onTileStationary(rockKind, (tile) => {
-    tile.has(rockKind, TileDir.Down)
+world.onTileStationary(SpriteKind.rockKind, (tile) => {
+    tile.has(SpriteKind.rockKind, TileDir.Down)
     tile.has(codes.Space, TileDir.Right)
     tile.has(codes.Space, TileDir.Right, TileDir.Down)
     tile.moveOne(TileDir.Right)
 })
 
 // rock falls to left
-world.onTileStationary(rockKind, (tile) => {
-    tile.has(rockKind, TileDir.Down)
+world.onTileStationary(SpriteKind.rockKind, (tile) => {
+    tile.has(SpriteKind.rockKind, TileDir.Down)
     tile.has(codes.Space, TileDir.Left)
     tile.has(codes.Space, TileDir.Left, TileDir.Down)
     tile.moveOne(TileDir.Left)
 })
 
-world.onTileArrived(rockKind, (tile, dir) => {
+world.onTileArrived(SpriteKind.rockKind, (tile, dir) => {
     world.isOneOf(dir, TileDir.Down);
     world.check(!world.tileIs(codes.Space, tile, TileDir.Down))
     tile.deadStop();
 })
 
-world.onTileArrived(rockKind, (tile, dir) => {
+world.onTileArrived(SpriteKind.rockKind, (tile, dir) => {
     world.isOneOf(dir, TileDir.Down);
-    tile.has(rockKind, TileDir.Down)
+    tile.has(SpriteKind.rockKind, TileDir.Down)
     tile.deadStop();
 })
 
-world.onTileArrived(rockKind, (tile, dir) => {
+world.onTileArrived(SpriteKind.rockKind, (tile, dir) => {
     world.isNotOneOf(dir, TileDir.Down);
     tile.has(codes.Space, TileDir.Down)
     tile.deadStop();
     tile.moveOne(TileDir.Down)
 })
 
-world.onTileTransition(rockKind, (tile) => {
+world.onTileTransition(SpriteKind.rockKind, (tile) => {
     // TODO: need to generalize this to work with kinds as well
     tile.hasMultiple(codes.Boulder)
     tile.knockBack()
