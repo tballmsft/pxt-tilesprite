@@ -53,7 +53,16 @@ namespace TileWorld {
         bindToController(player)
         scene.cameraFollowSprite(player)
     }
-    
+    /**
+     * Make a set of values and return the value representing the set
+     */
+    //% group="Tiles"
+    //% blockId=TWmakeset block="make set from %code %code2|| %code3 %code4"
+    //% inlineInputMode=inline
+    export function makeSet(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
+        return myWorld.makeGroup(code, code2, code3, code4)
+    }
+
     // notifications
     //% group="Events"
 
@@ -61,7 +70,7 @@ namespace TileWorld {
      * Act on a sprite that is resting on a tile
      * @param body code to execute
      */
-    //% group="Events" color="#0000FF"
+    //% group="Events" color="#444488"
     //% blockId=TWontilestationary block="on %code=colorindexpicker at rest"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileStationary(code: number, h: (tile: TileSprite) => void) {
@@ -71,7 +80,7 @@ namespace TileWorld {
      * Act on a sprite that has moved to center of tile
      * @param body code to execute
      */
-    //% group="Events"
+    //% group="Events" color="#444488"
     //% blockId=TWontilearrived block="on %code=colorindexpicker arrived"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileArrived(code: number, h: (tile: TileSprite, direction: TileDir) => void) { 
@@ -81,7 +90,7 @@ namespace TileWorld {
      * Act on a sprite that has just moved into new tile
      * @param body code to execute
      */
-    //% group="Events"
+    //% group="Events" color="#444488"
     //% blockId=TWontiletransition block="on %code=colorindexpicker transition"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileTransition(code: number, h: (tile: TileSprite, col: number, row: number) => void) { 
@@ -91,18 +100,9 @@ namespace TileWorld {
     // checks
 
     /**
-     * Make a set of values and return the value representing the set
-     */
-    //% group="Conditions"
-    //% blockId=TWmakeset block="make set from %code %code2|| %code3 %code4"
-    //% inlineInputMode=inline
-    export function makeSet(code: number, code2: number, code3: number = 0xff, code4: number = 0xff) {
-        return myWorld.makeGroup(code, code2, code3, code4)
-    }
-    /**
      * Check if a direction is one of several values.
      */
-    //% group="Conditions"
+    //% group="Conditions" color="#448844"
     //% blockId=TWisoneof block="is %d one of %c1 %c2 || %c3"
     //% inlineInputMode=inline
     export function isOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
@@ -111,17 +111,17 @@ namespace TileWorld {
     /**
      * Check if a direction is not one of several values.
      */
-    //% group="Conditions"
+    //% group="Conditions" color="#448844"
     //% blockId=TWisnotoneof block="is %d not one of %c1 %c2 || %c3"
     //% inlineInputMode=inline
     export function isNotOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isNotOneOf(d, c1, c2, c3)
     }
 
-    // actions
+    // actions 
     //% blockId=TWsettilecode block="set code %ts to %code"
     //% draggableParameters = "reporter"
-    //% group="Actions"
+    //% group="Actions" color="#88CC44"
     export function setTileCode(ts: TileSprite, code: number) {
         myWorld.setCode(ts, code)
     }
