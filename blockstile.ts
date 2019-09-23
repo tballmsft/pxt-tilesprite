@@ -71,27 +71,27 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on %code=colorindexpicker at rest"
+    //% blockId=TWontilestationary block="on $tile of kind $kind=spritekind at rest"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileStationary(code: number, h: (tile: TileSprite) => void) {
-        myWorld.onTileStationary(code, h);
+    export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
+        myWorld.onTileStationary(kind, h);
     }
     /**
      * Act on a sprite that has moved to center of tile
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on %code=colorindexpicker arrived"
+    //% blockId=TWontilearrived block="on $tile of kind $kind=spritekind arrived"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileArrived(code: number, h: (tile: TileSprite, direction: TileDir) => void) { 
-        myWorld.onTileArrived(code, h)
+    export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
+        myWorld.onTileArrived(kind, h)
     }
     /**
      * Act on a sprite that has just moved into new tile
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on %code=colorindexpicker transition"
+    //% blockId=TWontiletransition block="on $tile of kind $kind=spritekind transition"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileTransition(code: number, h: (tile: TileSprite, col: number, row: number) => void) { 
         myWorld.onTileTransition(code, h)
@@ -117,13 +117,4 @@ namespace TileWorld {
     export function isNotOneOf(d: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isNotOneOf(d, c1, c2, c3)
     }
-
-    // actions 
-    //% blockId=TWsettilecode block="set code %ts to %code"
-    //% draggableParameters = "reporter"
-    //% group="Actions" color="#88CC44"
-    export function setTileCode(ts: TileSprite, code: number) {
-        myWorld.setCode(ts, code)
-    }
-
 }
