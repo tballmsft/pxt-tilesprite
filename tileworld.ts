@@ -348,55 +348,37 @@ namespace TileWorld {
             return kind;
         }
 
-        onTileStationary(code: number, h: (ts: TileSprite) => void) {
-            if (!this.stationaryHandlers[code]) {
-                this.stationaryHandlers[code] = []
-                if (code < this.tileKind) {
-                    let process = (s: TileSprite) => 
-                        this.stationaryHandlers[s.getCode()].forEach((h) => tryCatch(h,s));
-                    this.sprites[code].forEach((spr) => spr.onTileStationary(process));
-                } else {
-                    let process = (s: TileSprite) => 
-                        this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h,s));
-                    let sprites = game.currentScene().spritesByKind[code].sprites()
-                    sprites.forEach((spr) => (<TileSprite>spr).onTileStationary(process));
-                }
+        onTileStationary(kind: number, h: (ts: TileSprite) => void) {
+            if (!this.stationaryHandlers[kind]) {
+                this.stationaryHandlers[kind] = []
+                let process = (s: TileSprite) => 
+                    this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h,s));
+                let sprites = game.currentScene().spritesByKind[kind].sprites()
+                sprites.forEach((spr) => (<TileSprite>spr).onTileStationary(process));
             }
-            this.stationaryHandlers[code].push(h);
+            this.stationaryHandlers[kind].push(h);
         }
 
-        onTileArrived(code: number, h: (ts: TileSprite, d: TileDir) => void) {
-            if (!this.arrivalHandlers[code]) {
-                this.arrivalHandlers[code] = [];
-                if (code < this.tileKind) {
-                    let process = (s: TileSprite, d: TileDir) => 
-                        this.arrivalHandlers[s.getCode()].forEach((h) => tryCatchTileDir(h, s, d));
-                    this.sprites[code].forEach((spr) => spr.onTileArrived(process))
-                } else {
-                    let process = (s: TileSprite, d: TileDir) => 
-                        this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
-                    let sprites = game.currentScene().spritesByKind[code].sprites()
-                    sprites.forEach((spr) => (<TileSprite>spr).onTileArrived(process));
-                }
+        onTileArrived(kind: number, h: (ts: TileSprite, d: TileDir) => void) {
+            if (!this.arrivalHandlers[kind]) {
+                this.arrivalHandlers[kind] = [];
+                let process = (s: TileSprite, d: TileDir) => 
+                    this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
+                let sprites = game.currentScene().spritesByKind[kind].sprites()
+                sprites.forEach((spr) => (<TileSprite>spr).onTileArrived(process));
             }
-            this.arrivalHandlers[code].push(h);
+            this.arrivalHandlers[kind].push(h);
         }
 
-        onTileTransition(code: number, h: (ts: TileSprite, r: number, c: number) => void) {
-            if (!this.transitionHandlers[code]) {
-                this.transitionHandlers[code] = [];
-                if (code < this.tileKind) {
-                    let process = (s: TileSprite, c: number, r: number) => 
-                        this.transitionHandlers[s.getCode()].forEach((h) => tryCatchColRow(h, s, c, r));
-                    this.sprites[code].forEach((spr) => spr.onTileTransition(process))
-                } else {
-                    let process = (s: TileSprite, c: number, r: number) => 
-                        this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
-                    let sprites = game.currentScene().spritesByKind[code].sprites()
-                    sprites.forEach((spr) => (<TileSprite>spr).onTileTransition(process));
-                }
+        onTileTransition(kind: number, h: (ts: TileSprite, r: number, c: number) => void) {
+            if (!this.transitionHandlers[kind]) {
+                this.transitionHandlers[kind] = [];
+                let process = (s: TileSprite, c: number, r: number) => 
+                   this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
+                let sprites = game.currentScene().spritesByKind[kind].sprites()
+                sprites.forEach((spr) => (<TileSprite>spr).onTileTransition(process));
             }
-            this.transitionHandlers[code].push(h);
+            this.transitionHandlers[kind].push(h);
         }
 
         isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
