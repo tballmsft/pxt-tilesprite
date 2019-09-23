@@ -12,9 +12,6 @@ enum TileDir {
     Down
 }
 
-//% weight=1000 color="#442255" icon="\uf45c"
-//% groups='["Tiles", "Events", "Logic"]'
-//% blockGap=8
 namespace TileWorld {
 
     // a sprite that moves by tiles, but only in one of four directions

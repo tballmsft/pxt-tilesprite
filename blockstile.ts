@@ -61,7 +61,7 @@ namespace TileWorld {
      * Act on a sprite that is resting on a tile
      * @param body code to execute
      */
-    //% group="Events"
+    //% group="Events" color="#0000FF"
     //% blockId=TWontilestationary block="on %code=colorindexpicker at rest"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileStationary(code: number, h: (tile: TileSprite) => void) {
