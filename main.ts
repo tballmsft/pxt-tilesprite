@@ -1,5 +1,3 @@
-
-
  /*
 
  // Rules of the game:
