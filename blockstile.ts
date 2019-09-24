@@ -42,17 +42,6 @@ namespace TileWorld {
     export function addTileSprite(code: number, image: Image, kind: number) { 
         myWorld.addTileSprites(code, image, kind)
     }
-     /**
-     * Set the player
-     * @param color
-     */
-    //% group="Tiles"
-    //% blockId=TWsetplayer block="set player to %color=colorindexpicker"
-    export function setPlayer(code: number) { 
-        let player = myWorld.getSprite(code)
-        bindToController(player)
-        scene.cameraFollowSprite(player)
-    }
 
     // notifications
 
