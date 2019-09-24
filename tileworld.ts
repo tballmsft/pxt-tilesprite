@@ -87,23 +87,31 @@ namespace TileWorld {
         setCode(code: number) {
             this.parent.setCode(this, code)
         }
-        // block
+        //% blockId=TWremove block="remove %this(tile)"
+        //% group="Actions" color="#88CC44"
         remove() {
             this.parent.removeSprite(this)
         }       
         // request sprite to move in specified direction
-        // block
+        //% blockId=TWmove block="move %this(tile) %dir=tiledir"
+        //% group="Actions" color="#88CC44"
         moveOne(dir: TileDir) {
             if (dir == TileDir.Left || dir == TileDir.Right)
                 this.moveInX(dir)
             else if (dir == TileDir.Up || dir == TileDir.Down)
                 this.moveInY(dir)
         }
+        // request sprite to move in specified direction
+        //% blockId=TWmove2 block="move %this(tile) %dir=variables_get(direction)"
+        //% group="Actions" color="#88CC44"
+        moveOne_(dir: number) { this.moveOne(dir) }
+
         // request sprite to stop moving when it reaches destination
         // block
         requestStop() { this.final = 0; }
         // stop at current tile
-        // block
+        //% blockId=TWdeadstop block="stop %this(tile)"
+        //% group="Actions" color="#88CC44"
         deadStop() { this.stopSprite(false) }
         // back to previous tile
         // block
