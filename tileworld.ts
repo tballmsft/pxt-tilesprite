@@ -12,6 +12,11 @@ enum TileDir {
     Down
 }
 
+//% blockId=tiledir block="$dir"
+function _tileDir(dir: TileDir): number {
+    return dir;
+}
+
 namespace TileWorld {
 
     // a sprite that moves by tiles, but only in one of four directions
@@ -95,16 +100,12 @@ namespace TileWorld {
         // request sprite to move in specified direction
         //% blockId=TWmove block="move sprite at $this(tile) $dir=tiledir"
         //% group="Actions" color="#88CC44"
-        moveOne(dir: TileDir) {
+        moveOne(dir: number) {
             if (dir == TileDir.Left || dir == TileDir.Right)
                 this.moveInX(dir)
             else if (dir == TileDir.Up || dir == TileDir.Down)
                 this.moveInY(dir)
         }
-        // request sprite to move in specified direction
-        //% blockId=TWmove2 block="move sprite at $this(tile) $dir=variables_get(direction)"
-        //% group="Actions" color="#88CC44"
-        moveOne_(dir: number) { this.moveOne(dir) }
 
         // request sprite to stop moving when it reaches destination
         // block
