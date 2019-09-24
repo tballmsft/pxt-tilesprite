@@ -55,25 +55,25 @@ namespace TileWorld {
         } 
         // conditions
 
-        //% blockId=TWhascode block="does %this(tile) have code %code=colorindexpicker at %dir || %dir2 %dir3"
+        //% blockId=TWhascode block="does $this(tile) have code $code=colorindexpicker at $dir=tiledir $dir2=tiledir"
         //% group="Conditions" color="#448844" inlineInputMode=inline
-        hasCode(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            this.parent.check(this.parent.containsAt(code, this, dir, dir2, dir3))
+        hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None) {
+            this.parent.check(this.parent.containsAt(code, this, dir, dir2))
         }
-        //% blockId=TWhaskind block="does %this(tile) have kind $kind=spritekind at %dir || %dir2 %dir3"
+        //% blockId=TWhaskind block="does %this(tile) have kind $kind=spritekind at %dir=tiledir %dir2=tiledir"
         //% group="Conditions" color="#448844" inlineInputMode=inline
-        hasKind(kind: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            this.parent.check(this.parent.containsAt(kind, this, dir, dir2, dir3))
+        hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None) {
+            this.parent.check(this.parent.containsAt(kind, this, dir, dir2))
         }
-        //% blockId=TWhasnocode block="%this(tile) has no code %code=colorindexpicker at %dir || %dir2 %dir3"
+        //% blockId=TWhasnocode block="%this(tile) has no code %code=colorindexpicker at %dir=tiledir %dir2=tiledir"
         //% group="Conditions" color="#448844" inlineInputMode=inline
-        hasNoCode(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            this.parent.check(!this.parent.containsAt(code, this, dir, dir2, dir3))
+        hasNoCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None) {
+            this.parent.check(!this.parent.containsAt(code, this, dir, dir2))
         }
-        //% blockId=TWhasnokind block="%this(tile) has no kind $kind=spritekind at %dir || %dir2 %dir3"
+        //% blockId=TWhasnokind block="%this(tile) has no kind $kind=spritekind at %dir=tiledir %dir2=tiledir"
         //% group="Conditions" color="#448844" inlineInputMode=inline
-        hasNoKind(kind: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            this.parent.check(!this.parent.containsAt(kind, this, dir, dir2, dir3))
+        hasNoKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, dir3: number = TileDir.None) {
+            this.parent.check(!this.parent.containsAt(kind, this, dir, dir2))
         }
         //% blockId=TWhasmultiple block="does %this(tile) have multiple $code=colorindexpicker at %dir || %dir2 %dir3"
         //% group="Conditions" color="#448844" inlineInputMode=inline
