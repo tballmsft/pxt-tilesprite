@@ -13,7 +13,6 @@
         "blockstile.ts"
     ],
     "testFiles": [
-        "test.ts"
     ],
     "public": false,
     "installedVersion": "workspace:61b84db3-6c7a-4117-3e63-465e2303c6ff",
