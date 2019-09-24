@@ -42,7 +42,18 @@ namespace TileWorld {
     export function addTileSprite(code: number, image: Image, kind: number) { 
         myWorld.addTileSprites(code, image, kind)
     }
-
+    /**	
+    * Set the player	
+    * @param color	
+    */
+    //% group="Tiles"	
+    //% blockId=TWsetplayer block="set player to %color=colorindexpicker"	
+    export function setPlayer(code: number) {
+        let player = myWorld.getSprite(code)
+        bindToController(player)
+        scene.cameraFollowSprite(player)
+    }
+    
     // notifications
 
     /**
@@ -56,7 +67,7 @@ namespace TileWorld {
         myWorld.onTileStationary(kind, h);
     }
     /**
-     * Act on a sprite that has moved to center of tile
+     * Sprite is at center of tile and received request to move
      * @param body code to execute
      */
     //% group="Events" color="#444488"
@@ -66,13 +77,13 @@ namespace TileWorld {
         myWorld.onTileArrived(kind, h)
     }
     /**
-     * Act on a sprite that has just moved into new tile
+     * Sprite has just move into (entered) a tile
      * @param body code to execute
      */
     //% group="Events" color="#444488"
     //% blockId=TWontiletransition block="enter $tile of kind $kind=spritekind"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileTransition(kind: number, h: (tile: TileSprite, col: number, row: number) => void) { 
+    export function onTileTransition(kind: number, h: (tile: TileSprite) => void) { 
         myWorld.onTileTransition(kind, h)
     }
     

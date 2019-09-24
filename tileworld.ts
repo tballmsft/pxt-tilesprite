@@ -356,11 +356,6 @@ namespace TileWorld {
                     if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
                 }
             }
-            // TODO: check for multiple player sprites
-            if (kind == SpriteKind.Player) {
-                bindToController(this.sprites[code][0])
-                scene.cameraFollowSprite(this.sprites[code][0])
-            }
         }
 
         private setKind(code: number, kind: number) {
