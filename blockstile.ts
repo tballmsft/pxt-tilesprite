@@ -43,15 +43,18 @@ namespace TileWorld {
         myWorld.addTileSprites(code, image, kind)
     }
     /**	
-    * Set the player	
+    * Move sprite with buttons	
     * @param color	
     */
     //% group="Tiles"	
-    //% blockId=TWsetplayer block="set player to %color=colorindexpicker"	
-    export function setPlayer(code: number) {
-        let player = myWorld.getSprite(code)
-        bindToController(player)
-        scene.cameraFollowSprite(player)
+    //% blockId=TWmoveButtons block="move $kind=spritekind with buttons"	
+    export function moveWithButtons(kind: number) { 
+        let sprites = game.currentScene().spritesByKind[kind].sprites()
+        sprites.forEach((s) => { 
+            if (s instanceof TileSprite) {
+                bindToController(<TileSprite>s)}
+            } 
+        )
     }
     
     // notifications
