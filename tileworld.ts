@@ -12,6 +12,11 @@ enum TileDir {
     Down
 }
 
+//% blockId=tiledir block="$dir"
+function _tileDir(dir: TileDir): number {
+    return dir;
+}
+
 enum ResultSet {
     //% block="has no"
     Zero,
@@ -21,9 +26,11 @@ enum ResultSet {
     MoreThanOne,
 }
 
-//% blockId=tiledir block="$dir"
-function _tileDir(dir: TileDir): number {
-    return dir;
+enum Testing {
+    //% block="one of"
+    OneOf,
+    //% block="not one of"
+    NotOneOf
 }
 
 //%
@@ -67,7 +74,7 @@ namespace TileWorld {
         // conditions
 
         //% blockId=TWhascode block="test $this(tile) $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
-        //% group="Conditions" color="#448844" inlineInputMode=inline
+        //% group="Tests" color="#448844" inlineInputMode=inline
         hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
             if (size == ResultSet.ExactlyOne)
                 this.parent.check(this.parent.containsAt(code, this, dir, dir2))
@@ -77,7 +84,7 @@ namespace TileWorld {
                 this.parent.check(false)
         }
         //% blockId=TWhaskind block="test $this(tile) $dir=tiledir $dir2=tiledir $size $kind=spritekind"
-        //% group="Conditions" color="#448844" inlineInputMode=inline
+        //% group="Tests" color="#448844" inlineInputMode=inline
         hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
             if (size == ResultSet.ExactlyOne)
                 this.parent.check(this.parent.containsAt(kind, this, dir, dir2))

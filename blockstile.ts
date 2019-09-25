@@ -1,5 +1,5 @@
 //% weight=1000 color="#442255" icon="\uf45c"
-//% groups='["Tiles", "Events", "Conditions", "Actions"]'
+//% groups='["Tiles", "Events", "Tests", "Actions"]'
 //% blockGap=8
 namespace TileWorld {
 
@@ -76,7 +76,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on $tile of kind $kind=spritekind at rest"
+    //% blockId=TWontilestationary block="on change around $kind=spritekind at $tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
         myWorld.onTileStationary(kind, h);
@@ -98,32 +98,24 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="enter $tile of kind $kind=spritekind"
+    //% blockId=TWontiletransition block="on $kind=spritekind moved into $tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileTransition(kind: number, h: (tile: TileSprite) => void) { 
         myWorld.onTileTransition(kind, h)
     }
-
     
     // checks
 
     /**
      * Check if a direction is one of several values.
      */
-    //% group="Conditions" color="#448844"
-    //% blockId=TWisoneof block="test %dir=variables_get(direction) one of %c1 %c2"
+    //% group="Tests" color="#448844"
+    //% blockId=TWisoneof block="test %dir=variables_get(direction) $cmp %c1 %c2"
     //% inlineInputMode=inline
-    export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff) { 
-        myWorld.isOneOf(dir, c1, c2)
-    }
-
-    /**
-     * Check if a direction is not one of several values.
-     */
-    //% group="Conditions" color="#448844"
-    //% blockId=TWisnotoneof block="test %dir=variables_get(direction) not one of %c1 %c2"
-    //% inlineInputMode=inline
-    export function isNotOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff) { 
-        myWorld.isNotOneOf(dir, c1, c2)
+    export function isOneOf(dir: number, cmp: Testing = Testing.OneOf, c1: TileDir, c2: TileDir) { 
+        if (cmp == Testing.OneOf)
+            myWorld.isOneOf(dir, c1, c2)
+        else 
+            myWorld.isNotOneOf(dir, c1, c2)
     }
 }
