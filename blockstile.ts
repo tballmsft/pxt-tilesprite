@@ -111,19 +111,19 @@ namespace TileWorld {
      * Check if a direction is one of several values.
      */
     //% group="Conditions" color="#448844"
-    //% blockId=TWisoneof block="is %dir=variables_get(direction) one of %c1 %c2 || %c3"
+    //% blockId=TWisoneof block="test %dir=variables_get(direction) one of %c1 %c2"
     //% inlineInputMode=inline
-    export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
-        myWorld.isOneOf(dir, c1, c2, c3)
+    export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff) { 
+        myWorld.isOneOf(dir, c1, c2)
     }
 
     /**
      * Check if a direction is not one of several values.
      */
     //% group="Conditions" color="#448844"
-    //% blockId=TWisnotoneof block="is %dir=variables_get(direction) not one of %c1 %c2 || %c3"
+    //% blockId=TWisnotoneof block="test %dir=variables_get(direction) not one of %c1 %c2"
     //% inlineInputMode=inline
-    export function isNotOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
-        myWorld.isNotOneOf(dir, c1, c2, c3)
+    export function isNotOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff) { 
+        myWorld.isNotOneOf(dir, c1, c2)
     }
 }
