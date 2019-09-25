@@ -17,9 +17,11 @@ function _tileDir(dir: TileDir): number {
     return dir;
 }
 
+//%
 namespace TileWorld {
 
     // a sprite that moves by tiles, but only in one of four directions
+    //%
     export class TileSprite extends Sprite implements Tile {
         public tileBits: number;
         private code: number;

@@ -112,7 +112,7 @@ namespace TileWorld {
      */
     //% group="Conditions" color="#448844"
     //% blockId=TWisoneof block="is %dir=variables_get(direction) one of %c1 %c2 || %c3"
-    //% inlineInputMode=inline direction.shadow=tiledir
+    //% inlineInputMode=inline
     export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isOneOf(dir, c1, c2, c3)
     }
@@ -122,7 +122,7 @@ namespace TileWorld {
      */
     //% group="Conditions" color="#448844"
     //% blockId=TWisnotoneof block="is %dir=variables_get(direction) not one of %c1 %c2 || %c3"
-    //% inlineInputMode=inline direction.shadow=tiledir
+    //% inlineInputMode=inline
     export function isNotOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isNotOneOf(dir, c1, c2, c3)
     }
