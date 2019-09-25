@@ -87,7 +87,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on $tile of kind $kind=spritekind move $direction"
+    //% blockId=TWontilearrived block="on request of $kind=spritekind at $tile to move $direction"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(kind, h)
