@@ -33,6 +33,13 @@ enum Testing {
     NotOneOf
 }
 
+enum KindKind {
+    //% block="fixed"
+    Fixed,
+    //% block="movable"
+    Movable
+}
+
 //%
 namespace TileWorld {
 

@@ -37,21 +37,14 @@ namespace TileWorld {
      * @param index
      * @param img
      */
-    //% blockId=TWsettile block="set %index=colorindexpicker to fixed sprite %img=tile_image_picker with $kind=spritekind""
+    //% blockId=TWaddsprite block="set $code=colorindexpicker to $kk sprite $image=tile_image_picker with $kind=spritekind"
     //% group="Tiles"
-    export function setTile(code: number, image: Image, kind: number) { 
-        myWorld.addTiles(code, image)
-    }
-
-    /**
-     * Set an image as a sprite at the given index. Sprites should be a 16x16 image
-     * @param index
-     * @param img
-     */
-    //% blockId=TWsetsprite block="set %index=colorindexpicker to movable sprite %img=tile_image_picker with $kind=spritekind"
-    //% group="Tiles"
-    export function addTileSprite(code: number, image: Image, kind: number) { 
-        myWorld.addTileSprites(code, image, kind)
+    //% inlineInputMode=inline
+    export function addSprite(code: number, image: Image, kk: KindKind, kind: number) {
+        if (kk == KindKind.Fixed)
+            myWorld.addTiles(code, image)
+        else
+            myWorld.addTileSprites(code, image, kind)
     }
 
     /**	
