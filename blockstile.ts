@@ -4,6 +4,7 @@
 namespace TileWorld {
 
     let myWorld = new TileWorld();
+    
     /**
      * Set the map for placing tiles in the scene
      * @param map
@@ -13,6 +14,7 @@ namespace TileWorld {
     export function setTileMap(map: Image) { 
         myWorld.setMap(map) 
     }
+
     /**
      * Set the background tile for sprites
      * @param color
@@ -22,26 +24,36 @@ namespace TileWorld {
     export function setBackgroundTile(code: number) { 
         myWorld.setBackgroundTile(code)
     }
+
+    // TODO: can we unify the two below?
+    // idea - a sprite is stationary or movable?
+
+    // set $code $image $kind $movable?
+    // $code -> $kind, regardless of $movable
+    // only movable sprites get events
+ 
     /**
      * Set an image as a tile at the given index. Tiles should be a 16x16 image
      * @param index
      * @param img
      */
-    //% blockId=TWsettile block="set tile %index=colorindexpicker to %img=tile_image_picker"
+    //% blockId=TWsettile block="set %index=colorindexpicker to fixed sprite %img=tile_image_picker with $kind=spritekind""
     //% group="Tiles"
-    export function setTile(code: number, image: Image) { 
+    export function setTile(code: number, image: Image, kind: number) { 
         myWorld.addTiles(code, image)
     }
+
     /**
      * Set an image as a sprite at the given index. Sprites should be a 16x16 image
      * @param index
      * @param img
      */
-    //% blockId=TWsetsprite block="set sprite %index=colorindexpicker to %img=tile_image_picker with $kind=spritekind"
+    //% blockId=TWsetsprite block="set %index=colorindexpicker to movable sprite %img=tile_image_picker with $kind=spritekind"
     //% group="Tiles"
     export function addTileSprite(code: number, image: Image, kind: number) { 
         myWorld.addTileSprites(code, image, kind)
     }
+
     /**	
     * Move sprite with buttons	
     * @param color	
@@ -69,6 +81,7 @@ namespace TileWorld {
     export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
         myWorld.onTileStationary(kind, h);
     }
+
     /**
      * Sprite is at center of tile and received request to move
      * @param body code to execute
@@ -79,6 +92,7 @@ namespace TileWorld {
     export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(kind, h)
     }
+
     /**
      * Sprite has just move into (entered) a tile
      * @param body code to execute
@@ -89,6 +103,7 @@ namespace TileWorld {
     export function onTileTransition(kind: number, h: (tile: TileSprite) => void) { 
         myWorld.onTileTransition(kind, h)
     }
+
     
     // checks
 
@@ -101,6 +116,7 @@ namespace TileWorld {
     export function isOneOf(dir: number, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) { 
         myWorld.isOneOf(dir, c1, c2, c3)
     }
+
     /**
      * Check if a direction is not one of several values.
      */
