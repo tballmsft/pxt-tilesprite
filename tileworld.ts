@@ -354,22 +354,13 @@ namespace TileWorld {
             this.backgroundTile = backgroundTile
         }
 
-        addTiles(code: number, art: Image) {
+        addTiles(code: number, art: Image, kind: number) {
             let tiles = scene.getTilesByType(code)
+            this.codeToKind[code] = kind;
             scene.setTile(code, art);
         }
 
-        private initHandlers(kind: number) {
-            if (!this.stationaryHandlers[kind]) this.stationaryHandlers[kind] = []
-            if (!this.arrivalHandlers[kind]) this.arrivalHandlers[kind] = []
-            if (!this.transitionHandlers[kind]) this.transitionHandlers[kind] = []
-        }
-        private hookupHandlers(s: TileSprite) {
-            this.hookupArrival(s)
-            this.hookupStationary(s)
-            this.hookupTransition(s)
-        }
-        addTileSprites(code: number, art:Image, kind: number = 0) {
+        addTileSprites(code: number, art:Image, kind: number) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
             this.sprites[code] = []
@@ -391,17 +382,6 @@ namespace TileWorld {
             }
         }
 
-        private setKind(code: number, kind: number) {
-            if (this.spriteCodes.find(c => c == code)) {
-                this.sprites[code].forEach((s) => { s.setKind(kind) })
-            }
-        }
-
-        private hookupStationary(s: TileSprite) {
-            let process = (s: TileSprite) =>
-                this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
-            s.onTileStationary(process);
-        }
         onTileStationary(kind: number, h: (ts: TileSprite) => void) {
             if (!this.stationaryHandlers[kind]) {
                 this.stationaryHandlers[kind] = []
@@ -409,11 +389,6 @@ namespace TileWorld {
             this.stationaryHandlers[kind].push(h);
         }
 
-        private hookupArrival(s: TileSprite) {
-            let process = (s: TileSprite, d: TileDir) =>
-                this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
-            s.onTileArrived(process);
-        }
         onTileArrived(kind: number, h: (ts: TileSprite, d: TileDir) => void) {
             if (!this.arrivalHandlers[kind]) {
                 this.arrivalHandlers[kind] = [];
@@ -421,15 +396,36 @@ namespace TileWorld {
             this.arrivalHandlers[kind].push(h);
         }
 
-        private hookupTransition(s: TileSprite) {
-            let process = (s: TileSprite, c: number, r: number) =>
-                this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
-            s.onTileTransition(process);
-        }
         onTileTransition(kind: number, h: (ts: TileSprite, r: number, c: number) => void) {
             if (!this.transitionHandlers[kind]) {
                 this.transitionHandlers[kind] = [];          }
             this.transitionHandlers[kind].push(h);
+        }
+
+        private initHandlers(kind: number) {
+            if (!this.stationaryHandlers[kind]) this.stationaryHandlers[kind] = []
+            if (!this.arrivalHandlers[kind]) this.arrivalHandlers[kind] = []
+            if (!this.transitionHandlers[kind]) this.transitionHandlers[kind] = []
+        }
+        private hookupHandlers(s: TileSprite) {
+            this.hookupArrival(s)
+            this.hookupStationary(s)
+            this.hookupTransition(s)
+        }
+        private hookupStationary(s: TileSprite) {
+            let process = (s: TileSprite) =>
+                this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
+            s.onTileStationary(process);
+        }
+        private hookupArrival(s: TileSprite) {
+            let process = (s: TileSprite, d: TileDir) =>
+                this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
+            s.onTileArrived(process);
+        }
+        private hookupTransition(s: TileSprite) {
+            let process = (s: TileSprite, c: number, r: number) =>
+                this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
+            s.onTileTransition(process);
         }
 
         isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {

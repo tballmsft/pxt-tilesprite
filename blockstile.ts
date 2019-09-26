@@ -25,13 +25,6 @@ namespace TileWorld {
         myWorld.setBackgroundTile(code)
     }
 
-    // TODO: can we unify the two below?
-    // idea - a sprite is stationary or movable?
-
-    // set $code $image $kind $movable?
-    // $code -> $kind, regardless of $movable
-    // only movable sprites get events
- 
     /**
      * Set an image as a tile at the given index. Tiles should be a 16x16 image
      * @param index
@@ -42,7 +35,7 @@ namespace TileWorld {
     //% inlineInputMode=inline
     export function addSprite(code: number, image: Image, kk: KindKind, kind: number) {
         if (kk == KindKind.Fixed)
-            myWorld.addTiles(code, image)
+            myWorld.addTiles(code, image, kind)
         else
             myWorld.addTileSprites(code, image, kind)
     }
@@ -71,7 +64,7 @@ namespace TileWorld {
     //% group="Events" color="#444488"
     //% blockId=TWontilestationary block="on change around $kind=spritekind at $tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileStationary(kind: number, h: (tile: TileSprite) => void) {
+    export function onTileStationary(kind: number, h: (tile: TileWorld.TileSprite) => void) {
         myWorld.onTileStationary(kind, h);
     }
 
@@ -82,7 +75,7 @@ namespace TileWorld {
     //% group="Events" color="#444488"
     //% blockId=TWontilearrived block="on request of $kind=spritekind at $tile to move $direction"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileArrived(kind: number, h: (tile: TileSprite, direction: TileDir) => void) { 
+    export function onTileArrived(kind: number, h: (tile: TileWorld.TileSprite, direction: TileDir) => void) { 
         myWorld.onTileArrived(kind, h)
     }
 
@@ -93,7 +86,7 @@ namespace TileWorld {
     //% group="Events" color="#444488"
     //% blockId=TWontiletransition block="on $kind=spritekind moved into $tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileTransition(kind: number, h: (tile: TileSprite) => void) { 
+    export function onTileTransition(kind: number, h: (tile: TileWorld.TileSprite) => void) { 
         myWorld.onTileTransition(kind, h)
     }
     
