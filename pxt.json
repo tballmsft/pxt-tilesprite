@@ -9,8 +9,7 @@
         "README.md",
         "tileworld.ts",
         "main.ts",
-        "tileagent.ts",
-        "blockstile.ts"
+        "tileagent.ts"
     ],
     "testFiles": [],
     "public": false,
