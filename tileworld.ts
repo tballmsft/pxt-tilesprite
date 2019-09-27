@@ -26,20 +26,19 @@ enum ResultSet {
     MoreThanOne,
 }
 
-enum Testing {
+enum Membership {
     //% block="one of"
     OneOf,
     //% block="not one of"
     NotOneOf
 }
 
-enum KindKind {
+enum Spritely {
     //% block="fixed"
     Fixed,
     //% block="movable"
     Movable
 }
-
 
 //% weight=1000 color="#442255" icon="\uf45c"
 //% groups='["Tiles", "Events", "Tests", "Actions"]'
@@ -81,49 +80,7 @@ namespace TileWorld {
             this.onStationary = undefined;
             this.onTransition = undefined;
         } 
-        // conditions
-
-        // TODO: move these out of here and abstract
-        //% blockId=TWhascode block="test $this(tile) $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
-        //% group="Tests" color="#448844" inlineInputMode=inline
-        hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-            if (size == ResultSet.ExactlyOne)
-                this.parent.check(this.parent.containsAt(code, this, dir, dir2))
-            else if (size == ResultSet.Zero)
-                this.parent.check(!this.parent.containsAt(code, this, dir, dir2))
-            else
-                this.parent.check(false)
-        }
-        //% blockId=TWhaskind block="test $this(tile) $dir=tiledir $dir2=tiledir $size $kind=spritekind"
-        //% group="Tests" color="#448844" inlineInputMode=inline
-        hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-            if (size == ResultSet.ExactlyOne)
-                this.parent.check(this.parent.containsAt(kind, this, dir, dir2))
-            else if (size == ResultSet.Zero)
-                this.parent.check(!this.parent.containsAt(kind, this, dir, dir2))
-            else
-                this.parent.check(false)
-        }
-        
-        // actions
-
-        // block
-        get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            return this.parent.getSprite(code, this, dir, dir2, dir3)
-        }
-        //% blockId=TWsettilecode block="set code at $this(tile) to $code=colorindexpicker"
-        //% group="Actions" color="#88CC44"
-        setCode(code: number) {
-            this.parent.setCode(this, code)
-        }
-        //% blockId=TWremove block="remove sprite at $this(tile)"
-        //% group="Actions" color="#88CC44"
-        remove() {
-            this.parent.removeSprite(this)
-        }       
-        // request sprite to move in specified direction
-        //% blockId=TWmove block="move sprite at $this(tile) $dir=tiledir"
-        //% group="Actions" color="#88CC44"
+   
         moveOne(dir: number) {
             if (dir == TileDir.Left || dir == TileDir.Right)
                 this.moveInX(dir)
@@ -132,14 +89,10 @@ namespace TileWorld {
         }
 
         // request sprite to stop moving when it reaches destination
-        // block
         requestStop() { this.final = 0; }
         // stop at current tile
-        //% blockId=TWdeadstop block="stop sprite at $this(tile)"
-        //% group="Actions" color="#88CC44"
         deadStop() { this.stopSprite(false) }
         // back to previous tile
-        // block
         knockBack() {
             if ((this.dir == TileDir.Left || this.dir == TileDir.Right) &&
                 this.old != this.getColumn()) {
@@ -720,8 +673,8 @@ namespace TileWorld {
     //% blockId=TWaddsprite block="set $code=colorindexpicker to $kk sprite $image=tile_image_picker with $kind=spritekind"
     //% group="Tiles"
     //% inlineInputMode=inline
-    export function addSprite(code: number, image: Image, kk: KindKind, kind: number) {
-        if (kk == KindKind.Fixed)
+    export function addSprite(code: number, image: Image, moving: Spritely, kind: number) {
+        if (moving == Spritely.Fixed)
             myWorld.addTiles(code, image, kind)
         else
             myWorld.addTileSprites(code, image, kind)
@@ -778,7 +731,29 @@ namespace TileWorld {
         myWorld.onTileTransition(kind, h)
     }
 
-    // checks
+    // tests
+
+    //% blockId=TWhascode block="test $tile $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
+    //% group="Tests" color="#448844" inlineInputMode=inline
+    export function hasCode(tile: Tile, code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
+        if (size == ResultSet.ExactlyOne)
+            myWorld.check(myWorld.containsAt(code, tile, dir, dir2))
+        else if (size == ResultSet.Zero)
+            myWorld.check(!myWorld.containsAt(code, tile, dir, dir2))
+        else
+            myWorld.check(false)
+    }
+
+    //% blockId=TWhaskind block="test $tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
+    //% group="Tests" color="#448844" inlineInputMode=inline
+    export function hasKind(tile: Tile, kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
+        if (size == ResultSet.ExactlyOne)
+            myWorld.check(myWorld.containsAt(kind, tile, dir, dir2))
+        else if (size == ResultSet.Zero)
+            myWorld.check(!myWorld.containsAt(kind, tile, dir, dir2))
+        else
+            myWorld.check(false)
+    }
 
     /**
      * Check if a direction is one of several values.
@@ -786,10 +761,40 @@ namespace TileWorld {
     //% group="Tests" color="#448844"
     //% blockId=TWisoneof block="test %dir=variables_get(direction) $cmp %c1 %c2"
     //% inlineInputMode=inline
-    export function isOneOf(dir: number, cmp: Testing = Testing.OneOf, c1: TileDir, c2: TileDir) {
-        if (cmp == Testing.OneOf)
+    export function isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
+        if (cmp == Membership.OneOf)
             myWorld.isOneOf(dir, c1, c2)
         else
             myWorld.isNotOneOf(dir, c1, c2)
     }
+
+    // actions
+
+    // conditions
+
+    // actions
+
+    // identification of target is complicated:
+    // (tile, dir) identifies tile that we want to act on
+    // - code vs. spritekind
+
+    // the action may also hav
+
+    // block
+    // get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+    //    return this.parent.getSprite(code, this, dir, dir2, dir3)
+    // }
+    //% blockId=TWsettilecode block="set code at $this(tile) to $code=colorindexpicker"
+    //% group="Actions" color="#88CC44"
+    //setCode(code: number) {
+    //    this.parent.setCode(this, code)
+    //}
+    //% blockId=TWremove block="remove sprite at $this(tile)"
+    //% group="Actions" color="#88CC44"
+    //remove() {
+    //    this.parent.removeSprite(this)
+    //}    
+    // request sprite to move in specified direction
+    //% blockId=TWmove block="move sprite at $this(tile) $dir=tiledir"
+    //% group="Actions" color="#88CC44"
 }
