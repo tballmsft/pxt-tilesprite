@@ -51,8 +51,8 @@ namespace TileWorld {
     const tileBits = 4;
 
     // a sprite that moves by tiles, but only in one of four directions
-    //%
     class TileSprite extends Sprite implements Tile {
+        // which tile map code does this sprite represent?
         private code: number;
         // which direction is the target 
         private dir: TileDir;
@@ -64,7 +64,7 @@ namespace TileWorld {
         private final: number;
         // notification
         private tileSpriteEvent: (ts: TileSprite, n: CallBackKind) => void
-
+        //
         constructor(world: TileWorld, code: number, image: Image, kind: number) {
             super(image);
             const scene = game.currentScene();
@@ -74,18 +74,18 @@ namespace TileWorld {
             this.dir = TileDir.None;
             this.tileSpriteEvent = undefined;
         } 
-   
+        //
         moveOne(dir: number) {
             if (dir == TileDir.Left || dir == TileDir.Right)
-                this.moveInX(dir)
+                return this.moveInX(dir)
             else if (dir == TileDir.Up || dir == TileDir.Down)
-                this.moveInY(dir)
+                return this.moveInY(dir)
+            return false;
         }
-
         // request sprite to stop moving when it reaches destination
         requestStop() { this.final = 0; }
         // stop at current tile
-        deadStop() { this.stopSprite(false) }
+        deadStop() { this.stopSprite() }
         // back to previous tile
         knockBack() {
             if ((this.dir == TileDir.Left || this.dir == TileDir.Right) &&
@@ -95,24 +95,22 @@ namespace TileWorld {
                 this.old != this.getRow()) {
                 this.y = this.centerIt(this.old << tileBits)
             }
-            this.stopSprite(false)
+            this.stopSprite()
         }
-
-        // most of the rest is for internal use
+        //
         getCode() { return this.code }
         getColumn() { return this.x >> tileBits }
         getRow() { return this.y >> tileBits }
-
         // notify client on entering tile
         onTileSpriteEvent(handler: (ts: TileSprite, d: number) => void) {
             this.tileSpriteEvent = handler
         }
+        // 
         notifyArrived(d: TileDir) {
             if (this.tileSpriteEvent) {
                 this.tileSpriteEvent(this, <number>d)
             }
         }
-
         // call from game update loop
         updateInMotion() {
             if (this.dir == TileDir.None)
@@ -143,18 +141,20 @@ namespace TileWorld {
                 this.reachedTargetY(this.next, size)
             }
         }
+        //
         updateStationary() {
             if (this.tileSpriteEvent && this.dir == TileDir.None) {
                 this.tileSpriteEvent(this, CallBackKind.Stationary)
             }
         }
+        //
         private moveInX(dir: TileDir) {
             let size = 1 << tileBits
             let opTileDir = dir == TileDir.Left ? TileDir.Right : TileDir.Left
             let sign = dir == TileDir.Left ? -1 : 1
             if (this.dir == dir) {
                 this.final += sign * size;
-                return;
+                return true;
             } else if (this.dir == opTileDir) {
                 // switching 180 doesn't require queuing
                 // next_x is defined, so use it
@@ -164,12 +164,13 @@ namespace TileWorld {
                 this.next = this.x + sign * size;
             } else {
                 // direction is 90 to current direction, so ignore
-                return;
+                return false;
             }
             this.old = this.getColumn()
             this.dir = dir
             this.final = this.next;
             this.vx = sign * 100
+            return true;
         }
         private moveInY(dir: TileDir) {
             let size = 1 << tileBits
@@ -177,7 +178,7 @@ namespace TileWorld {
             let sign = dir == TileDir.Up ? -1 : 1
             if (this.dir == dir) {
                 this.final += sign * size;
-                return;
+                return true;
             } else if (this.dir == opTileDir) {
                 // next_x is defined, so use it
                 this.next += sign * size
@@ -186,12 +187,13 @@ namespace TileWorld {
                 this.next = this.y + sign * size;
             } else {
                 // direction is 90 to current direction, so ignore
-                return;
+                return false;
             }
             this.old = this.getRow()
             this.dir = dir
             this.final = this.next
             this.vy = sign * 100
+            return true;
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             // determine what comes next
@@ -229,12 +231,12 @@ namespace TileWorld {
         private centerIt(n: number) {
             return ((n >> tileBits) << tileBits) + (1 << (tileBits - 1))
         }
-        private stopSprite(reentrant: boolean) {
+        private stopSprite() {
             this.final = 0
             if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
-                this.reachedTargetX(this.centerIt(this.x), 0, reentrant)
+                this.reachedTargetX(this.centerIt(this.x), 0, false)
             } else {
-                this.reachedTargetY(this.centerIt(this.y), 0, reentrant)
+                this.reachedTargetY(this.centerIt(this.y), 0, false)
             }
         }
     }
@@ -245,7 +247,7 @@ namespace TileWorld {
         private spriteCodes: number[];
         // map codes to kinds
         private codeToKind: number[];
-        // the sprites, divided up by code
+        // the sprites, divided up by codes
         private sprites: TileSprite[][];
         // the current tile map (no sprites)  
         private tileMap: Image;
@@ -254,26 +256,24 @@ namespace TileWorld {
         // note tiles with more than one sprite
         private multiples: Image;
         private multipleSprites: TileSprite[];
-        private tileHandler: (colliding: TileSprite[]) => void;
         private arrivalHandlers: { [index:number]: ((ts: TileSprite, d: TileDir) => void)[] };
         private transitionHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private stationaryHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private backgroundTile: number;
         private tileKind: number;
-
+        //
         constructor() {
-            this.backgroundTile = 0
+            this.backgroundTile = -1
             this.sprites = []
             this.codeToKind = []
             this.spriteCodes = []
             this.multipleSprites = [];
-            this.tileHandler = undefined;
             this.arrivalHandlers = {}
             this.transitionHandlers = {}
             this.stationaryHandlers = {}
             this.tileKind = SpriteKind.create()
         }
-
+        // methods for defining map and sprites
         setMap(tileMap: Image) {
             this.tileMap = tileMap.clone();
             this.spriteMap = tileMap.clone();
@@ -281,24 +281,28 @@ namespace TileWorld {
             scene.setTileMap(this.tileMap)
             game.onUpdate(() => { this.update(); })
         }
-
+        //
         setBackgroundTile(backgroundTile: number) {
             this.backgroundTile = backgroundTile
         }
-
+        //
+        setCode(curs: Tile, code: number) {
+            this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
+        }
+        //
         addTiles(code: number, art: Image, kind: number) {
             let tiles = scene.getTilesByType(code)
             this.codeToKind[code] = kind;
             scene.setTile(code, art);
         }
-
+        //
         addTileSprites(code: number, art:Image, kind: number) {
             let tiles = scene.getTilesByType(code)
             scene.setTile(code, art);
-            this.sprites[code] = []
             this.spriteCodes.push(code);
             this.codeToKind[code] = kind;
             this.initHandlers(kind)
+            this.sprites[code] = []
             for (let value of tiles) {
                 let tileSprite = new TileSprite(this, code, art, kind)
                 this.hookupHandlers(tileSprite)
@@ -306,97 +310,69 @@ namespace TileWorld {
                 value.place(tileSprite)
             }
             // remove from tile map
-            for (let y = 0; y < this.tileMap.height; y++) {
-                for (let x = 0; x < this.tileMap.width; x++) {
-                    let pixel = this.tileMap.getPixel(x, y)
-                    if (code == pixel) this.tileMap.setPixel(x, y, this.backgroundTile)
+            if (this.backgroundTile != -1) {
+                for (let y = 0; y < this.tileMap.height; y++) {
+                    for (let x = 0; x < this.tileMap.width; x++) {
+                        let pixel = this.tileMap.getPixel(x, y)
+                        if (code == pixel) 
+                            this.tileMap.setPixel(x, y, this.backgroundTile)
+                    }
                 }
             }
         }
-
+        // register event handlers
         onTileStationary(kind: number, h: (ts: TileSprite) => void) {
             if (!this.stationaryHandlers[kind]) {
                 this.stationaryHandlers[kind] = []
             }
             this.stationaryHandlers[kind].push(h);
         }
-
         onTileArrived(kind: number, h: (ts: TileSprite, d: TileDir) => void) {
             if (!this.arrivalHandlers[kind]) {
                 this.arrivalHandlers[kind] = [];
             }
             this.arrivalHandlers[kind].push(h);
         }
-
         onTileTransition(kind: number, h: (ts: TileSprite) => void) {
             if (!this.transitionHandlers[kind]) {
                 this.transitionHandlers[kind] = [];          }
             this.transitionHandlers[kind].push(h);
         }
-
+        // basic checking (TODO: can be lifted out)
         isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
             this.check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d==c3) )
         }
-
         isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
             this.check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
         }
-
         check(expr: boolean) {
             if (!expr) {
                 throw checkFailed;
             }
         }
-
-        setCode(curs: Tile, code: number) {
-            this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
-        }
-
-        containsAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+        //
+        containsAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             if (codeKind < this.tileKind)
-                return this.hasCode(codeKind, orig, dir, dir2, dir3)
+                return this.hasCode(codeKind, orig, dir, dir2)
             else
-                return this.hasKind(codeKind, orig, dir, dir2, dir3)
+                return this.hasKind(codeKind, orig, dir, dir2)
         }
-
-        // are there more than 1 sprite of kind at tile
-        hasMultiple(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) != -1) {
-                let cnt = 0
-                this.sprites[codeKind].forEach((s) => {
-                    if (s.getColumn() == orig.getColumn() && s.getRow() == orig.getRow())
-                        cnt++
-                })
-                return cnt > 1
-            } else if (codeKind > this.tileKind) {
-                let ss = game.currentScene().spritesByKind[codeKind].sprites()
-                let cnt = 0
-                ss.forEach(function (s) {
-                    let ts = <TileSprite>s
-                    if (ts.getColumn() == orig.getColumn() && ts.getRow() == orig.getRow())
-                        cnt++
-                })
-                return cnt
-            }
-            return false;
-        }
-
         // check the code for the underlying tile
-        tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+        tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
+            let cursor = new Cursor(this, orig, dir, dir2);
             if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) == -1) 
                 return this.tileMap.getPixel(cursor.getColumn(), cursor.getRow()) == codeKind
             else
                 return false
         }
 
-        private hasCode(code:number, orig: Tile, dir: TileDir, dir2: TileDir, dir3: TileDir) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+        private hasCode(code:number, orig: Tile, dir: TileDir, dir2: TileDir) {
+            let cursor = new Cursor(this, orig, dir, dir2);
             return this.checkTile(code,cursor)
         }
 
-        private hasKind(kind: number, orig: Tile, dir: TileDir, dir2: TileDir, dir3: TileDir) {
-            let cursor = new Cursor(this, orig, dir, dir2, dir3);
+        private hasKind(kind: number, orig: Tile, dir: TileDir, dir2: TileDir) {
+            let cursor = new Cursor(this, orig, dir, dir2);
             return this.checkTileKind(kind, cursor)
         }
 
@@ -425,36 +401,40 @@ namespace TileWorld {
             s.destroy()
         }
 
-        getSprite(code: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            if (code < this.tileKind)
-                return this.getSpriteByCode(code, orig, dir, dir2, dir3)
-            else
-                return this.getSpriteByKind(code, orig, dir, dir2, dir3)
-        }
-
-        private getSpriteByCode(code: number, orig: Tile = null, dir: TileDir, dir2: TileDir, dir3: TileDir) {
-            if (orig) {
-                let cursor = new Cursor(this, orig, dir, dir2, dir3);
-                return this.sprites[code].find((t: Tile) =>
-                    t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
-            } else {
-                return this.sprites[code][0]
+        getSprite(code: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
+            let ss = this.getSprites(code)
+            if (ss) {
+                if (orig) {
+                    let cursor = new Cursor(this, orig, dir, dir2);
+                    return ss.find((t: TileSprite) =>
+                        t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+                } else
+                    return <TileSprite>ss[0]
             }
+            return null;
         }
-
-        private getSpriteByKind(kind: number, orig: Tile = null, dir: TileDir, dir2: TileDir, dir3: TileDir) {
-            let ss = game.currentScene().spritesByKind[kind].sprites()
-            if (orig) {
-                let cursor = new Cursor(this, orig, dir, dir2, dir3);
-                return <TileSprite>ss.find(function (s: Sprite, index: number) {
-                    return ((<TileSprite>s).getColumn() == cursor.getColumn()) &&
-                           ((<TileSprite>s).getRow() == cursor.getRow())
+        // are there more than 1 sprite of kind at tile
+        hasMultiple(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+            let ss = this.getSprites(codeKind)
+            if (ss) {
+                let cnt = 0;
+                ss.forEach((s) => {
+                    let ts = <TileSprite>s
+                    if (s.getColumn() == orig.getColumn() && s.getRow() == orig.getRow())
+                        cnt++
                 })
-            } else {
-                return <TileSprite>ss[0]
+                return cnt > 1
             }
+            return false;
         }
-
+        private getSprites(codeKind: number): any[] {
+            if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) != -1) {
+                return this.sprites[codeKind]
+            } else if (codeKind > this.tileKind) {
+                return game.currentScene().spritesByKind[codeKind].sprites()
+            }
+            return null;
+        }
         private update() {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
@@ -479,7 +459,7 @@ namespace TileWorld {
                 }
             })
 
-            // three main update steps (ordering issues to be addressed
+            // two main update steps (ordering issues to be addressed
             // by tracking which sprite is affected by which step and lot
             // 
 
@@ -490,16 +470,12 @@ namespace TileWorld {
 
             // TODO: note that a sprite can be acted upon twice, if
             // TODO: it transitions from moving to stationary
+            // TODO: we should detect this
+            
             // 2. update the stationary sprites
             this.sprites.forEach((arr) => {
                 if (arr) { arr.forEach((sprite) => { sprite.updateStationary() }) }
             })
-
-            // 3. process collisions at tiles
-            // TODO: there could be multiple (col, row)
-            if (this.tileHandler && this.multipleSprites.length > 0) {
-                this.tileHandler(this.multipleSprites)
-            }
         }
 
         private addMultipleSprites(col: number, row: number) {
@@ -572,11 +548,11 @@ namespace TileWorld {
         private world: TileWorld;
         private col: number;
         private row: number;
-        constructor(w: TileWorld, s: Tile, dir: TileDir, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
+        constructor(w: TileWorld, s: Tile, dir: TileDir, dir2: TileDir = TileDir.None) {
             this.world = w;
             this.col = s.getColumn();
             this.row = s.getRow();
-            this.move(dir); this.move(dir2); this.move(dir3)
+            this.move(dir); this.move(dir2)
         }
         private move(dir: TileDir) {
             switch (dir) {
