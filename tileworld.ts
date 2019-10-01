@@ -21,9 +21,7 @@ enum ResultSet {
     //% block="has no"
     Zero,
     //% block="has one"
-    ExactlyOne,
-    //% block="has multiple"
-    MoreThanOne,
+    One,
 }
 
 enum Membership {
@@ -359,32 +357,6 @@ namespace TileWorld {
             this.transitionHandlers[kind].push(h);
         }
 
-        private initHandlers(kind: number) {
-            if (!this.stationaryHandlers[kind]) this.stationaryHandlers[kind] = []
-            if (!this.arrivalHandlers[kind]) this.arrivalHandlers[kind] = []
-            if (!this.transitionHandlers[kind]) this.transitionHandlers[kind] = []
-        }
-        private hookupHandlers(s: TileSprite) {
-            this.hookupArrival(s)
-            this.hookupStationary(s)
-            this.hookupTransition(s)
-        }
-        private hookupStationary(s: TileSprite) {
-            let process = (s: TileSprite) =>
-                this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
-            s.onTileStationary(process);
-        }
-        private hookupArrival(s: TileSprite) {
-            let process = (s: TileSprite, d: TileDir) =>
-                this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
-            s.onTileArrived(process);
-        }
-        private hookupTransition(s: TileSprite) {
-            let process = (s: TileSprite, c: number, r: number) =>
-                this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
-            s.onTileTransition(process);
-        }
-
         isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
             this.check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d==c3) )
         }
@@ -410,24 +382,35 @@ namespace TileWorld {
                 return this.hasKind(codeKind, orig, dir, dir2, dir3)
         }
 
+        // are there more than 1 sprite of kind at tile
         hasMultiple(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-            if (codeKind < this.tileKind && this.spriteCodes.find(c => c == codeKind)) {
+            if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) != -1) {
                 let cnt = 0
                 this.sprites[codeKind].forEach((s) => {
                     if (s.getColumn() == orig.getColumn() && s.getRow() == orig.getRow())
                         cnt++
                 })
                 return cnt > 1
+            } else if (codeKind > this.tileKind) {
+                let ss = game.currentScene().spritesByKind[codeKind].sprites()
+                let cnt = 0
+                ss.forEach(function (s) {
+                    let ts = <TileSprite>s
+                    if (ts.getColumn() == orig.getColumn() && ts.getRow() == orig.getRow())
+                        cnt++
+                })
+                return cnt
             }
             return false;
         }
 
+        // check the code for the underlying tile
         tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
             let cursor = new Cursor(this, orig, dir, dir2, dir3);
-            if (codeKind < this.tileKind) 
+            if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) == -1) 
                 return this.tileMap.getPixel(cursor.getColumn(), cursor.getRow()) == codeKind
             else
-                return this.codeToKind[this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())] == codeKind
+                return false
         }
 
         private hasCode(code:number, orig: Tile, dir: TileDir, dir2: TileDir, dir3: TileDir) {
@@ -552,6 +535,32 @@ namespace TileWorld {
                 }
             })
         }
+
+        private initHandlers(kind: number) {
+            if (!this.stationaryHandlers[kind]) this.stationaryHandlers[kind] = []
+            if (!this.arrivalHandlers[kind]) this.arrivalHandlers[kind] = []
+            if (!this.transitionHandlers[kind]) this.transitionHandlers[kind] = []
+        }
+        private hookupHandlers(s: TileSprite) {
+            this.hookupArrival(s)
+            this.hookupStationary(s)
+            this.hookupTransition(s)
+        }
+        private hookupStationary(s: TileSprite) {
+            let process = (s: TileSprite) =>
+                this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
+            s.onTileStationary(process);
+        }
+        private hookupArrival(s: TileSprite) {
+            let process = (s: TileSprite, d: TileDir) =>
+                this.arrivalHandlers[s.kind()].forEach((h) => tryCatchTileDir(h, s, d));
+            s.onTileArrived(process);
+        }
+        private hookupTransition(s: TileSprite) {
+            let process = (s: TileSprite, c: number, r: number) =>
+                this.transitionHandlers[s.kind()].forEach((h) => tryCatchColRow(h, s, c, r));
+            s.onTileTransition(process);
+        }
     }
 
     // basic movement for tile sprite
@@ -644,6 +653,9 @@ namespace TileWorld {
 
 
     let myWorld = new TileWorld();
+    // keep track of sprites passed down through active handler
+    // so user code doesn't need to refer to it.
+    let active: TileSprite[] = [];
 
     /**
      * Set the map for placing tiles in the scene
@@ -703,10 +715,14 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on change around $kind=spritekind at $tile"
+    //% blockId=TWontilestationary block="on change around $kind=spritekind"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileStationary(kind: number, h: (tile: Tile) => void) {
-        myWorld.onTileStationary(kind, h);
+    export function onTileStationary(kind: number, h: () => void) {
+        myWorld.onTileStationary(kind, (t) => {
+            active.push(t)
+            h() 
+            active.pop()
+        });
     }
 
     /**
@@ -714,10 +730,14 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on request of $kind=spritekind at $tile to move $direction"
+    //% blockId=TWontilearrived block="on request of $kind=spritekind to move $direction"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileArrived(kind: number, h: (tile: Tile, direction: TileDir) => void) {
-        myWorld.onTileArrived(kind, h)
+    export function onTileArrived(kind: number, h: (irection: TileDir) => void) {
+        myWorld.onTileArrived(kind, (t, d) => {
+            active.push(t)
+            h(d)
+            active.pop()
+        })
     }
 
     /**
@@ -725,34 +745,39 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on $kind=spritekind moved into $tile"
+    //% blockId=TWontiletransition block="on $kind=spritekind moved into tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onTileTransition(kind: number, h: (tile: Tile) => void) {
-        myWorld.onTileTransition(kind, h)
+    export function onTileTransition(kind: number, h: () => void) {
+        myWorld.onTileTransition(kind, (t) => {
+            active.push(t)
+            h()
+            active.pop()
+        })
     }
 
     // tests
 
-    //% blockId=TWhascode block="test $tile $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
+    // TODO - need to take account of the self sprite - that is, to not acount it
+    // TODO - in the following methods
+
+    //% blockId=TWhascode block="test $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
     //% group="Tests" color="#448844" inlineInputMode=inline
-    export function hasCode(tile: Tile, code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-        if (size == ResultSet.ExactlyOne)
+    export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
+        let tile = active[0]
+        if (size == ResultSet.One)
             myWorld.check(myWorld.containsAt(code, tile, dir, dir2))
         else if (size == ResultSet.Zero)
             myWorld.check(!myWorld.containsAt(code, tile, dir, dir2))
-        else
-            myWorld.check(false)
     }
 
-    //% blockId=TWhaskind block="test $tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
+    //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Tests" color="#448844" inlineInputMode=inline
-    export function hasKind(tile: Tile, kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-        if (size == ResultSet.ExactlyOne)
+    export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
+        let tile = active[0]
+        if (size == ResultSet.One)
             myWorld.check(myWorld.containsAt(kind, tile, dir, dir2))
         else if (size == ResultSet.Zero)
             myWorld.check(!myWorld.containsAt(kind, tile, dir, dir2))
-        else
-            myWorld.check(false)
     }
 
     /**
@@ -770,9 +795,9 @@ namespace TileWorld {
 
     // actions
 
-    // conditions
+    // tests - on tile, see, got, bumped
 
-    // actions
+    // actions, move, turn, holding, shoot, color
 
     // identification of target is complicated:
     // (tile, dir) identifies tile that we want to act on
