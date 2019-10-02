@@ -99,6 +99,7 @@ namespace TileWorld {
         }
         //
         getCode() { return this.code }
+        getDirection() { return this.dir }
         getColumn() { return this.x >> tileBits }
         getRow() { return this.y >> tileBits }
         // notify client on entering tile
@@ -508,33 +509,51 @@ namespace TileWorld {
         }
     }
 
-    // basic movement for tile sprite
-    function bindToController(sprite: TileSprite) {
-        controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(TileDir.Left)
-        })
-        controller.left.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(TileDir.Right)
-        })
-        controller.right.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(TileDir.Up)
-        })
-        controller.up.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
-        controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
-            sprite.notifyArrived(TileDir.Down)
-        })
-        controller.down.onEvent(ControllerButtonEvent.Released, function () {
-            sprite.requestStop()
-        })
+    // queue is of size one
+    class BindController {
+        constructor(public sprite: TileSprite) {
+            this.bindToController()
+        }
+        private requestMove(dir: TileDir) {
+            if (!this.sprite.moveOne(dir)) {
+                this.sprite.deadStop();
+                this.sprite.moveOne(dir)
+            }
+        }
+        private requestStop(dir: TileDir) {
+            if (dir == this.sprite.getDirection()) {
+                this.sprite.requestStop()
+            }
+        }
+        // basic movement for tile sprite
+        bindToController() {
+            controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+                this.requestMove(TileDir.Left)
+            })
+            controller.left.onEvent(ControllerButtonEvent.Released, function () {
+                this.requestStop(TileDir.Left)
+            })
+            controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+                this.requestMove(TileDir.Right)
+            })
+            controller.right.onEvent(ControllerButtonEvent.Released, function () {
+                this.requestStop(TileDir.Right)
+            })
+            controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+                this.requestMove(TileDir.Up)
+            })
+            controller.up.onEvent(ControllerButtonEvent.Released, function () {
+                this.requestStop(TileDir.Up)
+            })
+            controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+                this.requestMove(TileDir.Down)
+            })
+            controller.down.onEvent(ControllerButtonEvent.Released, function () {
+                this.requestStop(TileDir.Down)
+            })
+        }
     }
+
 
     // helpers
 
@@ -639,10 +658,9 @@ namespace TileWorld {
         let sprites = game.currentScene().spritesByKind[kind].sprites()
         sprites.forEach((s) => {
             if (s instanceof TileSprite) {
-                bindToController(<TileSprite>s)
+                // bindToController(<TileSprite>s)
             }
-        }
-        )
+        })
     }
 
     // notifications
