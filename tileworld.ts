@@ -339,18 +339,6 @@ namespace TileWorld {
                 this.transitionHandlers[kind] = [];          }
             this.transitionHandlers[kind].push(h);
         }
-        // basic checking (TODO: can be lifted out)
-        isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
-            this.check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d==c3) )
-        }
-        isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
-            this.check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
-        }
-        check(expr: boolean) {
-            if (!expr) {
-                throw checkFailed;
-            }
-        }
         //
         numberAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             let curs = new Cursor(this, orig, dir, dir2);
@@ -569,6 +557,20 @@ namespace TileWorld {
         }
     }
 
+    function check(expr: boolean) {
+        if (!expr) {
+            throw checkFailed;
+        }
+    }
+
+    // basic checking (TODO: can be lifted out)
+    function isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
+        check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d == c3))
+    }
+
+    function isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
+        check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
+    }
 
     // state here supports blocks
 
@@ -695,11 +697,11 @@ namespace TileWorld {
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let tile = getCurrentSprite()
-        myWorld.check(tile != null) 
+        check(tile != null) 
         if (size == ResultSet.One)
-            myWorld.check(myWorld.numberAt(code, tile, dir, dir2) == 1)
+            check(myWorld.numberAt(code, tile, dir, dir2) == 1)
         else if (size == ResultSet.Zero)
-            myWorld.check(myWorld.numberAt(code, tile, dir, dir2) == 0)
+            check(myWorld.numberAt(code, tile, dir, dir2) == 0)
     }
 
     //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
@@ -707,9 +709,9 @@ namespace TileWorld {
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let tile = active[0]
         if (size == ResultSet.One)
-            myWorld.check(myWorld.numberAt(kind, tile, dir, dir2) == 1)
+            check(myWorld.numberAt(kind, tile, dir, dir2) == 1)
         else if (size == ResultSet.Zero)
-            myWorld.check(myWorld.numberAt(kind, tile, dir, dir2) == 0)
+            check(myWorld.numberAt(kind, tile, dir, dir2) == 0)
     }
 
     /**
@@ -718,11 +720,11 @@ namespace TileWorld {
     //% group="Tests" color="#448844"
     //% blockId=TWisoneof block="test %dir=variables_get(direction) $cmp %c1 %c2"
     //% inlineInputMode=inline
-    export function isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
+    export function _isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
         if (cmp == Membership.OneOf)
-            myWorld.isOneOf(dir, c1, c2)
+            isOneOf(dir, c1, c2)
         else
-            myWorld.isNotOneOf(dir, c1, c2)
+            isNotOneOf(dir, c1, c2)
     }
 
     // actions
