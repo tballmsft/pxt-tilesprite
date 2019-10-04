@@ -698,20 +698,23 @@ namespace TileWorld {
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let tile = getCurrentSprite()
         check(tile != null) 
-        if (size == ResultSet.One)
-            check(myWorld.numberAt(code, tile, dir, dir2) == 1)
-        else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(code, tile, dir, dir2) == 0)
+        let delta = code == tile.getCode() ? -1 : 0
+        if (size == ResultSet.One) {
+            check(myWorld.numberAt(code, tile, dir, dir2)+delta == 1)
+        } else if (size == ResultSet.Zero)
+            check(myWorld.numberAt(code, tile, dir, dir2)+delta == 0)
     }
 
     //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let tile = active[0]
+        check(tile != null)
+        let delta = kind == tile.kind() ? -1 : 0
         if (size == ResultSet.One)
-            check(myWorld.numberAt(kind, tile, dir, dir2) == 1)
+            check(myWorld.numberAt(kind, tile, dir, dir2)+delta == 1)
         else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(kind, tile, dir, dir2) == 0)
+            check(myWorld.numberAt(kind, tile, dir, dir2)+delta == 0)
     }
 
     /**
