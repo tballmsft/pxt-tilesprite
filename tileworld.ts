@@ -563,15 +563,6 @@ namespace TileWorld {
         }
     }
 
-    // basic checking (TODO: can be lifted out)
-    function isOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
-        check(d == c1 || (c2 != 0xff && d == c2) || (c3 != 0xff && d == c3))
-    }
-
-    function isNotOneOf(d: TileDir, c1: TileDir, c2: TileDir = 0xff, c3: TileDir = 0xff) {
-        check(d != c1 && (c2 == 0xff || d != c2) && (c3 == 0xff || d != c3))
-    }
-
     // state here supports blocks
 
     let myWorld = new TileWorld();
@@ -725,10 +716,10 @@ namespace TileWorld {
     //% inlineInputMode=inline
     export function _isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
         if (cmp == Membership.OneOf)
-            isOneOf(dir, c1, c2)
+            check(dir == c1 || dir == c2) 
         else
-            isNotOneOf(dir, c1, c2)
-    }
+            check(dir != c1 && dir != c2)
+    }             
 
     // actions
 
