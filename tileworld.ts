@@ -472,10 +472,15 @@ namespace TileWorld {
         private sprite: TileSprite;
         constructor() { }
         private requestMove(dir: TileDir) {
-            if (!this.sprite.moveOne(dir)) {
-                this.sprite.deadStop();
-                this.sprite.moveOne(dir)
+            let sdir = this.sprite.getDirection()
+            if (sdir != TileDir.None) {
+                let sDirWhich = sdir == TileDir.Left || sdir == TileDir.Right
+                let dirWhich = dir == TileDir.Left || dir == TileDir.Right
+                if (sDirWhich != dirWhich)
+                    this.sprite.deadStop()
             }
+            this.sprite.notifyArrived(dir)
+
         }
         private requestStop(dir: TileDir) {
             if (dir == this.sprite.getDirection()) {
