@@ -646,7 +646,7 @@ namespace TileWorld {
     * @param color	
     */
     //% group="Tiles"	
-    //% blockId=TWmoveButtons block="move $kind=spritekind with buttons"
+    //% blockId=TWmoveButtons block="notify $kind=spritekind on dpad"
     export function moveWithButtons(kind: number) {
         let sprites = game.currentScene().spritesByKind[kind].sprites()
         if (sprites && sprites.length > 0) {
@@ -681,7 +681,7 @@ namespace TileWorld {
     //% group="Events" color="#444488"
     //% blockId=TWontilearrived block="on request of $kind=spritekind to move $direction"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onMoveRequest(kind: number, h: (d: TileDir) => void) {
+    export function onMoveRequest(kind: number, h: (direction: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
             enterHandler(t)
             h(d)
@@ -761,7 +761,7 @@ namespace TileWorld {
 
     //% blockId=TWselectdir block="target direction $dir=tiledir"
     //% group="Actions" color="#88CC44"
-    export function selectDir(dir: TileDir) {
+    export function selectDir(dir: number) {
         selectDirection = dir;
     }
 
@@ -802,7 +802,7 @@ namespace TileWorld {
     // request sprite to move in specified direction
     //% blockId=TWmove block="move sprite $dir=tiledir"
     //% group="Actions" color="#88CC44"
-    export function move(dir: TileDir) {
+    export function move(dir: number) {
         let sprite = getTargetSprite()
         if (sprite) {
             sprite.moveOne(dir)
