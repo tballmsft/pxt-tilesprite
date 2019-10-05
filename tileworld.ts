@@ -485,28 +485,28 @@ namespace TileWorld {
         // basic movement for tile sprite
         bindToController(s: TileSprite) {
             this.sprite = s;
-            controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+            controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
                 this.requestMove(TileDir.Left)
             })
-            controller.left.onEvent(ControllerButtonEvent.Released, function () {
+            controller.left.onEvent(ControllerButtonEvent.Released, () => {
                 this.requestStop(TileDir.Left)
             })
-            controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+            controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
                 this.requestMove(TileDir.Right)
             })
-            controller.right.onEvent(ControllerButtonEvent.Released, function () {
+            controller.right.onEvent(ControllerButtonEvent.Released, () => {
                 this.requestStop(TileDir.Right)
             })
-            controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+            controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
                 this.requestMove(TileDir.Up)
             })
-            controller.up.onEvent(ControllerButtonEvent.Released, function () {
+            controller.up.onEvent(ControllerButtonEvent.Released, () => {
                 this.requestStop(TileDir.Up)
             })
-            controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+            controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
                 this.requestMove(TileDir.Down)
             })
-            controller.down.onEvent(ControllerButtonEvent.Released, function () {
+            controller.down.onEvent(ControllerButtonEvent.Released, () => {
                 this.requestStop(TileDir.Down)
             })
         }
@@ -647,7 +647,7 @@ namespace TileWorld {
         if (sprites && sprites.length > 0) {
             let first = sprites[0]
             if (first instanceof TileSprite) {
-                myPlayerController(<TileSprite>first)
+                myPlayerController.bindToController(first)
             }
         }
     }
