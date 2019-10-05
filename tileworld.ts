@@ -115,7 +115,7 @@ namespace TileWorld {
         // call from game update loop
         updateInMotion() {
             if (this.dir == TileDir.None)
-                return;
+                return false;
             // have we crossed into a new tile?
             if (this.tileSpriteEvent) {
                 if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
@@ -133,14 +133,15 @@ namespace TileWorld {
             // have we reached the target?
             let size = 1 << tileBits
             if (this.dir == TileDir.Left && this.x <= this.next) {
-                this.reachedTargetX(this.next, -size)
+                return this.reachedTargetX(this.next, -size)
             } else if (this.dir == TileDir.Right && this.x >= this.next) {
-                this.reachedTargetX(this.next, size)
+                return this.reachedTargetX(this.next, size)
             } else if (this.dir == TileDir.Up && this.y <= this.next) {
-                this.reachedTargetY(this.next, -size)
+                return this.reachedTargetY(this.next, -size)
             } else if (this.dir == TileDir.Down && this.y >= this.next) {
-                this.reachedTargetY(this.next, size)
+                return this.reachedTargetY(this.next, size)
             }
+            return false;
         }
         //
         updateStationary() {
@@ -197,12 +198,14 @@ namespace TileWorld {
             return true;
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
+            let stops = false
             // determine what comes next
             this.x = x
             let keepTileDir = TileDir.None
             if (this.final && this.next != this.final) {
                 this.next += step
             } else {
+                stops = true
                 if (this.final) keepTileDir = this.dir
                 this.dir = TileDir.None
                 this.vx = 0
@@ -212,13 +215,16 @@ namespace TileWorld {
                 this.tileSpriteEvent(this, <number>keepTileDir)
             }
             this.old = this.getColumn()
+            return stops
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
+            let stops = false
             this.y = y
             let keepTileDir = TileDir.None
             if (this.final && this.next != this.final) {
                 this.next += step
             } else {
+                stops = true
                 if (this.final) keepTileDir = this.dir
                 this.dir = TileDir.None
                 this.vy = 0
@@ -228,6 +234,7 @@ namespace TileWorld {
                 this.tileSpriteEvent(this, <number>keepTileDir)
             }
             this.old = this.getRow()
+            return stops
         }
         private centerIt(n: number) {
             return ((n >> tileBits) << tileBits) + (1 << (tileBits - 1))
@@ -244,12 +251,9 @@ namespace TileWorld {
 
     // the tile world manages tile sprites
     class TileWorld {
-        // which codes map to sprites?
-        private spriteCodes: number[];
-        // map codes to kinds
-        private codeToKind: number[];
-        // the sprites, divided up by codes
-        private sprites: TileSprite[][];
+        // what tile code to put behind a sprite?
+        private backgroundTile: number;
+        private tileKind: number;
         // the current tile map (no sprites)  
         private tileMap: Image;
         // fill in with sprites
@@ -257,11 +261,16 @@ namespace TileWorld {
         // note tiles with more than one sprite
         private multiples: Image;
         private multipleSprites: TileSprite[];
+        // which codes map to sprites?
+        private spriteCodes: number[];
+        // map codes to kinds
+        private codeToKind: number[];
+        // the sprites, divided up by codes
+        private sprites: TileSprite[][];
+        // event handlers
         private arrivalHandlers: { [index:number]: ((ts: TileSprite, d: TileDir) => void)[] };
         private transitionHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         private stationaryHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
-        private backgroundTile: number;
-        private tileKind: number;
         //
         constructor() {
             this.backgroundTile = -1
@@ -339,7 +348,7 @@ namespace TileWorld {
                 this.transitionHandlers[kind] = [];          }
             this.transitionHandlers[kind].push(h);
         }
-        //
+        // how many sprites of codeKind are at a location?
         numberAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             let curs = new Cursor(this, orig, dir, dir2);
             if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
@@ -352,7 +361,7 @@ namespace TileWorld {
                     return (this.codeToKind[this.spriteMap.getPixel(curs.getColumn(), curs.getRow())] == codeKind) ? 1 : 0
             }
         }
-        // check the code for the underlying tile
+        // is the underlying tile at a location of codeKind?
         tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             let cursor = new Cursor(this, orig, dir, dir2);
             if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) == -1) 
@@ -360,12 +369,12 @@ namespace TileWorld {
             else
                 return false
         }
-        //
-        getSprites(code: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
+        // get all the sprites of codeKind at an (optional) location
+        getSprites(codeKind: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             if (orig) {
-                return this._getSpritesCursor(code, new Cursor(this, orig, dir, dir2));
+                return this._getSpritesCursor(codeKind, new Cursor(this, orig, dir, dir2));
             } else
-                return this._getSprites(code)
+                return this._getSprites(codeKind)
         }
         //
         removeSprite(s: TileSprite) {
@@ -410,22 +419,22 @@ namespace TileWorld {
                 }
             })
 
-            // two main update steps (ordering issues to be addressed
-            // by tracking which sprite is affected by which step and lot
-            // 
-
-            // 1. update the moving sprites
+            let transitionToStopped: TileSprite[] = []
+            // 1. update the moving sprites, keeping track of 
+            //    which moving sprites transition to stationary
             this.sprites.forEach((arr) => {
-                if (arr) arr.forEach((sprite) => { sprite.updateInMotion() })
+                if (arr) arr.forEach((sprite) => { 
+                    if (sprite.updateInMotion())
+                        transitionToStopped.push(sprite)
+                })
             })
 
-            // TODO: note that a sprite can be acted upon twice, if
-            // TODO: it transitions from moving to stationary
-            // TODO: we should detect this
-            
-            // 2. update the stationary sprites
+            // 2. update the stationary sprites (that were not previously moving)
             this.sprites.forEach((arr) => {
-                if (arr) { arr.forEach((sprite) => { sprite.updateStationary() }) }
+                if (arr) { arr.forEach((sprite) => { 
+                    if (transitionToStopped.indexOf(sprite) == -1)
+                        sprite.updateStationary() 
+                }) }
             })
         }
 
@@ -673,39 +682,32 @@ namespace TileWorld {
     //% group="Tiles"	
     //% blockId=TWgetsprite block="get current sprite"
     export function getCurrentSprite(): TileSprite {
-        if (active.length > 0) {
-            return active[active.length-1]
-        }
-        return null
+        check(active.length > 0)
+        return active[active.length-1]
     }
 
     // tests
 
-    // TODO - need to take account of the self sprite - that is, to not acount it
-    // TODO - in the following methods
-
     //% blockId=TWhascode block="test $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-        let tile = getCurrentSprite()
-        check(tile != null) 
-        let delta = code == tile.getCode() ? -1 : 0
+        let sprite = getCurrentSprite()
+        let delta = code == sprite.getCode() ? -1 : 0
         if (size == ResultSet.One) {
-            check(myWorld.numberAt(code, tile, dir, dir2)+delta == 1)
+            check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 1)
         } else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(code, tile, dir, dir2)+delta == 0)
+            check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 0)
     }
 
     //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
-        let tile = active[0]
-        check(tile != null)
-        let delta = kind == tile.kind() ? -1 : 0
+        let sprite = getCurrentSprite()
+        let delta = kind == sprite.kind() ? -1 : 0
         if (size == ResultSet.One)
-            check(myWorld.numberAt(kind, tile, dir, dir2)+delta == 1)
+            check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 1)
         else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(kind, tile, dir, dir2)+delta == 0)
+            check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 0)
     }
 
     /**
@@ -723,30 +725,29 @@ namespace TileWorld {
 
     // actions
 
-    // tests - on tile, see, got, bumped
 
-    // actions, move, turn, holding, shoot, color
+    // Object: what to act on: currentTile + direction
+    // select direction, kind
 
-    // identification of target is complicated:
-    // (tile, dir) identifies tile that we want to act on
-    // - code vs. spritekind
+    // default: works on current tile, self-sprite
+    // Action: what to do: move, remove, 
+    // Parameter: depends on the action
 
-    // the action may also hav
 
-    // block
-    // get(code: number, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None, dir3: TileDir = TileDir.None) {
-    //    return this.parent.getSprite(code, this, dir, dir2, dir3)
-    // }
+
     //% blockId=TWsettilecode block="set code at $this(tile) to $code=colorindexpicker"
     //% group="Actions" color="#88CC44"
-    //setCode(code: number) {
-    //    this.parent.setCode(this, code)
-    //}
+    export function setCode(code: number, dir: TileDir) {
+        let sprite = getCurrentSprite()
+        myWorld.setCode(sprite, code)
+    }
+
     //% blockId=TWremove block="remove sprite at $this(tile)"
     //% group="Actions" color="#88CC44"
-    //remove() {
+    // export function remove() {
     //    this.parent.removeSprite(this)
-    //}    
+    //}
+
     // request sprite to move in specified direction
     //% blockId=TWmove block="move sprite at $this(tile) $dir=tiledir"
     //% group="Actions" color="#88CC44"
