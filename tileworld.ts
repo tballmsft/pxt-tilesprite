@@ -626,7 +626,7 @@ namespace TileWorld {
      * @param index
      * @param img
      */
-    //% blockId=TWaddsprite block="set $code=colorindexpicker to $kk sprite $image=tile_image_picker with $kind=spritekind"
+    //% blockId=TWaddsprite block="set $code=colorindexpicker to $moving sprite $image=tile_image_picker with $kind=spritekind"
     //% group="Tiles"
     //% inlineInputMode=inline
     export function addSprite(code: number, image: Image, moving: Spritely, kind: number) {
