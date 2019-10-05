@@ -471,8 +471,7 @@ namespace TileWorld {
     // queue is of size one
     class BindController {
         private sprite: TileSprite;
-        constructor() {
-        }
+        constructor() { }
         private requestMove(dir: TileDir) {
             if (!this.sprite.moveOne(dir)) {
                 this.sprite.deadStop();
@@ -579,6 +578,16 @@ namespace TileWorld {
     // keep track of sprites passed down through active handler
     // so user code doesn't need to refer to it.
     let active: TileSprite[] = [];
+    let selectDirection  = TileDir.None
+    let selectCodeKind = -1
+    function enterHandler(t: TileSprite) {
+        active.push(t)
+        selectDirection = TileDir.None
+        selectCodeKind = -1;
+    }
+    function exitHandler(t: TileSprite) {
+        active.pop();
+    }
 
     /**
      * Set the map for placing tiles in the scene
@@ -640,9 +649,9 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onChangeAround(kind: number, h: () => void) {
         myWorld.onTileStationary(kind, (t) => {
-            active.push(t)
+            enterHandler(t)
             h() 
-            active.pop()
+            exitHandler(t)
         });
     }
 
@@ -655,9 +664,9 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMoveRequest(kind: number, h: (d: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
-            active.push(t)
+            enterHandler(t)
             h(d)
-            active.pop()
+            exitHandler(t)
         })
     }
 
@@ -670,9 +679,9 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMovedInto(kind: number, h: () => void) {
         myWorld.onTileTransition(kind, (t) => {
-            active.push(t)
+            enterHandler(t)
             h()
-            active.pop()
+            exitHandler(t)
         })
     }
 
@@ -682,8 +691,10 @@ namespace TileWorld {
     //% group="Tiles"	
     //% blockId=TWgetsprite block="get current sprite"
     export function getCurrentSprite(): TileSprite {
-        check(active.length > 0)
-        return active[active.length-1]
+        if (active.length > 0)
+            return active[active.length-1]
+        else
+            return null
     }
 
     // tests
@@ -692,22 +703,26 @@ namespace TileWorld {
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
-        let delta = code == sprite.getCode() ? -1 : 0
-        if (size == ResultSet.One) {
-            check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 1)
-        } else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 0)
+        if (sprite) {
+            let delta = code == sprite.getCode() ? -1 : 0
+            if (size == ResultSet.One) {
+                check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 1)
+            } else if (size == ResultSet.Zero)
+                check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 0)
+        }
     }
 
     //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
-        let delta = kind == sprite.kind() ? -1 : 0
-        if (size == ResultSet.One)
-            check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 1)
-        else if (size == ResultSet.Zero)
-            check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 0)
+        if (sprite) {
+            let delta = kind == sprite.kind() ? -1 : 0
+            if (size == ResultSet.One)
+                check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 1)
+            else if (size == ResultSet.Zero)
+                check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 0)
+        }
     }
 
     /**
@@ -733,13 +748,13 @@ namespace TileWorld {
     // Action: what to do: move, remove, 
     // Parameter: depends on the action
 
-
-
-    //% blockId=TWsettilecode block="set code at $this(tile) to $code=colorindexpicker"
+    //% blockId=TWsettilecode block="set code $code=colorindexpicker"
     //% group="Actions" color="#88CC44"
-    export function setCode(code: number, dir: TileDir) {
+    export function setCode(code: number) {
         let sprite = getCurrentSprite()
-        myWorld.setCode(sprite, code)
+        if (sprite) {
+            myWorld.setCode(sprite, code)
+        }
     }
 
     //% blockId=TWremove block="remove sprite at $this(tile)"
