@@ -400,7 +400,6 @@ namespace TileWorld {
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
             this.multipleSprites = []
-            // TODO: should select one target for multiple sprites in a tile
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {
@@ -580,11 +579,24 @@ namespace TileWorld {
     let active: TileSprite[] = [];
     let selectDirection  = TileDir.None
     let selectCodeKind = -1
+
+    function getTargetSprite() {
+        let sprite = getCurrentSprite()
+        if (sprite) {
+            let sprites = myWorld.getSprites(selectCodeKind, sprite, selectDirection)
+            if (sprites && sprites.length > 0) {
+                return sprites[0]
+            }
+        }
+        return null;
+    }
+
     function enterHandler(t: TileSprite) {
         active.push(t)
         selectDirection = TileDir.None
         selectCodeKind = -1;
     }
+
     function exitHandler(t: TileSprite) {
         active.pop();
     }
@@ -632,9 +644,11 @@ namespace TileWorld {
     //% blockId=TWmoveButtons block="move $kind=spritekind with buttons"
     export function moveWithButtons(kind: number) {
         let sprites = game.currentScene().spritesByKind[kind].sprites()
-        let first = sprites[0]
-        if (first instanceof TileSprite) {
-            myPlayerController(<TileSprite>first)
+        if (sprites && sprites.length > 0) {
+            let first = sprites[0]
+            if (first instanceof TileSprite) {
+                myPlayerController(<TileSprite>first)
+            }
         }
     }
 
@@ -740,9 +754,23 @@ namespace TileWorld {
 
     // actions
 
+    //% blockId=TWselectdir block="target direction $dir=tiledir"
+    //% group="Actions" color="#88CC44"
+    export function selectDir(dir: TileDir) {
+        selectDirection = dir;
+    }
 
-    // Object: what to act on: currentTile + direction
-    // select direction, kind
+    //% blockId=TWselectcode block="target code $code=colorindexpicker"
+    //% group="Actions" color="#88CC44"
+    export function selectCode(code: number) {
+        selectCodeKind = code;
+    }
+
+    //% blockId=TWselectkind block="target kind $kind=spritekind"
+    //% group="Actions" color="#88CC44"
+    export function selectKind(kind: number) {
+        selectCodeKind = kind;
+    }
 
     // default: works on current tile, self-sprite
     // Action: what to do: move, remove, 
@@ -751,19 +779,28 @@ namespace TileWorld {
     //% blockId=TWsettilecode block="set code $code=colorindexpicker"
     //% group="Actions" color="#88CC44"
     export function setCode(code: number) {
-        let sprite = getCurrentSprite()
+        let sprite = getTargetSprite()
         if (sprite) {
             myWorld.setCode(sprite, code)
         }
     }
 
-    //% blockId=TWremove block="remove sprite at $this(tile)"
+    //% blockId=TWremove block="remove sprite"
     //% group="Actions" color="#88CC44"
-    // export function remove() {
-    //    this.parent.removeSprite(this)
-    //}
+    export function remove() {
+        let sprite = getTargetSprite()
+        if (sprite) {
+            myWorld.removeSprite(sprite)
+        }
+    }
 
     // request sprite to move in specified direction
-    //% blockId=TWmove block="move sprite at $this(tile) $dir=tiledir"
+    //% blockId=TWmove block="move sprite $dir=tiledir"
     //% group="Actions" color="#88CC44"
+    export function move(dir: TileDir) {
+        let sprite = getTargetSprite()
+        if (sprite) {
+            sprite.moveOne(dir)
+        }
+    }
 }
