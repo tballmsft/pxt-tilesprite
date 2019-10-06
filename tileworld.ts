@@ -454,14 +454,13 @@ namespace TileWorld {
             if (!this.transitionHandlers[kind]) this.transitionHandlers[kind] = []
         }
         private hookupHandlers(s: TileSprite) {
-            let process = (s: TileSprite, d: number) => {
-                if (d == CallBackKind.Stationary)
+            let process = (s: TileSprite, dir: number) => {
+                if (dir == CallBackKind.Stationary)
                     this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
-                else if (d == CallBackKind.Transition)
+                else if (dir == CallBackKind.Transition)
                     this.transitionHandlers[s.kind()].forEach((h) => tryCatch(h, s));
                 else
-                    this.arrivalHandlers[s.kind()].forEach((h,d) => tryCatchDir(h, s, d));
- 
+                    this.arrivalHandlers[s.kind()].forEach((h) => tryCatchDir(h, s, dir));
             }
             s.onTileSpriteEvent(process)
         }
@@ -582,24 +581,15 @@ namespace TileWorld {
     // keep track of sprites passed down through active handler
     // so user code doesn't need to refer to it.
     let active: TileSprite[] = [];
-    let selectDirection  = TileDir.None
-    let selectCodeKind = -1
 
     function getTargetSprite() {
         let sprite = getCurrentSprite()
-        if (sprite) {
-            let sprites = myWorld.getSprites(selectCodeKind, sprite, selectDirection)
-            if (sprites && sprites.length > 0) {
-                return sprites[0]
-            }
-        }
-        return null;
+        // TODO
+        return sprite
     }
 
     function enterHandler(t: TileSprite) {
         active.push(t)
-        selectDirection = TileDir.None
-        selectCodeKind = -1;
     }
 
     function exitHandler(t: TileSprite) {
@@ -617,7 +607,7 @@ namespace TileWorld {
     }
 
     /**
-     * Set the background tile for sprites
+     * Set the background tile
      * @param color
      */
     //% group="Tiles"
@@ -627,11 +617,13 @@ namespace TileWorld {
     }
 
     /**
-     * Set an image as a tile at the given index. Tiles should be a 16x16 image
-     * @param index
-     * @param img
+     * Map a color to a 16x16 tile image and sprite kind. 
+     * @param code
+     * @param moving
+     * @param image
+     * @param kind
      */
-    //% blockId=TWaddsprite block="set $code=colorindexpicker to $moving sprite $image=tile_image_picker with $kind=spritekind"
+    //% blockId=TWaddsprite block="map $code=colorindexpicker to $moving sprite $image=tile_image_picker as $kind=spritekind"
     //% group="Tiles"
     //% inlineInputMode=inline
     export function addSprite(code: number, image: Image, moving: Spritely, kind: number) {
@@ -718,6 +710,8 @@ namespace TileWorld {
 
     // tests
 
+    // TODO: fill slot with sprite 
+
     //% blockId=TWhascode block="test $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
@@ -731,6 +725,8 @@ namespace TileWorld {
         }
     }
 
+    // TODO: fill slot with sprite 
+    
     //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Tests" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
@@ -758,24 +754,6 @@ namespace TileWorld {
     }             
 
     // actions
-
-    //% blockId=TWselectdir block="target direction $dir=tiledir"
-    //% group="Actions" color="#88CC44"
-    export function selectDir(dir: number) {
-        selectDirection = dir;
-    }
-
-    //% blockId=TWselectcode block="target code $code=colorindexpicker"
-    //% group="Actions" color="#88CC44"
-    export function selectCode(code: number) {
-        selectCodeKind = code;
-    }
-
-    //% blockId=TWselectkind block="target kind $kind=spritekind"
-    //% group="Actions" color="#88CC44"
-    export function selectKind(kind: number) {
-        selectCodeKind = kind;
-    }
 
     // default: works on current tile, self-sprite
     // Action: what to do: move, remove, 
