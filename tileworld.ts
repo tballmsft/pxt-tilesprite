@@ -20,7 +20,7 @@ function _tileDir(dir: TileDir): number {
 enum ResultSet {
     //% block="has no"
     Zero,
-    //% block="has one"
+    //% block="has other"
     One,
 }
 
@@ -39,7 +39,7 @@ enum Spritely {
 }
 
 //% weight=1000 color="#442255" icon="\uf45c"
-//% groups='["Tiles", "Events", "Tests", "Actions"]'
+//% groups='["Tiles", "Events", "Assertions", "Actions"]'
 //% blockGap=8
 namespace TileWorld {
 
@@ -329,6 +329,11 @@ namespace TileWorld {
                     }
                 }
             }
+        }
+        createTileSpriteAt(code: number, cursor: Tile) {
+            //let tileSprite = new TileSprite(this, code, art, kind)
+            //this.hookupHandlers(tileSprite)
+            //this.sprites[code].push(tileSprite)
         }
         // register event handlers
         onTileStationary(kind: number, h: (ts: TileSprite) => void) {
@@ -682,11 +687,11 @@ namespace TileWorld {
     }
 
     /**
-     * Sprite has just move into (entered) a tile
+     * Sprite is moving into a tile
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on $kind=spritekind moved into tile"
+    //% blockId=TWontiletransition block="on $kind=spritekind moving into tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMovedInto(kind: number, h: () => void) {
         myWorld.onTileTransition(kind, (t) => {
@@ -712,8 +717,8 @@ namespace TileWorld {
 
     // TODO: fill slot with sprite 
 
-    //% blockId=TWhascode block="test $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
-    //% group="Tests" color="#448844" inlineInputMode=inline
+    //% blockId=TWhascode block="tile $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
+    //% group="Assertions" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
         if (sprite) {
@@ -727,8 +732,8 @@ namespace TileWorld {
 
     // TODO: fill slot with sprite 
     
-    //% blockId=TWhaskind block="test $dir=tiledir $dir2=tiledir $size $kind=spritekind"
-    //% group="Tests" color="#448844" inlineInputMode=inline
+    //% blockId=TWhaskind block="tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
+    //% group="Assertions" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
         if (sprite) {
@@ -743,8 +748,8 @@ namespace TileWorld {
     /**
      * Check if a direction is one of several values.
      */
-    //% group="Tests" color="#448844"
-    //% blockId=TWisoneof block="test %dir=variables_get(direction) $cmp %c1 %c2"
+    //% group="Assertions" color="#448844"
+    //% blockId=TWisoneof block="assert %dir=variables_get(direction) $cmp %c1 %c2"
     //% inlineInputMode=inline
     export function _isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
         if (cmp == Membership.OneOf)
@@ -759,31 +764,70 @@ namespace TileWorld {
     // Action: what to do: move, remove, 
     // Parameter: depends on the action
 
-    //% blockId=TWsettilecode block="set code $code=colorindexpicker"
+
+    // other-and-self
+    
+    // request sprite to move in specified direction
+    //% blockId=TWmoveself block="move $dir=tiledir self"
     //% group="Actions" color="#88CC44"
-    export function setCode(code: number) {
+    export function moveSelf(dir: number) {
         let sprite = getTargetSprite()
         if (sprite) {
-            myWorld.setCode(sprite, code)
+            sprite.moveOne(dir)
         }
     }
 
-    //% blockId=TWremove block="remove sprite"
+    // request sprite to move in specified direction
+    //% blockId=TWmoveother block="move $dir=tiledir other at $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
-    export function remove() {
-        let sprite = getTargetSprite()
+    export function moveOther(otherdir: number, dir: number) {
+
+    }
+    
+    //% blockId=TWremoveSelf block="remove self"
+    //% group="Actions" color="#88CC44"
+    export function removeSelf() {
+        let sprite = getCurrentSprite()
         if (sprite) {
             myWorld.removeSprite(sprite)
         }
     }
 
-    // request sprite to move in specified direction
-    //% blockId=TWmove block="move sprite $dir=tiledir"
+    //% blockId=TWremoveother block="remove other at $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
-    export function move(dir: number) {
-        let sprite = getTargetSprite()
+    export function removeOther(otherdir: number) {
+
+    }
+
+    // direction-based 
+    // - set tile code
+    // - create sprite
+
+    //% blockId=TWsettilecode block="set code $code=colorindexpicker at $dir=tiledir"
+    //% group="Actions" color="#88CC44"
+    export function setCode(code: number, dir: number) {
+        let sprite = getCurrentSprite()
         if (sprite) {
-            sprite.moveOne(dir)
+            let cursor = new Cursor(myWorld, sprite, dir);
+            myWorld.setCode(cursor, code)
+        }
+    }
+
+    /*
+    
+    //% blockId=TWaddsprite block="map $code=colorindexpicker to $moving sprite $image=tile_image_picker as $kind=spritekind"
+    //% group="Tiles"
+    //% inlineInputMode=inline
+    export function addSprite(code: number, image: Image, moving: Spritely, kind: number) {
+
+    */
+
+    //% blockId=TWcreatesprite block="create sprite $code=colorindexpicker at $dir=tiledir"
+    //% group="Actions" color="#88CC44"
+    export function createSprite(code: number, dir: number) {
+        let sprite = getCurrentSprite()
+        if (sprite) {
+            myWorld.createTileSpriteAt(code, new Cursor(myWorld, sprite, dir))    
         }
     }
 }
