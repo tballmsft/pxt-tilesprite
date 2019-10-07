@@ -449,11 +449,11 @@ namespace TileWorld {
         private hookupHandlers(s: TileSprite) {
             let process = (s: TileSprite, dir: number) => {
                 if (dir == CallBackKind.Stationary)
-                    this.stationaryHandlers[s.kind()].forEach((h) => tryCatch(h, s));
+                    this.stationaryHandlers[s.kind()].forEach((h) => { h(s) });
                 else if (dir == CallBackKind.Transition)
-                    this.transitionHandlers[s.kind()].forEach((h) => tryCatch(h, s));
+                    this.transitionHandlers[s.kind()].forEach((h) => { h(s) });
                 else
-                    this.arrivalHandlers[s.kind()].forEach((h) => tryCatchDir(h, s, dir));
+                    this.arrivalHandlers[s.kind()].forEach((h) => { h(s, dir) });
             }
             s.onTileSpriteEvent(process)
         }
@@ -545,22 +545,6 @@ namespace TileWorld {
 
     let checkFailed = new CheckFailed();
 
-    let tryCatch = (h: (s: TileSprite) => void, s: TileSprite) => {
-        try {
-            h(s)
-        } catch (e) {
-            // TODO
-        }
-    }
-
-    let tryCatchDir = (h: (s: TileSprite, d: TileDir) => void, s: TileSprite, d: TileDir) => {
-        try {
-            h(s, d)
-        } catch (e) {
-            // TODO
-        }
-    }
-
     function check(expr: boolean) {
         if (!expr) {
             throw checkFailed;
@@ -574,15 +558,15 @@ namespace TileWorld {
     // keep track of sprites passed down through active handler
     // so user code doesn't need to refer to it.
     let active: TileSprite[] = [];
+    let targets: { [index:number]: TileSprite } = {} 
 
-    function getTargetSprite() {
-        let sprite = getCurrentSprite()
-        // TODO
-        return sprite
+    function getTargetSprite(dir: TileDir) {
+        return targets[dir]
     }
 
     function enterHandler(t: TileSprite) {
         active.push(t)
+        targets = {}
     }
 
     function exitHandler(t: TileSprite) {
@@ -653,9 +637,14 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onChangeAround(kind: number, h: () => void) {
         myWorld.onTileStationary(kind, (t) => {
-            enterHandler(t)
-            h() 
-            exitHandler(t)
+            try {
+                enterHandler(t)
+                h() 
+            } catch (e) {
+
+            } finally {
+                exitHandler(t)
+            }
         });
     }
 
@@ -668,9 +657,13 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMoveRequest(kind: number, h: (dir: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
-            enterHandler(t)
-            h(d)
-            exitHandler(t)
+            try {
+                enterHandler(t)
+                h(d)
+            } catch (e) {
+            } finally {
+                exitHandler(t)
+            }
         })
     }
 
@@ -683,9 +676,13 @@ namespace TileWorld {
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMovedInto(kind: number, h: () => void) {
         myWorld.onTileTransition(kind, (t) => {
-            enterHandler(t)
-            h()
-            exitHandler(t)
+            try {
+                enterHandler(t)
+                h()
+            } catch (e) {
+            } finally {
+                exitHandler(t)
+            }
         })
     }
 
@@ -733,7 +730,11 @@ namespace TileWorld {
             }
             let sprites = myWorld.getSprites(codeKind, cursor)
             check(sprites.length + delta >= 1)
-            // TODO: record sprite
+            // record the sprite, but not two steps away
+            if (dir == TileDir.None || dir2 == TileDir.None) {
+                let theDir = (dir == TileDir.None) ? dir2 : dir
+                targets[theDir] = sprites[0]
+            }
         } else if (size == ResultSet.Zero) {
             // optimization based on counts
             if (approxCount >= 0) {
@@ -771,7 +772,7 @@ namespace TileWorld {
     //% blockId=TWmoveself block="move $dir=tiledir self"
     //% group="Actions" color="#88CC44"
     export function moveSelf(dir: number) {
-        let sprite = getTargetSprite()
+        let sprite = getCurrentSprite()
         if (sprite) {
             sprite.moveOne(dir)
         }
@@ -781,7 +782,10 @@ namespace TileWorld {
     //% blockId=TWmoveother block="move $dir=tiledir other at $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
     export function moveOther(otherdir: number, dir: number) {
-
+        let sprite = getTargetSprite(otherdir)
+        if (sprite) {
+            sprite.moveOne(dir)
+        }
     }
     
     //% blockId=TWremoveSelf block="remove self"
@@ -796,7 +800,10 @@ namespace TileWorld {
     //% blockId=TWremoveother block="remove other at $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
     export function removeOther(otherdir: number) {
-
+        let sprite = getTargetSprite(otherdir)
+        if (sprite) {
+            myWorld.removeSprite(sprite)
+        }
     }
 
     // direction-based 
