@@ -351,18 +351,18 @@ namespace TileWorld {
         }
         // how many sprites of codeKind are at a location? return -1 if can't figure out without consulting sprites
         countCodeKindAt(codeKind: number, cursor: Cursor) {
-            let tileMapCode = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
+            // let tileMapCode = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
             let spriteMapCode = this.spriteMap.getPixel(cursor.getColumn(), cursor.getRow())
             if (this.isFixedCode(codeKind)) {
-                return (codeKind == tileMapCode) ? 1 : 0
+                return (codeKind == spriteMapCode) ? 1 : 0
             } else if (this.multiples.getPixel(cursor.getColumn(), cursor.getRow())) {
                 return -1
             } else if (codeKind < this.tileKind) {
                 return (codeKind == spriteMapCode) ? 1 : 0
             } else {
-                let tileMapKind = this.codeToKind[tileMapCode]
+                // let tileMapKind = this.codeToKind[tileMapCode]
                 let spriteMapKind = this.codeToKind[spriteMapCode]
-                return (codeKind == tileMapKind ? 1 : 0) + (tileMapCode == spriteMapCode ? 0 : (codeKind == spriteMapKind ? 1 : 0))
+                return (codeKind == spriteMapKind ? 1 : 0)//+ (tileMapCode == spriteMapCode ? 0 : (codeKind == spriteMapKind ? 1 : 0))
             }
         }
         // is the underlying tile at a location of codeKind?
