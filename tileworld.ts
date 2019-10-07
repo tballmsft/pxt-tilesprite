@@ -664,9 +664,9 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on request of $kind=spritekind to move $direction"
+    //% blockId=TWontilearrived block="on request of $kind=spritekind to move $dir"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onMoveRequest(kind: number, h: (direction: TileDir) => void) {
+    export function onMoveRequest(kind: number, h: (dir: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
             enterHandler(t)
             h(d)
