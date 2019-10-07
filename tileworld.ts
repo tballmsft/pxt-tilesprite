@@ -260,7 +260,6 @@ namespace TileWorld {
         private spriteMap: Image;
         // note tiles with more than one sprite
         private multiples: Image;
-        private multipleSprites: TileSprite[];
         // which codes map to sprites?
         private spriteCodes: number[];
         // map codes to kinds
@@ -277,7 +276,6 @@ namespace TileWorld {
             this.sprites = []
             this.codeToKind = []
             this.spriteCodes = []
-            this.multipleSprites = [];
             this.arrivalHandlers = {}
             this.transitionHandlers = {}
             this.stationaryHandlers = {}
@@ -299,7 +297,6 @@ namespace TileWorld {
         setCode(curs: Tile, code: number) {
             this.tileMap.setPixel(curs.getColumn(), curs.getRow(), code)
         }
-        //
         addTiles(code: number, art: Image, kind: number) {
             let tiles = scene.getTilesByType(code)
             this.codeToKind[code] = kind;
@@ -353,26 +350,25 @@ namespace TileWorld {
                 this.transitionHandlers[kind] = [];          }
             this.transitionHandlers[kind].push(h);
         }
+
         // how many sprites of codeKind are at a location?
-        numberAt(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
+        numSpritesAt(orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             let curs = new Cursor(this, orig, dir, dir2);
-            if (this.multiples.getPixel(curs.getColumn(), curs.getRow())) {
-                return this._getSpritesCursor(codeKind, curs).length
-            } else {
-                // TODO: if the thing is a tile, this doesn't work
-                if (codeKind < this.tileKind)
-                    return (this.spriteMap.getPixel(curs.getColumn(), curs.getRow()) == codeKind) ? 1 : 0
-                else
-                    return (this.codeToKind[this.spriteMap.getPixel(curs.getColumn(), curs.getRow())] == codeKind) ? 1 : 0
-            }
+            if (this.multiples.getPixel(curs.getColumn(), curs.getRow()))
+                return 2
+            else if (this.spriteCodes.indexOf(this.spriteMap.getPixel(curs.getColumn(), curs.getRow())) != -1)
+                return 1
+            else
+                return 0
         }
         // is the underlying tile at a location of codeKind?
         tileIs(codeKind: number, orig: Tile, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
             let cursor = new Cursor(this, orig, dir, dir2);
-            if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) == -1) 
-                return this.tileMap.getPixel(cursor.getColumn(), cursor.getRow()) == codeKind
+            let targetCodeKind = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
+            if (codeKind < this.tileKind) 
+                return targetCodeKind == codeKind
             else
-                return false
+                return this.codeToKind[targetCodeKind] == codeKind
         }
         // get all the sprites of codeKind at an (optional) location
         getSprites(codeKind: number, orig: Tile = null, dir: TileDir = TileDir.None, dir2: TileDir = TileDir.None) {
@@ -383,6 +379,8 @@ namespace TileWorld {
         }
         //
         removeSprite(s: TileSprite) {
+            // TODO: we may want to consider a two phase process where we
+            // TODO: disable the TileSprite and leave Sprite intact
             this.sprites[s.getCode()].removeElement(s)
             s.destroy()
         }
@@ -395,7 +393,8 @@ namespace TileWorld {
             if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) != -1) {
                 return this.sprites[codeKind]
             } else if (codeKind > this.tileKind) {
-                return game.currentScene().spritesByKind[codeKind].sprites()
+                if (game.currentScene().spritesByKind[codeKind])
+                    return game.currentScene().spritesByKind[codeKind].sprites()
             }
             return [];
         }
@@ -404,16 +403,13 @@ namespace TileWorld {
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
-            this.multipleSprites = []
             this.sprites.forEach((arr, code) => {
                 if (arr) {
                     arr.forEach((sprite) => {
                         let col = sprite.getColumn(), row = sprite.getRow()
                         let here = this.spriteMap.getPixel(col, row)
-                        if (this.spriteCodes.find((code) => code == here) &&
-                            !this.multiples.getPixel(col, row)) {
+                        if (this.spriteCodes.indexOf(here) != -1 && !this.multiples.getPixel(col, row)) {
                             // we have more than 1 sprite at (col,row)
-                            this.addMultipleSprites(col, row);
                             this.multiples.setPixel(col, row, 1)
                         } else {
                             // no sprite at this tile yet
@@ -439,17 +435,6 @@ namespace TileWorld {
                     if (transitionToStopped.indexOf(sprite) == -1)
                         sprite.updateStationary() 
                 }) }
-            })
-        }
-
-        private addMultipleSprites(col: number, row: number) {
-            this.sprites.forEach((arr, code) => {
-                if (arr) {
-                    arr.forEach((sprite) => {
-                        if (col == sprite.getColumn() && row == sprite.getRow())
-                            this.multipleSprites.push(sprite);
-                    })
-                }
             })
         }
 
@@ -723,10 +708,7 @@ namespace TileWorld {
         let sprite = getCurrentSprite()
         if (sprite) {
             let delta = code == sprite.getCode() ? -1 : 0
-            if (size == ResultSet.One) {
-                check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 1)
-            } else if (size == ResultSet.Zero)
-                check(myWorld.numberAt(code, sprite, dir, dir2)+delta == 0)
+            supportHas(code, dir, dir2, size, sprite, delta)
         }
     }
 
@@ -738,10 +720,24 @@ namespace TileWorld {
         let sprite = getCurrentSprite()
         if (sprite) {
             let delta = kind == sprite.kind() ? -1 : 0
-            if (size == ResultSet.One)
-                check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 1)
-            else if (size == ResultSet.Zero)
-                check(myWorld.numberAt(kind, sprite, dir, dir2)+delta == 0)
+            supportHas(kind, dir, dir2, size, sprite, delta)
+        }
+    }
+
+    function supportHas(codeKind: number, dir: TileDir, dir2: TileDir, 
+                        size: ResultSet, sprite: TileSprite, delta: number) {
+        let numSprites = myWorld.numSpritesAt(sprite, dir, dir2)
+        if (size == ResultSet.One) {
+            check(numSprites > 1)
+            let sprites = myWorld.getSprites(codeKind, sprite, dir, dir2)
+            check(sprites.length + delta >= 1)
+            // TODO: record sprite
+        } else if (size == ResultSet.Zero) {
+            // optimization based on counts
+            if (numSprites <= 1)        // count must be zero
+                return;
+            let sprites = myWorld.getSprites(codeKind, sprite, dir, dir2)
+            check(sprites.length + delta == 0)
         }
     }
 
