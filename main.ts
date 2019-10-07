@@ -5,11 +5,18 @@ namespace SpriteKind {
     export const Dirt = SpriteKind.create()
     export const Space = SpriteKind.create()
 }
-TileWorld.onMoveRequest(SpriteKind.Player, function (direction) {
+TileWorld.onMoveRequest(SpriteKind.Player, function (dir) {
+    TileWorld._isOneOf(dir, Membership.OneOf, TileDir.Left, TileDir.Right)
+    TileWorld.hasCode(11, dir, _tileDir(TileDir.None), ResultSet.One)
+    TileWorld.hasCode(1, dir, dir, ResultSet.One)
+    TileWorld.moveSelf(dir)
+    TileWorld.moveOther(dir, dir)
+})
+TileWorld.onMoveRequest(SpriteKind.Player, function (dir) {
     TileWorld.setCode(1, _tileDir(TileDir.None))
-    TileWorld.hasKind(SpriteKind.Wall, direction, _tileDir(TileDir.None), ResultSet.Zero)
-    TileWorld.hasCode(11, direction, _tileDir(TileDir.None), ResultSet.Zero)
-    TileWorld.moveSelf(direction)
+    TileWorld.hasKind(SpriteKind.Wall, dir, _tileDir(TileDir.None), ResultSet.Zero)
+    TileWorld.hasCode(11, dir, _tileDir(TileDir.None), ResultSet.Zero)
+    TileWorld.moveSelf(dir)
 })
 TileWorld.setTileMap(img`
     c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c
@@ -157,7 +164,6 @@ TileWorld.addSprite(1, img`
     f f f f f f f f f c c c c c c f
 `, Spritely.Fixed, SpriteKind.Space)
 TileWorld.moveWithButtons(SpriteKind.Player)
-
 */
 
  /*

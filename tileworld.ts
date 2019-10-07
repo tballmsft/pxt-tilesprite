@@ -346,8 +346,8 @@ namespace TileWorld {
             this.transitionHandlers[kind].push(h);
         }
 
-        private isFixedCode(codeKind: number) {
-            return codeKind < this.tileKind  && this.spriteCodes.indexOf(codeKind) == -1
+        public isFixedCode(codeKind: number) {
+            return codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) == -1
         }
         // how many sprites of codeKind are at a location? return -1 if can't figure out without consulting sprites
         countCodeKindAt(codeKind: number, cursor: Cursor) {
@@ -389,8 +389,11 @@ namespace TileWorld {
         }
         private _getSpritesCursor(codeKind: number, cursor: Cursor) {
             let ss = this._getSprites(codeKind)
-            return ss.filter((t: TileSprite) =>
-                t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+            if (ss)
+                return ss.filter((t: TileSprite) =>
+                    t.getColumn() == cursor.getColumn() && t.getRow() == cursor.getRow())
+            else
+                return null
         }
         private _getSprites(codeKind: number): any[] {
             if (codeKind < this.tileKind && this.spriteCodes.indexOf(codeKind) != -1) {
@@ -399,7 +402,7 @@ namespace TileWorld {
                 if (game.currentScene().spritesByKind[codeKind])
                     return game.currentScene().spritesByKind[codeKind].sprites()
             }
-            return [];
+            return null;
         }
         //
         private update() {
@@ -469,10 +472,9 @@ namespace TileWorld {
                 let sDirWhich = sdir == TileDir.Left || sdir == TileDir.Right
                 let dirWhich = dir == TileDir.Left || dir == TileDir.Right
                 if (sDirWhich != dirWhich)
-                    this.sprite.deadStop()
+                    this.sprite.deadStop()   // TODO: creates jitter
             }
             this.sprite.notifyArrived(dir)
-
         }
         private requestStop(dir: TileDir) {
             if (dir == this.sprite.getDirection()) {
@@ -482,6 +484,7 @@ namespace TileWorld {
         // basic movement for tile sprite
         bindToController(s: TileSprite) {
             this.sprite = s;
+            scene.cameraFollowSprite(s)
             controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
                 this.requestMove(TileDir.Left)
             })
@@ -728,12 +731,16 @@ namespace TileWorld {
             if (approxCount >= 0) {
                 check (approxCount-delta > 0)
             }
+            if (myWorld.isFixedCode(codeKind))
+                return;
             let sprites = myWorld.getSprites(codeKind, cursor)
-            check(sprites.length + delta >= 1)
-            // record the sprite, but not two steps away
-            if (dir == TileDir.None || dir2 == TileDir.None) {
-                let theDir = (dir == TileDir.None) ? dir2 : dir
-                targets[theDir] = sprites[0]
+            if (sprites) {
+                check(sprites.length + delta >= 1)
+                // record the sprite, but not two steps away
+                if (dir == TileDir.None || dir2 == TileDir.None) {
+                    let theDir = (dir == TileDir.None) ? dir2 : dir
+                    targets[theDir] = sprites[0]
+                }
             }
         } else if (size == ResultSet.Zero) {
             // optimization based on counts
@@ -741,8 +748,12 @@ namespace TileWorld {
                 check (approxCount-delta == 0)
                 return
             }
+            if (myWorld.isFixedCode(codeKind))
+                return;
             let sprites = myWorld.getSprites(codeKind, cursor)
-            check(sprites.length + delta == 0)
+            if (sprites) {
+               check(sprites.length + delta == 0)
+            }
         }
     }
 
