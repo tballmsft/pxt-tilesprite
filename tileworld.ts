@@ -364,7 +364,7 @@ namespace TileWorld {
             } else {
                 let tileMapKind = this.codeToKind[tileMapCode]
                 let spriteMapKind = this.codeToKind[spriteMapCode]
-                return (codeKind == spriteMapKind ? 1 : 0) + (tileMapCode == spriteMapCode ? 0 : (codeKind == spriteMapKind ? 1 : 0))
+                return (codeKind == tileMapKind ? 1 : 0) + (tileMapCode == spriteMapCode ? 0 : (codeKind == spriteMapKind ? 1 : 0))
             }
         }
         // is the underlying tile at a location of codeKind?
@@ -725,37 +725,41 @@ namespace TileWorld {
         }
     }
 
+    // TODO: need to redo
     function supportHas(codeKind: number, dir: TileDir, dir2: TileDir, 
                         size: ResultSet, sprite: TileSprite, delta: number) {
         let cursor = new Cursor(myWorld, sprite, dir, dir2)
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
-        if (size == ResultSet.One || size ==ResultSet.Only) {
+        if (size == ResultSet.Zero) {
+            // optimization based on counts
             if (approxCount >= 0) {
-                check (size == ResultSet.One ? approxCount+delta > 0 : approxCount+delta == 1)
+                check(approxCount - delta == 0)
+                return
+            } else {
+                // there are multiple sprites in this tile
+                // still need to consider 
+                let sprites = myWorld.getSprites(codeKind, cursor)
+                if (sprites) {
+                    check(sprites.length + delta == 0)
+                }
+            }
+        } else if (size == ResultSet.One) {
+            if (approxCount >= 0) {
+                check (approxCount+delta > 0)
             }
             if (myWorld.isFixedCode(codeKind))
                 return;
             let sprites = myWorld.getSprites(codeKind, cursor)
             if (sprites) {
-                check(size == ResultSet.One ? sprites.length + delta >= 1 : sprites.length + delta == 1)
+                check(sprites.length + delta >= 1)
                 // record the sprite, but not two steps away
                 if (dir == TileDir.None || dir2 == TileDir.None) {
                     let theDir = (dir == TileDir.None) ? dir2 : dir
                     targets[theDir] = sprites[0]
                 }
             }
-        } else if (size == ResultSet.Zero) {
-            // optimization based on counts
-            if (approxCount >= 0) {
-                check (approxCount-delta == 0)
-                return
-            }
-            if (myWorld.isFixedCode(codeKind))
-                return;
-            let sprites = myWorld.getSprites(codeKind, cursor)
-            if (sprites) {
-               check(sprites.length + delta == 0)
-            }
+        } else {
+            // ResultSet.Only
         }
     }
 
