@@ -374,6 +374,13 @@ namespace TileWorld {
                 return (codeKind == tileMapKind ? 1 : 0) + (tileMapCode == spriteMapCode ? 0 : (codeKind == spriteMapKind ? 1 : 0))
             }
         }
+
+        hasMovableSprite(cursor: Cursor) {
+            let tileMapCode = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
+            let spriteMapCode = this.spriteMap.getPixel(cursor.getColumn(), cursor.getRow())
+            return spriteMapCode != tileMapCode
+        }
+
         // is the underlying tile at a location of codeKind?
         tileIs(codeKind: number, cursor: Cursor) {
             let targetCodeKind = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
@@ -755,9 +762,9 @@ namespace TileWorld {
             check(c + delta > 0)
             recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
             return;
-        } else if (size == ResultSet.Only && c >= 0) {
-            check(c + delta == 1)
-            recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
+        } else if (size == ResultSet.Only) {
+            // this can only be true for fixed sprite (no movable sprites possible)
+            check(!myWorld.hasMovableSprite(cursor) && c == 1)
             return;
         }
         // assert(!myWorld.isFixedCode(codeKind))
