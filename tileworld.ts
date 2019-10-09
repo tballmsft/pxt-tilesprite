@@ -360,11 +360,12 @@ namespace TileWorld {
         // how many fixed/movable sprites of codeKind are at a location? 
         // returns -1 if result needs to consult actual sprite list at location
         countCodeKindAt(codeKind: number, cursor: Cursor) {
-            let tileMapCode = this.tileMap.getPixel(cursor.getColumn(), cursor.getRow())
-            let spriteMapCode = this.spriteMap.getPixel(cursor.getColumn(), cursor.getRow())
+            let col = cursor.getColumn(), row = cursor.getRow()
+            let tileMapCode = this.tileMap.getPixel(col, row)
+            let spriteMapCode = this.spriteMap.getPixel(col, row)
             if (this.isFixedCode(codeKind))
                 return (codeKind == tileMapCode) ? 1 : 0
-            else if (this.multiples.getPixel(cursor.getColumn(), cursor.getRow())) 
+            else if (this.multiples.getPixel(col, row)) 
                 return -1
             else if (codeKind < this.tileKind)
                 return (codeKind == spriteMapCode) ? 1 : 0
@@ -542,7 +543,8 @@ namespace TileWorld {
         constructor(s: Tile, dir: TileDir, dir2: TileDir = TileDir.None) {
             this.col = s.getColumn();
             this.row = s.getRow();
-            this.move(dir); this.move(dir2)
+            this.move(dir); 
+            this.move(dir2)
         }
         private move(dir: TileDir) {
             switch (dir) {
@@ -722,7 +724,7 @@ namespace TileWorld {
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            let delta = code == sprite.getCode() ? -1 : 0
+            let delta = (dir == TileDir.None && dir2 == TileDir.None) ? (code == sprite.getCode() ? -1 : 0) : 0
             supportHas(code, true, dir, dir2, size, sprite, delta)
         }
     }
@@ -732,7 +734,7 @@ namespace TileWorld {
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            let delta = kind == sprite.kind() ? -1 : 0
+            let delta = (dir == TileDir.None && dir2 == TileDir.None) ? (kind == sprite.kind() ? -1 : 0) : 0
             supportHas(kind, false, dir, dir2, size, sprite, delta)
         }
     }
@@ -753,7 +755,7 @@ namespace TileWorld {
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
         if (size == ResultSet.Zero || size == ResultSet.One) {
             if (approxCount >= 0) {
-                check(size == ResultSet.Zero ? approxCount - delta == 0 : approxCount + delta > 0)
+                check(size == ResultSet.Zero ? approxCount + delta == 0 : approxCount + delta > 0)
                 recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
                 return;
             }
