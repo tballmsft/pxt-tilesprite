@@ -303,7 +303,7 @@ namespace TileWorld {
             return this.tileMap.getPixel(curs.getColumn(), curs.getRow())
         }
         getKindFromCode(code: number) {
-            return this.codeToKind(code)
+            return this.codeToKind[code]
         }
         addTiles(code: number, art: Image, kind: number) {
             let tiles = scene.getTilesByType(code)
@@ -734,7 +734,7 @@ namespace TileWorld {
 
     // record the sprite, but not two steps away
     function recordSprite(sprites: TileSprite[], dir: TileDir, dir2: TileDir) {
-        if (sprites) {
+        if (sprites && sprites.length > 0) {
             if (dir == TileDir.None || dir2 == TileDir.None) {
                 let theDir = (dir == TileDir.None) ? dir2 : dir
                 targets[theDir] = sprites[0]
@@ -745,29 +745,34 @@ namespace TileWorld {
     function supportHas(codeKind: number, code: boolean, dir: TileDir, dir2: TileDir, 
                         size: ResultSet, sprite: TileSprite, delta: number) {
         let cursor = new Cursor(myWorld, sprite, dir, dir2)
-        function checkIt(c: number) {
-            if (size == ResultSet.Zero && c >= 0) {
-                check(c - delta == 0)
-                return true;
-            } else if (size == ResultSet.One && c >= 0) {
-                check(c + delta > 0)
-                recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
-                return true;
-            } else if (size == ResultSet.Only && c >= 0) {
-                check(c + delta == 1)
-                recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
-                return true;
-            }
-            return false;
-        }
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
-        if (checkIt(approxCount))
-            return
+
+        let c = approxCount
+        if (size == ResultSet.Zero && c >= 0) {
+            check(c - delta == 0)
+            return;
+        } else if (size == ResultSet.One && c >= 0) {
+            check(c + delta > 0)
+            recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
+            return;
+        } else if (size == ResultSet.Only && c >= 0) {
+            check(c + delta == 1)
+            recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
+            return;
+        }
         // assert(!myWorld.isFixedCode(codeKind))
         let sprites = myWorld.getSprites(codeKind, cursor)
         let kindOfFixed = myWorld.getKindFromCode(myWorld.getCode(cursor))
-        let count = sprites.length + (code ? 0 : (kindOfFixed == codeKind ? 1 : 0))
-        checkIt(count)
+        c = (sprites ? sprites.length : 0) + (code ? 0 : (kindOfFixed == codeKind ? 1 : 0))
+        if (size == ResultSet.Zero) {
+            check(c - delta == 0)
+        } else if (size == ResultSet.One) {
+            check(c + delta > 0)
+            recordSprite(sprites, dir, dir2)
+        } else if (size == ResultSet.Only) {
+            check(c + delta == 1)
+            recordSprite(sprites, dir, dir2)
+        }
     }
 
     /**
