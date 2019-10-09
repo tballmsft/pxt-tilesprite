@@ -537,11 +537,9 @@ namespace TileWorld {
 
     // a cursor is just a coordinate
     class Cursor implements Tile {
-        private world: TileWorld;
         private col: number;
         private row: number;
-        constructor(w: TileWorld, s: Tile, dir: TileDir, dir2: TileDir = TileDir.None) {
-            this.world = w;
+        constructor(s: Tile, dir: TileDir, dir2: TileDir = TileDir.None) {
             this.col = s.getColumn();
             this.row = s.getRow();
             this.move(dir); this.move(dir2)
@@ -652,7 +650,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on change around $kind=spritekind"
+    //% blockId=TWontilestationary block="on stationary $kind=spritekind"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onChangeAround(kind: number, h: () => void) {
         myWorld.onTileStationary(kind, (t) => {
@@ -751,7 +749,7 @@ namespace TileWorld {
 
     function supportHas(codeKind: number, code: boolean, dir: TileDir, dir2: TileDir, 
                         size: ResultSet, sprite: TileSprite, delta: number) {
-        let cursor = new Cursor(myWorld, sprite, dir, dir2)
+        let cursor = new Cursor(sprite, dir, dir2)
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
         if (size == ResultSet.Zero || size == ResultSet.One) {
             if (approxCount >= 0) {
@@ -845,7 +843,7 @@ namespace TileWorld {
     export function setCode(code: number, dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            let cursor = new Cursor(myWorld, sprite, dir);
+            let cursor = new Cursor(sprite, dir);
             myWorld.setCode(cursor, code)
         }
     }
@@ -864,7 +862,7 @@ namespace TileWorld {
     export function createSprite(code: number, dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.createTileSpriteAt(code, new Cursor(myWorld, sprite, dir))    
+            myWorld.createTileSpriteAt(code, new Cursor(sprite, dir))    
         }
     }
 }
