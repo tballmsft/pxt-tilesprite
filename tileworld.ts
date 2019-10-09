@@ -753,31 +753,25 @@ namespace TileWorld {
                         size: ResultSet, sprite: TileSprite, delta: number) {
         let cursor = new Cursor(myWorld, sprite, dir, dir2)
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
-
-        let c = approxCount
-        if (size == ResultSet.Zero && c >= 0) {
-            check(c - delta == 0)
-            return;
-        } else if (size == ResultSet.One && c >= 0) {
-            check(c + delta > 0)
-            recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
-            return;
+        if (size == ResultSet.Zero || size == ResultSet.One) {
+            if (approxCount >= 0) {
+                check(size == ResultSet.Zero ? approxCount - delta == 0 : approxCount + delta > 0)
+                recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
+                return;
+            }
         } else if (size == ResultSet.Only) {
-            // this can only be true for fixed sprite (no movable sprites possible)
-            check(!myWorld.hasMovableSprite(cursor) && c == 1)
+            // this only applies to fixed sprites, so count is accurate
+            check(!myWorld.hasMovableSprite(cursor) && approxCount == 1)
             return;
         }
         // assert(!myWorld.isFixedCode(codeKind))
         let sprites = myWorld.getSprites(codeKind, cursor)
         let kindOfFixed = myWorld.getKindFromCode(myWorld.getCode(cursor))
-        c = (sprites ? sprites.length : 0) + (code ? 0 : (kindOfFixed == codeKind ? 1 : 0))
+        let count = (sprites ? sprites.length : 0) + (code ? 0 : (kindOfFixed == codeKind ? 1 : 0))
         if (size == ResultSet.Zero) {
-            check(c - delta == 0)
+            check(count + delta == 0)
         } else if (size == ResultSet.One) {
-            check(c + delta > 0)
-            recordSprite(sprites, dir, dir2)
-        } else if (size == ResultSet.Only) {
-            check(c + delta == 1)
+            check(count + delta > 0)
             recordSprite(sprites, dir, dir2)
         }
     }
