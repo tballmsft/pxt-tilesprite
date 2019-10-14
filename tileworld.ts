@@ -455,7 +455,7 @@ namespace TileWorld {
             // 2. update the stationary sprites (that were not previously moving)
             this.sprites.forEach((arr) => {
                 if (arr) { arr.forEach((sprite) => { 
-                    if (transitionToStopped.indexOf(sprite) == -1)
+                    //if (transitionToStopped.indexOf(sprite) == -1)
                         sprite.updateStationary() 
                 }) }
             })
