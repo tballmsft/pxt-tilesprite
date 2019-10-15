@@ -62,8 +62,8 @@ namespace TileWorld {
         private old: number;
         // the next tile target
         private next: number
-        // the final tile target
-        private final: number;
+        // have we received a stop request? 
+        private stop: boolean
         // notification
         private tileSpriteEvent: (ts: TileSprite, n: CallBackKind) => void
         //
@@ -75,17 +75,20 @@ namespace TileWorld {
             this.code = code
             this.dir = TileDir.None;
             this.tileSpriteEvent = undefined;
+            this.stop = false;
         } 
         //
         moveOne(dir: number) {
+            if (this.dir != TileDir.None)
+                return;
+            this.stop = false;
             if (dir == TileDir.Left || dir == TileDir.Right)
-                return this.moveInX(dir)
+                this.moveInX(dir)
             else if (dir == TileDir.Up || dir == TileDir.Down)
-                return this.moveInY(dir)
-            return false;
+                this.moveInY(dir)
         }
         // request sprite to stop moving when it reaches destination
-        requestStop() { this.final = 0; }
+        requestStop() { this.stop = true; }
         // stop at current tile
         deadStop() { this.stopSprite() }
         // back to previous tile
@@ -135,114 +138,67 @@ namespace TileWorld {
             // have we reached the target?
             let size = 1 << tileBits
             if (this.dir == TileDir.Left && this.x <= this.next) {
-                return this.reachedTargetX(this.next, -size)
+                return this.reachedTargetX(this.next, -size);
             } else if (this.dir == TileDir.Right && this.x >= this.next) {
-                return this.reachedTargetX(this.next, size)
+                return this.reachedTargetX(this.next, size);
             } else if (this.dir == TileDir.Up && this.y <= this.next) {
-                return this.reachedTargetY(this.next, -size)
+                return this.reachedTargetY(this.next, -size);
             } else if (this.dir == TileDir.Down && this.y >= this.next) {
-                return this.reachedTargetY(this.next, size)
+                return this.reachedTargetY(this.next, size);
             }
             return false;
         }
         //
         updateStationary() {
             if (this.tileSpriteEvent && this.dir == TileDir.None) {
-                this.tileSpriteEvent(this, CallBackKind.Stationary)
+                this.tileSpriteEvent(this, CallBackKind.Stationary);
             }
         }
         //
         private moveInX(dir: TileDir) {
-            let size = 1 << tileBits
-            let opTileDir = dir == TileDir.Left ? TileDir.Right : TileDir.Left
-            let sign = dir == TileDir.Left ? -1 : 1
-            if (this.dir == dir) {
-                this.final += sign * size;
-                return true;
-            } else if (this.dir == opTileDir) {
-                // switching 180 doesn't require queuing
-                // next_x is defined, so use it
-                this.next += sign * size
-            } else if (this.dir == TileDir.None) {
-                // player.x is aligned, so use it
-                this.next = this.x + sign * size;
-            } else {
-                // direction is 90 to current direction, so ignore
-                return false;
-            }
-            this.old = this.getColumn()
-            this.dir = dir
-            this.final = this.next;
-            this.vx = sign * 100
-            return true;
+            let size = 1 << tileBits;
+            let sign = dir == TileDir.Left ? -1 : 1;
+            this.next = this.x + sign * size;
+            this.old = this.getColumn();
+            this.dir = dir;
+            this.vx = sign * 100;
         }
         private moveInY(dir: TileDir) {
-            let size = 1 << tileBits
-            let opTileDir = dir == TileDir.Up ? TileDir.Down : TileDir.Up
+            let size = 1 << tileBits;
             let sign = dir == TileDir.Up ? -1 : 1
-            if (this.dir == dir) {
-                this.final += sign * size;
-                return true;
-            } else if (this.dir == opTileDir) {
-                // next_x is defined, so use it
-                this.next += sign * size
-            } else if (this.dir == TileDir.None) {
-                // player.x is aligned, so use it
-                this.next = this.y + sign * size;
-            } else {
-                // direction is 90 to current direction, so ignore
-                return false;
-            }
-            this.old = this.getRow()
-            this.dir = dir
-            this.final = this.next
-            this.vy = sign * 100
-            return true;
+            this.next = this.y + sign * size;
+            this.old = this.getRow();
+            this.dir = dir;
+            this.vy = sign * 100;
         }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
-            let stops = false
-            // determine what comes next
-            this.x = x
-            let keepTileDir = TileDir.None
-            if (this.final && this.next != this.final) {
-                this.next += step
-            } else {
-                stops = true
-                if (this.final) keepTileDir = this.dir
-                this.dir = TileDir.None
-                this.vx = 0
-            }
+            this.x = x;
+            let keepTileDir = this.dir;
+            this.dir = TileDir.None;
+            this.vx = 0;
             // notify
             if (this.tileSpriteEvent && reentrant) {
-                this.tileSpriteEvent(this, <number>keepTileDir)
+                this.tileSpriteEvent(this, this.stop ? TileDir.None : <number>keepTileDir);
             }
-            this.old = this.getColumn()
-            return stops
+            this.old = this.getColumn();
+            return true;
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
-            let stops = false
             this.y = y
-            let keepTileDir = TileDir.None
-            if (this.final && this.next != this.final) {
-                this.next += step
-            } else {
-                stops = true
-                if (this.final) keepTileDir = this.dir
-                this.dir = TileDir.None
-                this.vy = 0
-            }
+            let keepTileDir = this.dir
+            this.dir = TileDir.None
+            this.vy = 0
             // notify
             if (this.tileSpriteEvent && reentrant) {
-                this.tileSpriteEvent(this, <number>keepTileDir)
+                this.tileSpriteEvent(this, this.stop ? TileDir.None: <number>keepTileDir)
             }
             this.old = this.getRow()
-            return stops
+            return true
         }
         private centerIt(n: number) {
             return ((n >> tileBits) << tileBits) + (1 << (tileBits - 1))
         }
         private stopSprite() {
-            this.final = 0
             if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
                 this.reachedTargetX(this.centerIt(this.x), 0, false)
             } else {
