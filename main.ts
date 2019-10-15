@@ -1,4 +1,3 @@
-/*
 namespace SpriteKind {
     export const Rock = SpriteKind.create()
     export const Wall = SpriteKind.create()
@@ -184,4 +183,4 @@ TileWorld.addSprite(1, img`
     f f f f f f f f f c c c c c c f
 `, Spritely.Fixed, SpriteKind.Space)
 TileWorld.moveWithButtons(SpriteKind.Player)
- */
+ 

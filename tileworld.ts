@@ -528,11 +528,7 @@ namespace TileWorld {
                 } else {
                     // it is an arrival
                     this.motionEventFired = true
-                    if (this.arrivalHandlers[s.kind()].length > 0) {
-                        this.arrivalHandlers[s.kind()].forEach((h) => { h(s, dir) });
-                    } else {
-                        this.stationaryHandlers[s.kind()].forEach((h) => { h(s) });
-                    }
+                    this.arrivalHandlers[s.kind()].forEach((h) => { h(s, dir) });
                 }
             }
             s.onTileSpriteEvent(process)
