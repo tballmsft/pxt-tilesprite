@@ -572,24 +572,55 @@ namespace TileWorld {
 
     // state here supports blocks
 
+    enum TheActions { Move, Remove, Create, SetTile }
+    class ClosedAction {
+        constructor(public action: TheActions, public args: any[]) { }
+    }
+
     let myWorld = new TileWorld();
     let myPlayerController = new BindController()
     // keep track of sprites passed down through active handler
     // so user code doesn't need to refer to it.
     let active: TileSprite[] = [];
-    let targets: { [index:number]: TileSprite } = {} 
+    let targets: { [index:number]: TileSprite } = {};
+    let actions: ClosedAction[] = [];
 
     function getTargetSprite(dir: TileDir) {
         return targets[dir]
     }
 
     function enterHandler(t: TileSprite) {
-        active.push(t)
-        targets = {}
+        active.push(t);
+        targets = {};
+        actions = [];
+    }
+
+    function processAction(a: ClosedAction) {
+        switch (a.action) {
+            case TheActions.Move: {
+                (<TileSprite>a.args[0]).moveOne(a.args[1])
+                break;
+            }
+            case TheActions.Remove: {
+                myWorld.removeSprite(a.args[0])
+                break;
+            }
+            case TheActions.Create: {
+                myWorld.createTileSpriteAt(a.args[0], a.args[1])
+                break;
+            }
+            case TheActions.SetTile: {
+                myWorld.setCode(a.args[0], a.args[1])
+                break;
+            }
+        }
     }
 
     function exitHandler(t: TileSprite) {
         active.pop();
+        actions.forEach(processAction)
+        actions = []
+        targets = {}
     }
 
     /**
@@ -795,7 +826,7 @@ namespace TileWorld {
     // Action: what to do: move, remove, 
     // Parameter: depends on the action
 
-
+    // TODO: queue up all actions...
     // other-and-self
     
     // request sprite to move in specified direction
@@ -804,7 +835,8 @@ namespace TileWorld {
     export function moveSelf(dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            sprite.moveOne(dir)
+            actions.push(new ClosedAction(TheActions.Move, [sprite,dir]))
+            //sprite.moveOne(dir)
         }
     }
 
@@ -814,7 +846,8 @@ namespace TileWorld {
     export function moveOther(otherdir: number, dir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            sprite.moveOne(dir)
+            actions.push(new ClosedAction(TheActions.Move, [sprite, dir]))
+            //sprite.moveOne(dir)
         }
     }
     
@@ -823,7 +856,8 @@ namespace TileWorld {
     export function removeSelf() {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.removeSprite(sprite)
+            actions.push(new ClosedAction(TheActions.Remove, [sprite]))
+            //myWorld.removeSprite(sprite)
         }
     }
 
@@ -832,7 +866,8 @@ namespace TileWorld {
     export function removeOther(otherdir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            myWorld.removeSprite(sprite)
+            actions.push(new ClosedAction(TheActions.Remove, [sprite]))
+            // myWorld.removeSprite(sprite)
         }
     }
 
@@ -846,7 +881,8 @@ namespace TileWorld {
         let sprite = getCurrentSprite()
         if (sprite) {
             let cursor = new Cursor(sprite, dir);
-            myWorld.setCode(cursor, code)
+            actions.push(new ClosedAction(TheActions.SetTile, [cursor, code]))
+            // myWorld.setCode(cursor, code)
         }
     }
 
@@ -864,7 +900,8 @@ namespace TileWorld {
     export function createSprite(code: number, dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.createTileSpriteAt(code, new Cursor(sprite, dir))    
+            actions.push(new ClosedAction(TheActions.Create, [code, new Cursor(sprite, dir)]))
+            // myWorld.createTileSpriteAt(code, new Cursor(sprite, dir))    
         }
     }
 }
