@@ -422,7 +422,9 @@ namespace TileWorld {
             return null;
         }
         //
+        private motionEventFired = false;
         private update() {
+            this.motionEventFired = false;
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
@@ -453,12 +455,14 @@ namespace TileWorld {
             })
 
             // 2. update the stationary sprites (that were not previously moving)
-            this.sprites.forEach((arr) => {
-                if (arr) { arr.forEach((sprite) => { 
-                    //if (transitionToStopped.indexOf(sprite) == -1)
-                        sprite.updateStationary() 
-                }) }
-            })
+            if (this.motionEventFired) {
+                this.sprites.forEach((arr) => {
+                    if (arr) { arr.forEach((sprite) => { 
+                        //if (transitionToStopped.indexOf(sprite) == -1)
+                            sprite.updateStationary() 
+                    }) }
+                })
+            }
         }
 
         private initHandlers(kind: number) {
@@ -468,12 +472,21 @@ namespace TileWorld {
         }
         private hookupHandlers(s: TileSprite) {
             let process = (s: TileSprite, dir: number) => {
-                if (dir == CallBackKind.Stationary)
+                if (dir == CallBackKind.Stationary) {
                     this.stationaryHandlers[s.kind()].forEach((h) => { h(s) });
-                else if (dir == CallBackKind.Transition)
+                } else if (dir == CallBackKind.Transition) {
+                    this.motionEventFired = true
                     this.transitionHandlers[s.kind()].forEach((h) => { h(s) });
-                else
-                    this.arrivalHandlers[s.kind()].forEach((h) => { h(s, dir) });
+                } else {
+                    // it is an arrival
+                    this.motionEventFired = true
+                    if (this.arrivalHandlers[s.kind()].length > 0) {
+                        this.arrivalHandlers[s.kind()].forEach((h) => { h(s, dir) });
+                    } else {
+                        // do we really want to do this?
+                        // this.stationaryHandlers[s.kind()].forEach((h) => { h(s) });
+                    }
+                }
             }
             s.onTileSpriteEvent(process)
         }
@@ -574,7 +587,7 @@ namespace TileWorld {
 
     enum TheActions { Move, Remove, Create, SetTile }
     class ClosedAction {
-        constructor(public action: TheActions, public args: any[]) { }
+        constructor(public self: boolean, public action: TheActions, public args: any[]) { }
     }
 
     let myWorld = new TileWorld();
@@ -617,6 +630,16 @@ namespace TileWorld {
     }
 
     function addAction(a: ClosedAction) {
+        if (a.action == TheActions.Move) {
+            if (a.self) {
+                // remove non-self moves on same sprite
+                actions = actions.filter(b => !(b.action == TheActions.Move && b.args[0] == a.args[0] && !b.self))
+            } else {
+                // don't add if a self move on same sprite
+                if (actions.find(b => (b.action == TheActions.Move && b.args[0] == a.args[0] && b.self)))
+                    return;
+            }
+        }
         actions.push(a)
     }
 
@@ -838,7 +861,7 @@ namespace TileWorld {
     export function moveSelf(dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            addAction(new ClosedAction(TheActions.Move, [sprite,dir]))
+            addAction(new ClosedAction(true, TheActions.Move, [sprite,dir]))
         }
     }
 
@@ -848,7 +871,7 @@ namespace TileWorld {
     export function moveOther(otherdir: number, dir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            addAction(new ClosedAction(TheActions.Move, [sprite, dir]))
+            addAction(new ClosedAction(false, TheActions.Move, [sprite, dir]))
         }
     }
     
@@ -857,7 +880,7 @@ namespace TileWorld {
     export function removeSelf() {
         let sprite = getCurrentSprite()
         if (sprite) {
-            addAction(new ClosedAction(TheActions.Remove, [sprite]))
+            addAction(new ClosedAction(true, TheActions.Remove, [sprite]))
         }
     }
 
@@ -866,7 +889,7 @@ namespace TileWorld {
     export function removeOther(otherdir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            addAction(new ClosedAction(TheActions.Remove, [sprite]))
+            addAction(new ClosedAction(false, TheActions.Remove, [sprite]))
         }
     }
 
@@ -880,7 +903,7 @@ namespace TileWorld {
         let sprite = getCurrentSprite()
         if (sprite) {
             let cursor = new Cursor(sprite, dir);
-            addAction(new ClosedAction(TheActions.SetTile, [cursor, code]))
+            addAction(new ClosedAction(false, TheActions.SetTile, [cursor, code]))
         }
     }
 
@@ -898,7 +921,7 @@ namespace TileWorld {
     export function createSprite(code: number, dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            addAction(new ClosedAction(TheActions.Create, [code, new Cursor(sprite, dir)])) 
+            addAction(new ClosedAction(false, TheActions.Create, [code, new Cursor(sprite, dir)])) 
         }
     }
 }
