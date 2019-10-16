@@ -58,37 +58,49 @@ namespace TileWorld {
         private code: number;
         // which direction is the target 
         private dir: TileDir;
+        //  keep track of one more direction request
+        private queueDir: TileDir;
         // previous sprite coord value
         private old: number;
         // the next tile target
-        private next: number
+        private next: number;
         // have we received a stop request? 
-        private stop: boolean
+        private stop: boolean;
         // notification
-        private tileSpriteEvent: (ts: TileSprite, n: CallBackKind) => void
+        private tileSpriteEvent: (ts: TileSprite, n: CallBackKind) => void;
         //
         constructor(world: TileWorld, code: number, image: Image, kind: number) {
             super(image);
             const scene = game.currentScene();
             scene.physicsEngine.addSprite(this);
-            this.setKind(kind)
-            this.code = code
+            this.setKind(kind);
+            this.code = code;
             this.dir = TileDir.None;
+            this.queueDir = TileDir.None;
             this.tileSpriteEvent = undefined;
             this.stop = false;
         } 
         //
         moveOne(dir: number) {
-            if (this.dir != TileDir.None)
-                return;
-            this.stop = false;
-            if (dir == TileDir.Left || dir == TileDir.Right)
-                this.moveInX(dir)
-            else if (dir == TileDir.Up || dir == TileDir.Down)
-                this.moveInY(dir)
+            if (this.dir != TileDir.None) {
+                if (this.queueDir == TileDir.None)
+                    this.queueDir = dir;
+            } else {
+                this.stop = false;
+                if (dir == TileDir.Left || dir == TileDir.Right)
+                    this.moveInX(dir);
+                else if (dir == TileDir.Up || dir == TileDir.Down)
+                    this.moveInY(dir);
+            }
         }
         // request sprite to stop moving when it reaches destination
-        requestStop() { this.stop = true; }
+        requestStop() { 
+            if (this.stop == true) {
+                this.queueDir = TileDir.None;
+            } else {
+                this.stop = true;
+            } 
+        }
         // stop at current tile
         deadStop() { this.stopSprite() }
         // back to previous tile
@@ -171,26 +183,30 @@ namespace TileWorld {
             this.dir = dir;
             this.vy = sign * 100;
         }
+
+        private newTileDir() {
+            // did queue come before stop or after stop - does it matter?
+            let tileDir = this.queueDir != TileDir.None ? this.queueDir : (this.stop ? TileDir.None : <number>this.dir) 
+            this.dir = TileDir.None;
+            this.queueDir = TileDir.None
+            return tileDir;
+        }
         private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
             this.x = x;
-            let keepTileDir = this.dir;
-            this.dir = TileDir.None;
             this.vx = 0;
-            // notify
+            let newDir = this.newTileDir()
             if (this.tileSpriteEvent && reentrant) {
-                this.tileSpriteEvent(this, this.stop ? TileDir.None : <number>keepTileDir);
+                this.tileSpriteEvent(this, newDir);
             }
             this.old = this.getColumn();
             return true;
         }
         private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
             this.y = y
-            let keepTileDir = this.dir
-            this.dir = TileDir.None
             this.vy = 0
-            // notify
+            let newDir = this.newTileDir()
             if (this.tileSpriteEvent && reentrant) {
-                this.tileSpriteEvent(this, this.stop ? TileDir.None: <number>keepTileDir)
+                this.tileSpriteEvent(this, newDir)
             }
             this.old = this.getRow()
             return true
@@ -496,13 +512,6 @@ namespace TileWorld {
         private sprite: TileSprite;
         constructor() { }
         private requestMove(dir: TileDir) {
-            let sdir = this.sprite.getDirection()
-            if (sdir != TileDir.None) {
-                let sDirWhich = sdir == TileDir.Left || sdir == TileDir.Right
-                let dirWhich = dir == TileDir.Left || dir == TileDir.Right
-                if (sDirWhich != dirWhich)
-                    this.sprite.deadStop()   // TODO: creates jitter
-            }
             this.sprite.notifyArrived(dir)
         }
         private requestStop(dir: TileDir) {
