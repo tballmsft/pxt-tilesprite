@@ -448,7 +448,8 @@ namespace TileWorld {
             this.actions = []
         }
 
-        public addAction(a: ClosedAction) {
+        public addAction(self: boolean, action: TheActions, args: any[]) {
+            let a = new ClosedAction(self, action, args)
             // resolve conflicts on motion
             if (a.action == TheActions.Move) {
                 if (a.self) {
@@ -776,7 +777,7 @@ namespace TileWorld {
         let cursor = new Cursor(sprite, dir, dir2)
         let approxCount = myWorld.countCodeKindAt(codeKind, cursor)
         if (size == ResultSet.Zero || size == ResultSet.One) {
-            if (approxCount >= 0) {
+            if (approxCount + delta >= 0) {
                 check(size == ResultSet.Zero ? approxCount + delta == 0 : approxCount + delta > 0)
                 recordSprite(myWorld.getSprites(codeKind, cursor), dir, dir2)
                 return;
@@ -825,7 +826,7 @@ namespace TileWorld {
     export function moveSelf(dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.addAction(new ClosedAction(true, TheActions.Move, [sprite,dir]))
+            myWorld.addAction(true, TheActions.Move, [sprite,dir])
         }
     }
 
@@ -835,7 +836,7 @@ namespace TileWorld {
     export function moveOther(otherdir: number, dir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            myWorld.addAction(new ClosedAction(false, TheActions.Move, [sprite, dir]))
+            myWorld.addAction(false, TheActions.Move, [sprite, dir])
         }
     }
     
@@ -844,7 +845,7 @@ namespace TileWorld {
     export function removeSelf() {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.addAction(new ClosedAction(true, TheActions.Remove, [sprite]))
+            myWorld.addAction(true, TheActions.Remove, [sprite])
         }
     }
 
@@ -853,7 +854,7 @@ namespace TileWorld {
     export function removeOther(otherdir: number) {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
-            myWorld.addAction(new ClosedAction(false, TheActions.Remove, [sprite]))
+            myWorld.addAction(false, TheActions.Remove, [sprite])
         }
     }
 
@@ -867,7 +868,7 @@ namespace TileWorld {
         let sprite = getCurrentSprite()
         if (sprite) {
             let cursor = new Cursor(sprite, dir);
-            myWorld.addAction(new ClosedAction(false, TheActions.SetTile, [cursor, code]))
+            myWorld.addAction(false, TheActions.SetTile, [cursor, code])
         }
     }
 
@@ -885,7 +886,7 @@ namespace TileWorld {
     export function createSprite(code: number, dir: number) {
         let sprite = getCurrentSprite()
         if (sprite) {
-            myWorld.addAction(new ClosedAction(false, TheActions.Create, [code, new Cursor(sprite, dir)])) 
+            myWorld.addAction(false, TheActions.Create, [code, new Cursor(sprite, dir)])
         }
     }
 }
