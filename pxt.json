@@ -1,5 +1,5 @@
 {
-    "name": "pxt-tilesprite-debug",
+    "name": "pxt-tilesprite",
     "version": "0.0.23",
     "description": "",
     "dependencies": {
