@@ -1,6 +1,6 @@
 // which direction is the sprite moving
 enum TileDir {
-    //% block="None"
+    //% block="--"
     None,
     //% block="Left"
     Left,
@@ -38,6 +38,10 @@ enum Spritely {
     Fixed,
     //% block="movable"
     Movable
+}
+
+namespace SpriteKind {
+    export const none = SpriteKind.create()
 }
 
 //% weight=1000 color="#442255" icon="\uf45c"
@@ -695,7 +699,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="on request of $kind=spritekind to move $dir"
+    //% blockId=TWontilearrived block="should $kind=spritekind keeping moving $dir"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMoveRequest(kind: number, h: (dir: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
@@ -751,6 +755,7 @@ namespace TileWorld {
             supportHas(code, true, dir, dir2, size, sprite, delta)
         }
     }
+
 
     //% blockId=TWhaskind block="tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Assertions" color="#448844" inlineInputMode=inline
