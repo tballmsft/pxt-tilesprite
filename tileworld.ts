@@ -317,6 +317,11 @@ namespace TileWorld {
                 }
             }
         }
+        getSpritesCount(code: number) {
+            if (this.sprites[code])
+               return this.sprites[code].length
+            return 0
+        }
         createTileSpriteAt(code: number, cursor: Tile) {
             //let tileSprite = new TileSprite(this, code, art, kind)
             //this.hookupHandlers(tileSprite)
@@ -679,7 +684,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilestationary block="on stationary $kind=spritekind"
+    //% blockId=TWontilestationary block="at rest $kind=spritekind"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onChangeAround(kind: number, h: () => void) {
         myWorld.onTileStationary(kind, (t) => {
@@ -699,7 +704,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontilearrived block="should $kind=spritekind keeping moving $dir"
+    //% blockId=TWontilearrived block="on push $kind=spritekind $dir"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMoveRequest(kind: number, h: (dir: TileDir) => void) {
         myWorld.onTileArrived(kind, (t, d) => {
@@ -718,7 +723,7 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="on $kind=spritekind moving into tile"
+    //% blockId=TWontiletransition block="if $kind=spritekind moves into tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
     export function onMovedInto(kind: number, h: () => void) {
         myWorld.onTileTransition(kind, (t) => {
@@ -742,6 +747,13 @@ namespace TileWorld {
             return active[active.length-1]
         else
             return null
+    }
+
+
+    //% group="Tiles"	
+    //% blockId=TWgetspritecount block="get sprite count $code=colorindexpicker"
+    export function getSpriteCount(code: number): number {
+        return myWorld.getSpritesCount(code)
     }
 
     // Assertions!
