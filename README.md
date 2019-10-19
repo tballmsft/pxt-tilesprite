@@ -1,4 +1,4 @@
-# pxt-tilewrold
+# pxt-tileworld
 
 This extension defines "TileWorld" for sprites that move Up, Right, Left Down on a matrix.
 
