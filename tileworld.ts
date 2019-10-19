@@ -876,7 +876,7 @@ namespace TileWorld {
         }
     }
 
-    //% blockId=TWknockbackother block="knock back other $otherdir"
+    //% blockId=TWknockbackother block="knock back other $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
     export function knockBackOther(otherdir: number) {
         let sprite = getTargetSprite(otherdir)
@@ -885,7 +885,7 @@ namespace TileWorld {
         }
     }
 
-    //% blockId=TWstopother block="stop other $otherdir"
+    //% blockId=TWstopother block="stop other $otherdir=tiledir"
     //% group="Actions" color="#88CC44"
     export function stopOther(otherdir: number) {
         let sprite = getTargetSprite(otherdir)
