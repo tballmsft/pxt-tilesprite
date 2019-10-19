@@ -1,6 +1,6 @@
-# pxt-tilesprite
+# pxt-tilewrold
 
-This extension adds support for sprites that snap to tiles.
+This extension defines "TileWorld" for sprites that move Up, Right, Left Down on a matrix.
 
 ## Reference
 
