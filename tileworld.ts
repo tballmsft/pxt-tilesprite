@@ -523,8 +523,10 @@ namespace TileWorld {
         }
         requestStop(sprite: TileSprite, dir: TileDir) {
             // look for matching request on push queue
-            let r = this.interceptRequests.find(r => r.sprite == sprite && r.dir == dir)
-            if (r) { r.next = TileDir.None; } 
+            let r = this.getRequest(sprite, dir)
+            if (r.next == dir) { 
+                r.next = TileDir.None; 
+            } 
         }
     }
 
