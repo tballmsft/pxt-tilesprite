@@ -40,10 +40,6 @@ enum Spritely {
     Movable
 }
 
-namespace SpriteKind {
-    export const none = SpriteKind.create()
-}
-
 //% weight=1000 color="#442255" icon="\uf45c"
 //% groups='["Tiles", "Events", "Assertions", "Actions"]'
 //% blockGap=8
@@ -202,7 +198,7 @@ namespace TileWorld {
     }
 
     // tileworld actions
-    enum TheActions { Move, Remove, Create, SetTile }
+    enum TheActions { Move, Remove, Create, Stop, KnockBack, SetTile }
     class ClosedAction {
         constructor(public self: boolean, public action: TheActions, public args: any[]) { }
     }
@@ -454,6 +450,14 @@ namespace TileWorld {
                     (<TileSprite>a.args[0]).moveOne(a.args[1])
                     break;
                 }
+                case TheActions.Stop: {
+                    (<TileSprite>a.args[0]).deadStop()
+                    break;
+                }
+                case TheActions.KnockBack: {
+                    (<TileSprite>a.args[0]).knockBack()
+                    break;
+                }
                 case TheActions.Remove: {
                     this.removeSprite(a.args[0])
                     break;
@@ -515,22 +519,23 @@ namespace TileWorld {
                 // no - generate push request
                 this.invokeHandlers(sprite, dir, false);
                 let r = this.getRequest(sprite, dir);
+                // set default next direction
                 r.next = dir;
             } else {
+                // yes - update the next direction for sprite
                 let r = this.getRequest(sprite, sprite.getDirection());
                 r.next = dir;
             }
         }
         requestStop(sprite: TileSprite, dir: TileDir) {
-            // look for matching request on push queue
             let r = this.getRequest(sprite, dir)
+            // if no change to direction, then stop
             if (r.next == dir) { 
                 r.next = TileDir.None; 
             } 
         }
     }
 
-    // queue is of size one
     class BindController {
         private sprite: TileSprite;
         private world: TileWorld;
@@ -602,12 +607,9 @@ namespace TileWorld {
         public getRow() { return this.row }
     }
 
-    class CheckFailed {
-
-    }
-
+    // for assertion checking
+    class CheckFailed {  }
     let checkFailed = new CheckFailed();
-
     function check(expr: boolean) {
         if (!expr) {
             throw checkFailed;
@@ -621,6 +623,7 @@ namespace TileWorld {
     // keep track of sprites passed down through active handler
     // so user code doesn't need to refer to it.
     let active: TileSprite[] = [];
+    // for current handler, track the sprites targeted by asserytions
     let targets: { [index:number]: TileSprite } = {};
 
     function getTargetSprite(dir: TileDir) {
@@ -660,8 +663,8 @@ namespace TileWorld {
     /**
      * Map a color to a 16x16 tile image and sprite kind. 
      * @param code
-     * @param moving
      * @param image
+     * @param moving
      * @param kind
      */
     //% blockId=TWaddsprite block="map $code=colorindexpicker to $moving sprite $image=tile_image_picker as $kind=spritekind"
@@ -716,7 +719,6 @@ namespace TileWorld {
                 enterHandler(t)
                 h() 
             } catch (e) {
-
             } finally {
                 exitHandler(t)
             }
@@ -780,7 +782,7 @@ namespace TileWorld {
         return myWorld.getSpritesCount(code)
     }
 
-    // Assertions!
+    // Assertions
 
     //% blockId=TWhascode block="tile $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
     //% group="Assertions" color="#448844" inlineInputMode=inline
@@ -791,7 +793,6 @@ namespace TileWorld {
             supportHas(code, true, dir, dir2, size, sprite, delta)
         }
     }
-
 
     //% blockId=TWhaskind block="tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
     //% group="Assertions" color="#448844" inlineInputMode=inline
@@ -853,13 +854,7 @@ namespace TileWorld {
             check(dir != c1 && dir != c2)
     }             
 
-    // actions
-
-    // default: works on current tile, self-sprite
-    // Action: what to do: move, remove, 
-    // Parameter: depends on the action
-
-    // other-and-self
+    // Actions
     
     // request sprite to move in specified direction
     //% blockId=TWmoveself block="move $dir=tiledir self"
@@ -878,6 +873,24 @@ namespace TileWorld {
         let sprite = getTargetSprite(otherdir)
         if (sprite) {
             myWorld.addAction(false, TheActions.Move, [sprite, dir])
+        }
+    }
+
+    //% blockId=TWknockbackother block="knock back other $otherdir"
+    //% group="Actions" color="#88CC44"
+    export function knockBackOther(otherdir: number) {
+        let sprite = getTargetSprite(otherdir)
+        if (sprite && sprite.getDirection() != TileDir.None) {
+            myWorld.addAction(false, TheActions.KnockBack, [sprite])
+        }
+    }
+
+    //% blockId=TWstopother block="stop other $otherdir"
+    //% group="Actions" color="#88CC44"
+    export function stopOther(otherdir: number) {
+        let sprite = getTargetSprite(otherdir)
+        if (sprite && sprite.getDirection() != TileDir.None) {
+            myWorld.addAction(false, TheActions.Stop, [sprite])
         }
     }
     
@@ -912,15 +925,6 @@ namespace TileWorld {
             myWorld.addAction(false, TheActions.SetTile, [cursor, code])
         }
     }
-
-    /*
-    
-    //% blockId=TWaddsprite block="map $code=colorindexpicker to $moving sprite $image=tile_image_picker as $kind=spritekind"
-    //% group="Tiles"
-    //% inlineInputMode=inline
-    export function addSprite(code: number, image: Image, moving: Spritely, kind: number) {
-
-    */
 
     //% blockId=TWcreatesprite block="create sprite $code=colorindexpicker at $dir=tiledir"
     //% group="Actions" color="#88CC44"
