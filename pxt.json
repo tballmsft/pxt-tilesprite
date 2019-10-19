@@ -1,5 +1,5 @@
 {
-    "name": "pxt-tilesprite",
+    "name": "pxt-tileworld",
     "version": "1.1.0",
     "description": "",
     "dependencies": {
@@ -8,8 +8,7 @@
     "files": [
         "README.md",
         "tileworld.ts",
-        "main.ts",
-        "tileagent.ts"
+        "main.ts"
     ],
     "testFiles": [],
     "public": false,
