@@ -46,8 +46,8 @@ enum Spritely {
 namespace TileWorld {
 
     enum CallBackKind {
-        Stationary = TileDir.Down + 1,
-        Transition
+        AtRest = TileDir.Down + 1,
+        MoveInto
     }
 
     const tileBits = 4;
@@ -90,19 +90,19 @@ namespace TileWorld {
         // stop at current tile
         deadStop() { 
             if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
-                this.reachedTargetX(this.centerIt(this.x), 0, false)
+                this.reachedTargetX(this.centerIt(this.x), false)
             } else {
-                this.reachedTargetY(this.centerIt(this.y), 0, false)
+                this.reachedTargetY(this.centerIt(this.y), false)
             }
         }
         // back to previous tile
         knockBack() {
             if ((this.dir == TileDir.Left || this.dir == TileDir.Right) &&
                 this.old != this.getColumn()) {
-                this.x = this.centerIt(this.old << tileBits)
+                this.x = this.old << tileBits
             } else if ((this.dir == TileDir.Up || this.dir == TileDir.Down) &&
                 this.old != this.getRow()) {
-                this.y = this.centerIt(this.old << tileBits)
+                this.y = this.old << tileBits
             }
             this.deadStop()
         }
@@ -118,38 +118,37 @@ namespace TileWorld {
         // call from game update loop
         updateInMotion() {
             if (this.dir == TileDir.None)
-                return false;
+                return;
             // have we crossed into a new tile?
             if (this.tileSpriteEvent) {
                 if (this.dir == TileDir.Left || this.dir == TileDir.Right) {
                     if (this.old != this.getColumn()) {
-                        this.tileSpriteEvent(this, CallBackKind.Transition)
+                        this.tileSpriteEvent(this, CallBackKind.MoveInto+this.dir)
                     }
-                    this.old = this.getColumn()
+                    // this.old = this.getColumn()
                 } else if (this.dir == TileDir.Up || this.dir == TileDir.Down) {
                     if (this.old != this.getRow()) {
-                        this.tileSpriteEvent(this, CallBackKind.Transition)
+                        this.tileSpriteEvent(this, CallBackKind.MoveInto+this.dir)
                     }
-                    this.old = this.getRow()
+                    // this.old = this.getRow()
                 }
             }
             // have we reached the target?
             let size = 1 << tileBits
             if (this.dir == TileDir.Left && this.x <= this.next) {
-                return this.reachedTargetX(this.next, -size);
+                this.reachedTargetX(this.next);
             } else if (this.dir == TileDir.Right && this.x >= this.next) {
-                return this.reachedTargetX(this.next, size);
+                this.reachedTargetX(this.next);
             } else if (this.dir == TileDir.Up && this.y <= this.next) {
-                return this.reachedTargetY(this.next, -size);
+                this.reachedTargetY(this.next);
             } else if (this.dir == TileDir.Down && this.y >= this.next) {
-                return this.reachedTargetY(this.next, size);
+                this.reachedTargetY(this.next);
             }
-            return false;
         }
         //
         updateStationary() {
             if (this.tileSpriteEvent && this.dir == TileDir.None) {
-                this.tileSpriteEvent(this, CallBackKind.Stationary);
+                this.tileSpriteEvent(this, CallBackKind.AtRest);
             }
         }
         //
@@ -170,7 +169,7 @@ namespace TileWorld {
             this.vy = sign * 100;
         }
 
-        private reachedTargetX(x: number, step: number, reentrant: boolean = true) {
+        private reachedTargetX(x: number, reentrant: boolean = true) {
             this.x = x;
             this.vx = 0;
             let lastDir = this.dir
@@ -179,9 +178,8 @@ namespace TileWorld {
                 this.tileSpriteEvent(this, <number>lastDir);
             }
             this.old = this.getColumn();
-            return true;
         }
-        private reachedTargetY(y: number, step: number, reentrant: boolean = true) {
+        private reachedTargetY(y: number,reentrant: boolean = true) {
             this.y = y
             this.vy = 0
             let lastDir = this.dir
@@ -190,7 +188,6 @@ namespace TileWorld {
                 this.tileSpriteEvent(this, <number>lastDir)
             }
             this.old = this.getRow()
-            return true
         }
         private centerIt(n: number) {
             return ((n >> tileBits) << tileBits) + (1 << (tileBits - 1))
@@ -222,7 +219,7 @@ namespace TileWorld {
         private sprites: TileSprite[][];
         // event handlers
         private onPushHandlers: { [index:number]: ((ts: TileSprite, d: TileDir) => void)[] };
-        private moveIntoHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
+        private moveIntoHandlers: { [index:number]: ((ts: TileSprite, d: TileDir) => void)[] };
         private atRestHandlers: { [index:number]: ((ts: TileSprite) => void)[] };
         //
         constructor() {
@@ -306,7 +303,7 @@ namespace TileWorld {
             if (!this.onPushHandlers[kind]) this.onPushHandlers[kind] = [];
             this.onPushHandlers[kind].push(h);
         }
-        onMoveInto(kind: number, h: (ts: TileSprite) => void) {
+        onMoveInto(kind: number, h: (ts: TileSprite, d: TileDir) => void) {
             if (!this.moveIntoHandlers[kind]) this.moveIntoHandlers[kind] = [];
             this.moveIntoHandlers[kind].push(h);
         }
@@ -402,24 +399,12 @@ namespace TileWorld {
                 }
             })
 
-            let transitionToStopped: TileSprite[] = []
-            // 1. update the moving sprites, keeping track of 
-            //    which moving sprites transition to stationary
-            this.sprites.forEach((arr) => {
-                if (arr) arr.forEach((sprite) => { 
-                    if (sprite.updateInMotion())
-                        transitionToStopped.push(sprite)
-                })
-            })
+            this.sprites.forEach((a) => { if (a) a.forEach((s) => s.updateInMotion()) })
 
+            // examine actions to see which sprites are 
             // 2. update the stationary sprites (that were not previously moving)
             if (this.motionEventFired) {
-                this.sprites.forEach((arr) => {
-                    if (arr) { arr.forEach((sprite) => { 
-                        //if (transitionToStopped.indexOf(sprite) == -1)
-                            sprite.updateStationary() 
-                    }) }
-                })
+                this.sprites.forEach((a) => { if (a) { a.forEach((s) => s.updateStationary()) } })
             }
 
             // do all the actions
@@ -480,11 +465,12 @@ namespace TileWorld {
             if (!this.moveIntoHandlers[kind]) this.moveIntoHandlers[kind] = []
         }
         private invokeHandlers(s: TileSprite, dir: number, intercept: boolean) {
-            if (dir == CallBackKind.Stationary) {
+            if (dir == CallBackKind.AtRest) {
                 this.atRestHandlers[s.kind()].forEach((h) => { h(s) });
-            } else if (dir == CallBackKind.Transition) {
-                this.motionEventFired = true
-                this.moveIntoHandlers[s.kind()].forEach((h) => { h(s) });
+            } else if (dir >= CallBackKind.MoveInto) {
+                dir = dir - CallBackKind.MoveInto;
+                this.motionEventFired = true;
+                this.moveIntoHandlers[s.kind()].forEach((h) => { h(s, dir) });
             } else {
                 this.motionEventFired = true
                 // process requests out of band
@@ -749,13 +735,13 @@ namespace TileWorld {
      * @param body code to execute
      */
     //% group="Events" color="#444488"
-    //% blockId=TWontiletransition block="if $kind=spritekind moves into tile"
+    //% blockId=TWontiletransition block="if $kind=spritekind moves $dir into tile"
     //% blockAllowMultiple=1 draggableParameters="reporter"
-    export function onMovedInto(kind: number, h: () => void) {
-        myWorld.onMoveInto(kind, (t) => {
+    export function onMovedInto(kind: number, h: (dir: TileDir) => void) {
+        myWorld.onMoveInto(kind, (t, d) => {
             try {
                 enterHandler(t)
-                h()
+                h(d)
             } catch (e) {
             } finally {
                 exitHandler(t)
@@ -876,10 +862,10 @@ namespace TileWorld {
         }
     }
 
-    //% blockId=TWknockbackother block="knock back other $otherdir=tiledir"
+    //% blockId=TWknockbackself block="knockback self"
     //% group="Actions" color="#88CC44"
-    export function knockBackOther(otherdir: number) {
-        let sprite = getTargetSprite(otherdir)
+    export function knockBackSelf() {
+        let sprite = getCurrentSprite()
         if (sprite && sprite.getDirection() != TileDir.None) {
             myWorld.addAction(false, TheActions.KnockBack, [sprite])
         }
