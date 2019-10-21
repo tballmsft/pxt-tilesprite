@@ -376,10 +376,8 @@ namespace TileWorld {
             return null;
         }
         //
-        private motionEventFired = false;
         private actions: ClosedAction[] = [];
         private update() {
-            this.motionEventFired = false;
             // first recompute the map
             this.spriteMap.copyFrom(this.tileMap)
             this.multiples.fill(0)
@@ -399,15 +397,12 @@ namespace TileWorld {
                 }
             })
 
+            // because we queue up actions, there are no state changes here
+            // update sprites in motion
             this.sprites.forEach((a) => { if (a) a.forEach((s) => s.updateInMotion()) })
-
-            // examine actions to see which sprites are 
-            // 2. update the stationary sprites (that were not previously moving)
-            if (this.motionEventFired) {
-                this.sprites.forEach((a) => { if (a) { a.forEach((s) => s.updateStationary()) } })
-            }
-
-            // do all the actions
+            // update stationary sprites
+            this.sprites.forEach((a) => { if (a) { a.forEach((s) => s.updateStationary()) } })
+            // now apply the updates
             this.actions.forEach((a) => this.processAction(a))
             this.actions = []
         }
@@ -469,10 +464,8 @@ namespace TileWorld {
                 this.atRestHandlers[s.kind()].forEach((h) => { h(s) });
             } else if (dir >= CallBackKind.MoveInto) {
                 dir = dir - CallBackKind.MoveInto;
-                this.motionEventFired = true;
                 this.moveIntoHandlers[s.kind()].forEach((h) => { h(s, dir) });
             } else {
-                this.motionEventFired = true
                 // process requests out of band
                 if (intercept) {
                     let r = this.interceptRequests.find(r => r.sprite == s && r.dir == dir)
