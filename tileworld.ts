@@ -18,11 +18,11 @@ function _tileDir(dir: TileDir): number {
 }
 
 enum ResultSet {
-    //% block="has no"
+    //% block="no"
     Zero,
-    //% block="has a"
+    //% block="a"
     One,
-    //% block="has only"
+    //% block="only"
     Only
 }
 
@@ -770,7 +770,7 @@ namespace TileWorld {
 
     // Assertions
 
-    //% blockId=TWhascode block="tile $dir=tiledir $dir2=tiledir $size $code=colorindexpicker"
+    //% blockId=TWhascode block="pass if $size $code=colorindexpicker at $dir=tiledir $dir2=tiledir "
     //% group="Assertions" color="#448844" inlineInputMode=inline
     export function hasCode(code: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
@@ -780,7 +780,7 @@ namespace TileWorld {
         }
     }
 
-    //% blockId=TWhaskind block="tile $dir=tiledir $dir2=tiledir $size $kind=spritekind"
+    //% blockId=TWhaskind block="pass if $size $kind=spritekind at $dir=tiledir $dir2=tiledir"
     //% group="Assertions" color="#448844" inlineInputMode=inline
     export function hasKind(kind: number, dir: number = TileDir.None, dir2: number = TileDir.None, size: ResultSet = ResultSet.Zero) {
         let sprite = getCurrentSprite()
@@ -831,7 +831,7 @@ namespace TileWorld {
      * Check if a direction is one of several values.
      */
     //% group="Assertions" color="#448844"
-    //% blockId=TWisoneof block="assert %dir=variables_get(dir) $cmp %c1 %c2"
+    //% blockId=TWisoneof block="pass if %dir=variables_get(dir) $cmp %c1 %c2"
     //% inlineInputMode=inline
     export function _isOneOf(dir: number, cmp: Membership = Membership.OneOf, c1: TileDir, c2: TileDir) {
         if (cmp == Membership.OneOf)
