@@ -1,6 +1,6 @@
 # pxt-tileworld
 
-This extension defines "TileWorld" for sprites that move Up, Right, Left Down on a matrix. For an example game programmed with the TileWorld extension, see https://github.com/tballmsft/pxt-bouldergame.
+This [MakeCode Arcade](https://arcade.makecode.com/) extension defines "TileWorld" for sprites that move Up, Right, Left Down on a matrix. For an example game programmed with the TileWorld extension, see https://github.com/tballmsft/pxt-bouldergame.
 
 ## Reference
 
