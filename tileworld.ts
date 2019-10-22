@@ -484,6 +484,7 @@ namespace TileWorld {
 
         // support for key stroke handling
         private interceptRequests: { sprite: TileSprite, dir: TileDir, next: TileDir}[] = [];
+        private keyDowns: boolean[] = [ false, false, false, false, false];
         private getRequest(sprite: TileSprite, dir: TileDir) {
             let r = this.interceptRequests.find(r => r.sprite == sprite && r.dir == dir)
             if (!r) {
@@ -493,6 +494,7 @@ namespace TileWorld {
             return r
         }
         requestPush(sprite: TileSprite, dir: TileDir) {
+            this.keyDowns[dir] = true;
             // is the sprite moving?
             if (sprite.getDirection() == TileDir.None) {
                 // no - generate push request
@@ -507,10 +509,16 @@ namespace TileWorld {
             }
         }
         requestStop(sprite: TileSprite, dir: TileDir) {
+            this.keyDowns[dir] = false;
+            // is something else down?
             let r = this.getRequest(sprite, dir)
             // if no change to direction, then stop
             if (r.next == dir) { 
-                r.next = TileDir.None; 
+                let down = this.keyDowns.indexOf(true)
+                if (down == -1)
+                    r.next = TileDir.None; 
+                else
+                    r.next = down;
             } 
         }
     }
