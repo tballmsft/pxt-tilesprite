@@ -2,6 +2,24 @@
 
  namespace tileWorldEditor {
 
+     let tile = img`
+         b b b b b b b b b b b b b b b c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         b . . . . . . . . . . . . . . c
+         c c c c c c c c c c c c c c c c
+     `
      let cursorIn = img`
          . . . . . . . . . . . . . . . .
          . . 1 1 1 1 1 1 1 1 1 1 1 1 . .
@@ -56,5 +74,25 @@
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-    
+     let editorMap = img`
+         . . . . . . . . . .
+         . . 8 . . . . . . .
+         . 8 8 8 . . . . . .
+         8 8 9 8 8 . . . . .
+         . 8 8 8 . . . . . .
+         . . 8 . . . . . . .
+         . . . . . . . . . .
+         . . . . . . . . . .
+     `
+
+     function test() {
+        scene.setTileMap(editorMap)
+        scene.setTile(8, tile);
+        scene.setTile(9, tile);
+        let cursor: Sprite = sprites.create(cursorIn)
+        cursor.x = 40
+        cursor.y = 56
+     }
+
+     //test()
  }
