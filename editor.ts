@@ -127,7 +127,7 @@
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
      `
 
-     function makeEditor() {
+     function makeEditor(fixed: Sprite[], movable: Sprite[]) {
         scene.setTileMap(editorMap)
         scene.setTile(8, tile);
         scene.setTile(9, tile);
@@ -149,14 +149,15 @@
         })
      }
 
-     makeEditor()
+     // makeEditor([], [])
 
      // todo:
      // cursor navigation
-     // modal dialog (menu???)
-     // - select sprite
-     // - negation
-     // 
+     // steps:
+     // 1. select "self" sprite
+     // 2. select event type
+     // 3. fill out context
+                   
      // "program" data structure
      // "editor" data structure
      // menu bar
