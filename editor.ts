@@ -139,6 +139,7 @@ namespace boulder {
         foo.setKind(i)
         movableSprites.push(foo)
     })
+
     export let fixedSprites: Sprite[] = []
     fixed.forEach((img, i) => {
         let foo = sprites.create(img)
@@ -222,19 +223,37 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
+     let genericSprite = img`
+         . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . .
+         . . . . . 1 1 1 1 1 1 . . . . .
+         . . . . 1 5 5 5 5 5 5 5 . . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . 1 5 5 5 5 5 5 5 5 5 . . .
+         . . . . 5 5 5 5 5 5 5 5 . . . .
+         . . . . . 5 5 5 5 5 5 . . . . .
+         . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . .
+     `
      let editorMap = img`
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . 8 . . . 4 4 4 4 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . 8 8 8 . . 4 f f f 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . 8 8 9 8 8 . 4 f f f 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . 8 8 8 . . 4 f f f 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . 8 . . . 4 4 4 4 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . 5 . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . 5 . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -275,9 +294,24 @@ namespace boulder {
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
      `
 
+    function makeContext(row: number, col: number) {
+        for(let i = -2; i <=2; i++) {
+            currentMap.setPixel(col+i,row,9);
+            currentMap.setPixel(col, row+i, 9);
+            if (i > -2 && i < 2) {
+                currentMap.setPixel(col + i, row + i, 9);
+                currentMap.setPixel(col + i, row - i, 9);
+            }
+        }
+        // todo Arrow sprites
+    }
+
+    let currentMap: Image = undefined;
+
      function makeEditor(fixed: Sprite[], movable: Sprite[]) {
-        scene.setTileMap(editorMap)
-        scene.setTile(8, tile);
+        currentMap = editorMap.clone();
+        scene.setTileMap(currentMap)
+        scene.setTile(5, genericSprite);
         scene.setTile(9, tile);
         let cursor: Sprite = sprites.create(cursorIn)
         cursor.x = 40
@@ -295,9 +329,10 @@ namespace boulder {
         controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
             cursor.y += 16
         })
+        makeContext(10,10)
      }
 
-     // makeEditor(boulder.fixedSprites, boulder.movableSprites)
+     makeEditor(boulder.fixedSprites, boulder.movableSprites)
 
      // todo:
      // cursor navigation
@@ -306,6 +341,9 @@ namespace boulder {
      // 2. select event type
      // 3. fill out context
                    
+     // one room per rule
+     // room list?
+
      // "program" data structure
      // "editor" data structure
      // menu bar
