@@ -244,10 +244,10 @@ namespace boulder {
      let editorMap = img`
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . 4 4 4 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . 5 . . . 4 . . 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . 4 . . 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . 4 4 4 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -294,57 +294,60 @@ namespace boulder {
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
      `
 
-    function makeContext(row: number, col: number) {
-        for(let i = -2; i <=2; i++) {
-            currentMap.setPixel(col+i,row,9);
-            currentMap.setPixel(col, row+i, 9);
-            if (i > -2 && i < 2) {
-                currentMap.setPixel(col + i, row + i, 9);
-                currentMap.setPixel(col + i, row - i, 9);
+    class Room {
+
+    }
+    
+    class Editor {
+        private currentMap: Image;
+        constructor(private fixed: Sprite[], private movable: Sprite[]) {
+                this.currentMap = editorMap.clone();
+                scene.setTileMap(this.currentMap)
+                scene.setTile(9, tile);
+                let tiles = scene.getTilesByType(5)
+                for (let value of tiles) {
+                    let foo = sprites.create(genericSprite, SpriteKind.Food)
+                    value.place(foo)
+                }
+                this.currentMap.fill(0)
+                this.makeContext(3, 3)
+
+                let cursor: Sprite = sprites.create(cursorIn, SpriteKind.Player)
+                cursor.x = 40
+                cursor.y = 56
+                scene.cameraFollowSprite(cursor)
+                controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
+                    cursor.x -= 16
+                })
+                controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
+                    cursor.x += 16
+                })
+                controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
+                    cursor.y -= 16
+                })
+                controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
+                    cursor.y += 16
+                })
+                
+            }
+        private  makeContext(row: number, col: number) {
+            for (let i = -2; i <= 2; i++) {
+                this.currentMap.setPixel(col + i, row, 9);
+                this.currentMap.setPixel(col, row + i, 9);
+                if (i > -2 && i < 2) {
+                    this.currentMap.setPixel(col + i, row + i, 9);
+                    this.currentMap.setPixel(col + i, row - i, 9);
+                }
             }
         }
-        // todo Arrow sprites
     }
 
-    let currentMap: Image = undefined;
-
-     function makeEditor(fixed: Sprite[], movable: Sprite[]) {
-        currentMap = editorMap.clone();
-        scene.setTileMap(currentMap)
-        scene.setTile(9, tile);
-        let tiles = scene.getTilesByType(5)
-        for (let value of tiles) {
-            let foo = sprites.create(genericSprite, SpriteKind.Food)
-            value.place(foo)
-        }
-        currentMap.fill(0)
-
-        let cursor: Sprite = sprites.create(cursorIn, SpriteKind.Player)
-        cursor.x = 40
-        cursor.y = 56
-        scene.cameraFollowSprite(cursor)
-        controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
-            cursor.x -= 16
-        })
-        controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
-            cursor.x += 16
-        })
-        controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
-            cursor.y -= 16
-        })
-        controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
-            cursor.y += 16
-        })
-        makeContext(3,3)
-     }
-
-/*
-     makeEditor(boulder.fixedSprites, boulder.movableSprites)
+     let editor = new Editor(boulder.fixedSprites, boulder.movableSprites)
      
      sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
          // add menu of sprites...
      })
-*/
+
      // todo:
      // cursor navigation
      // steps:
