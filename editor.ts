@@ -177,8 +177,8 @@ namespace boulder {
          . 1 . . . . . . . . . . . . 1 .
          . 1 . . . . . . . . . . . . 1 .
          . 1 . . . . . . . . . . . . 1 .
-         . 1 . . . . . . . . . . . . 1 .
-         . 1 . . . . . . . . . . . . 1 .
+         . 1 . . . . . 1 1 . . . . . 1 .
+         . 1 . . . . . 1 1 . . . . . 1 .
          . 1 . . . . . . . . . . . . 1 .
          . 1 . . . . . . . . . . . . 1 .
          . 1 . . . . . . . . . . . . 1 .
@@ -245,15 +245,15 @@ namespace boulder {
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . 5 . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-         . . . 5 . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -311,9 +311,15 @@ namespace boulder {
      function makeEditor(fixed: Sprite[], movable: Sprite[]) {
         currentMap = editorMap.clone();
         scene.setTileMap(currentMap)
-        scene.setTile(5, genericSprite);
         scene.setTile(9, tile);
-        let cursor: Sprite = sprites.create(cursorIn)
+        let tiles = scene.getTilesByType(5)
+        for (let value of tiles) {
+            let foo = sprites.create(genericSprite, SpriteKind.Food)
+            value.place(foo)
+        }
+        currentMap.fill(0)
+
+        let cursor: Sprite = sprites.create(cursorIn, SpriteKind.Player)
         cursor.x = 40
         cursor.y = 56
         scene.cameraFollowSprite(cursor)
@@ -329,11 +335,16 @@ namespace boulder {
         controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
             cursor.y += 16
         })
-        makeContext(10,10)
+        makeContext(3,3)
      }
 
+/*
      makeEditor(boulder.fixedSprites, boulder.movableSprites)
-
+     
+     sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+         // add menu of sprites...
+     })
+*/
      // todo:
      // cursor navigation
      // steps:
