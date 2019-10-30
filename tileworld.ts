@@ -511,15 +511,13 @@ namespace TileWorld {
         requestStop(sprite: TileSprite, dir: TileDir) {
             this.keyDowns[dir] = false;
             // is something else down?
-            let r = this.getRequest(sprite, dir)
+            let r = this.getRequest(sprite, dir);
+            r.next = TileDir.None;
+            let r2 = this.getRequest(sprite, sprite.getDirection())
             // if no change to direction, then stop
-            if (r.next == dir) { 
-                let down = this.keyDowns.indexOf(true)
-                if (down == -1)
-                    r.next = TileDir.None; 
-                else
-                    r.next = down;
-            } 
+            let down = this.keyDowns.indexOf(true)
+            if (down != -1)
+                r2.next = down; 
         }
     }
 
