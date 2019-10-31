@@ -366,6 +366,26 @@ namespace boulder {
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
      `
 
+    class MapEditor {
+        // tilemap
+        // size
+        // default tile
+        //  
+    } 
+
+    class Toolbox {
+        // show sprites, tiles, commands
+        // select current sprite/tile
+        constructor(private gameSprites: Sprite[]) {
+            
+        }
+
+        
+    }
+
+    // the "adventure"
+    // - you are in room with several sprites. Each sprite has a doorway next to it.
+
     class Room {
 
     }
