@@ -1,4 +1,3 @@
-/*
 namespace boulder {
 
     let player = img`
@@ -153,4 +152,3 @@ namespace boulder {
 }
 let allSprites: Sprite[] = [].concat(boulder.movableSprites).concat(boulder.fixedSprites)
 let mapEditor = new tileWorldEditor.MapEditor(allSprites)
-*/

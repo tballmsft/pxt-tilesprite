@@ -126,6 +126,43 @@ namespace tileWorldEditor {
          1 1 . . . . . . . . . . . . 1 1
          . 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .
      `
+     // commands
+     const play = img`
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+         f f 7 7 f f f f f f f f f f f f
+         f f 7 7 7 7 f f f f f f f f f f
+         f f 7 7 7 7 7 7 f f f f f f f f
+         f f 7 7 7 7 7 7 7 7 f f f f f f
+         f f 7 7 7 7 7 7 7 7 7 7 f f f f
+         f f 7 7 7 7 7 7 7 7 7 7 1 1 f f
+         f f 7 7 7 7 7 7 7 7 1 1 f f f f
+         f f 7 7 7 7 7 7 1 1 f f f f f f
+         f f 7 7 7 7 1 1 f f f f f f f f
+         f f 7 7 1 1 f f f f f f f f f f
+         f f 1 1 f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+     `
+     const pencil = img`
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f 3 f f f f
+         f f f f f f f f f f 3 3 3 f f f
+         f f f f f f f f f 4 1 3 3 3 f f
+         f f f f f f f f 4 4 e 1 3 f f f
+         f f f f f f f 4 4 e 4 4 f f f f
+         f f f f f f 4 4 e 4 4 f f f f f
+         f f f f f 4 4 e 4 4 f f f f f f
+         f f f f 4 4 e 4 4 f f f f f f f
+         f f f 4 4 e 4 4 f f f f f f f f
+         f f 4 4 e 4 4 f f f f f f f f f
+         f f 1 e 4 4 f f f f f f f f f f
+         f f 1 1 4 f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+         f f f f f f f f f f f f f f f f
+     `
      // language sprites
     
      const negate = img`
@@ -291,21 +328,27 @@ namespace tileWorldEditor {
 
      let spriteIndex = -1;
 
-     function closeMenu() {
+     function closeMenu(command: string) {
          if (instance) {
              instance.dispose();
              instance = undefined;
              controller._setUserEventsEnabled(true);
              game.popScene();
          }
+         if (command) {
+             // time for another editor!!!
+         }
      }
 
-     function buildOptionList(s: Sprite[]): MenuOption[] {
+     function buildOptionList(s: Sprite[], commands: Sprite[]): MenuOption[] {
          let options: MenuOption[] = [];
          s.forEach((s: Sprite, index: number) => {
-             options.push(new MenuOption(s.image, () => s.data, () => { spriteIndex = index; closeMenu() }));
+             options.push(new MenuOption(s.image, () => s.data, () => { spriteIndex = index; closeMenu(null) }));
          })
-         options.push(new MenuOption(scene.systemMenu.CLOSE_MENU_ICON, () => "CLOSE", () => { closeMenu() }));
+         commands.forEach((s: Sprite, index: number) => {
+             options.push(new MenuOption(s.image, () => s.data, () => { closeMenu(s.data) }));
+         })
+         options.push(new MenuOption(scene.systemMenu.CLOSE_MENU_ICON, () => "CLOSE", () => { closeMenu(null) }));
          return options;
      }
 
@@ -320,8 +363,8 @@ namespace tileWorldEditor {
 
      class SpriteMenu extends PauseMenu {
          private myTheme: MenuTheme;
-         constructor(s: Sprite[]) {
-             super(() => buildOptionList(s), spriteTheme())
+         constructor(s: Sprite[], c: Sprite[]) {
+             super(() => buildOptionList(s,c), spriteTheme())
          }
          // get rid of floating animation
          onUpdate() { }
@@ -329,22 +372,33 @@ namespace tileWorldEditor {
 
      let instance: SpriteMenu;
 
-     function showSpriteMenu(s: Sprite[]) {
+     function showSpriteMenu(s: Sprite[], c: Sprite[]) {
          if (instance) return;
          game.pushScene();
-         instance = new SpriteMenu(s);
+         instance = new SpriteMenu(s, c);
          instance.show();
      }
 
     export class MapEditor {
         private tileMap: Image;
         private cursor: Sprite;
+        private commands: Sprite[] = [];
         constructor(private allSprites: Sprite[]) {
             let tileSprite = new Sprite(tile)
             tileSprite.setKind(0)
             tileSprite.data = "Transparent"
             tileSprite.setFlag(SpriteFlag.Invisible, true)
             this.allSprites.insertAt(0, tileSprite)
+            let playSprite = new Sprite(play)
+            playSprite.setKind(1000)
+            playSprite.data = "Play"
+            playSprite.setFlag(SpriteFlag.Invisible, true)
+            this.commands.push(playSprite);
+            let editSprite = new Sprite(pencil)
+            editSprite.setKind(1001)
+            editSprite.data = "Program"
+            editSprite.setFlag(SpriteFlag.Invisible, true)
+            this.commands.push(editSprite);
 
             this.tileMap = image.create(30, 30)
             scene.setTileMap(this.tileMap)
@@ -384,7 +438,7 @@ namespace tileWorldEditor {
                 }
             })
             controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
-                showSpriteMenu(this.allSprites)
+                showSpriteMenu(this.allSprites, this.commands)
             })
         }
     } 
