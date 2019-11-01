@@ -1,157 +1,78 @@
- // the start of an editor 
+namespace tileWorldEditor {
+     import MenuOption = scene.systemMenu.MenuOption
+     import PauseMenu = scene.systemMenu.PauseMenu
+     import MenuTheme = scene.systemMenu.MenuTheme
 
-namespace boulder {
+    // smaller cards for pop-up menu
+     const CARD_NORMAL_20 = img`
+         . 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .
+         1 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 1 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 1
+         1 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 1 1
+         . 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .
+     `;
 
-    let player = img`
-        . . . . . . f f f f . . . . . .
-        . . . . f f f 2 2 f f f . . . .
-        . . . f f f 2 3 2 2 f f f . . .
-        . . f f f e e e e e e f f f . .
-        . . f f e 2 2 2 2 2 2 e e f . .
-        . . f e 2 f f f f f f 2 e f . .
-        . . f f f f e e e e f f f f . .
-        . f f e f b f 4 4 f b f e f f .
-        . f e e 4 1 f d d f 1 4 e e f .
-        . . f e e d d d d d d e e f . .
-        . . . f e e 4 4 4 4 e e f . . .
-        . . e 4 f 2 2 2 2 2 2 f 4 e . .
-        . . 4 d f 2 2 2 2 2 2 f d 4 . .
-        . . 4 4 f 4 4 5 5 4 4 f 4 4 . .
-        . . . . . f f f f f f . . . . .
-        . . . . . f f . . f f . . . . .
-    `
-    let diamond = img`
-        . . . . 8 8 8 8 8 8 8 8 . . . .
-        . . . 8 8 9 9 9 9 9 9 1 1 . . .
-        . . 8 8 8 8 9 9 9 9 1 1 1 1 . .
-        . 8 8 8 8 8 8 9 9 1 1 1 1 1 1 .
-        8 8 8 8 8 8 8 8 1 1 1 1 1 1 1 1
-        9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
-        9 9 9 9 9 9 9 9 1 1 1 1 1 1 1 1
-        . 9 9 9 9 9 9 9 1 1 1 1 1 1 1 .
-        . . 9 9 9 9 9 9 1 1 1 1 1 1 . .
-        . . . 9 9 9 9 9 1 1 1 1 1 . . .
-        . . . . 9 9 9 9 1 1 1 1 . . . .
-        . . . . . 9 9 9 1 1 1 . . . . .
-        . . . . . . 9 9 1 1 . . . . . .
-        . . . . . . . 9 1 . . . . . . .
-        . . . . . . . . . . . . . . . .
-        . . . . . . . . . . . . . . . .
-    `
-    let boulder = img`
-        . . . . . c c b b b . . . . . .
-        . . . . c b d d d d b . . . . .
-        . . . . c d d d d d d b b . . .
-        . . . . c d d d d d d d d b . .
-        . . . c b b d d d d d d d b . .
-        . . . c b b d d d d d d d b . .
-        . c c c c b b b b d d d b b b .
-        . c d d b c b b b b b b b b d b
-        c b b d d d b b b b b d d b d b
-        c c b b d d d d d d d b b b d c
-        c b c c c b b b b b b b d d c c
-        c c b b c c c c b d d d b c c b
-        . c c c c c c c c c c c b b b b
-        . . c c c c c b b b b b b b c .
-        . . . . . . c c b b b b c c . .
-        . . . . . . . . c c c c . . . .
-    `
-    let enemy = img`
-        . . . . . . . f f f f . . . . .
-        . . . . . f f 1 1 1 1 f f . . .
-        . . . . f b 1 1 1 1 1 1 b f . .
-        . . . . f 1 1 1 1 1 1 1 1 f . .
-        . . . f d 1 1 1 1 1 1 1 1 d f .
-        . 7 . f d 1 1 1 1 1 1 1 1 d f .
-        7 . . f d 1 1 1 1 1 1 1 1 d f .
-        7 . . f d 1 1 1 1 1 1 1 1 d f .
-        7 . . f d d d 1 1 1 1 d d d f f
-        7 7 . f b d b f d d f b d b f c
-        7 7 7 f c d c f 1 1 f c d c f b
-        . 7 7 f f f b d b 1 b d f f c f
-        . f c b 1 b c f f f f f f . . .
-        . f 1 c 1 c 1 f f f f f f . . .
-        . f d f d f d f f f f f . . . .
-        . . f . f . f . . . . . . . . .
-    `
-
-    let wall = img`
-        d d d d d d d d d d d d d d d 8
-        d 6 6 6 8 8 8 6 6 6 6 6 6 6 8 8
-        d 6 6 8 6 6 6 8 6 6 6 6 6 6 8 8
-        d 6 8 6 8 8 8 6 8 8 8 8 8 8 8 8
-        d 8 6 8 8 d 8 8 6 6 6 6 6 6 8 8
-        d 8 6 8 d d d 8 6 8 8 8 8 8 6 8
-        d 8 6 8 8 d 8 8 6 6 6 6 6 6 8 8
-        d 6 8 6 8 8 8 6 8 8 8 8 8 8 8 8
-        d 6 6 6 6 6 6 6 6 8 6 6 6 6 8 8
-        d 8 8 8 6 6 6 6 6 8 8 6 6 8 6 8
-        d 6 6 6 6 6 6 6 6 8 8 8 8 8 6 8
-        d 8 8 8 6 6 6 6 6 6 6 6 6 6 6 8
-        d 6 6 6 6 6 6 6 6 6 6 6 6 6 6 8
-        d 8 8 8 8 6 6 6 6 8 8 8 8 8 6 8
-        d 6 6 6 6 6 6 6 8 8 6 6 6 8 6 8
-        8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
-    `
-    let dirt = img`
-        f e e e e e f e e e e 4 4 4 4 e
-        e e 4 4 e e e f f f e e e e e e
-        e 4 4 4 4 4 e e f f f f f e e e
-        e 4 4 4 4 4 4 e f e e e e e f e
-        e 4 4 4 4 4 4 e f e 4 4 4 4 e f
-        e e 4 4 4 4 4 f e 4 4 4 4 4 4 e
-        e e e 4 4 4 e e e 4 4 4 4 4 4 e
-        f f e e e e e f e 4 4 4 4 4 4 e
-        f e e e 4 4 4 e f e 4 4 4 4 e e
-        f e e 4 4 4 4 4 e e e e 4 4 e f
-        e e 4 4 4 4 4 4 4 e f e e e e f
-        f e 4 4 4 4 4 4 4 e e f f f e e
-        f e 4 4 4 4 4 4 4 e f e e e e f
-        e f e 4 4 4 4 4 e f e 4 4 e e e
-        e e f e 4 4 4 e f e 4 4 4 4 e e
-        f e e f e e e f e 4 4 4 4 4 4 e
-    `
-    let space = img`
-        f f f f f f f f f f f c c c c f
-        f f c c f f f f f f f f f f f f
-        f c c c c c f f f f f f f f f f
-        f c c c c c c f f f f f f f f f
-        f c c c c c c f f f c c c c f f
-        f f c c c c c f f c c c c c c f
-        f f f c c c f f f c c c c c c f
-        f f f f f f f f f c c c c c c f
-        f f f f c c c f f f c c c c f f
-        f f f c c c c c f f f f c c f f
-        f f c c c c c c c f f f f f f f
-        f f c c c c c c c f f f f f f f
-        f f c c c c c c c f f f f f f f
-        f f f c c c c c f f f c c f f f
-        f f f f c c c f f f c c c c f f
-        f f f f f f f f f c c c c c c f
-    `
-    let movable = [ player, diamond, boulder, enemy]
-    let fixed = [ wall, dirt, space]
-
-    export let movableSprites: Sprite[] = []
-    movable.forEach((img,i) => { 
-        let foo = sprites.create(img)
-        foo.setFlag(SpriteFlag.Invisible, true)
-        foo.setKind(i)
-        movableSprites.push(foo)
-    })
-
-    export let fixedSprites: Sprite[] = []
-    fixed.forEach((img, i) => {
-        let foo = sprites.create(img)
-        foo.setFlag(SpriteFlag.Invisible, true)
-        foo.setKind(movableSprites.length+i)
-        fixedSprites.push(foo)
-    })
-}
-
- namespace tileWorldEditor {
-
-     let tile = img`
+     const CARD_SELECTED_20 = img`
+         . 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 .
+         2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 2 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 2
+         2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 2 2
+         . 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 .
+     `
+     const CARD_ACTIVE_20 = img`
+         . 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 .
+         4 4 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 4 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 4
+         4 4 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 4 4
+         . 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 .
+     `
+    // world editing spriates
+     const tile = img`
          b b b b b b b b b b b b b b b c
          b . . . . . . . . . . . . . . c
          b . . . . . . . . . . . . . . c
@@ -169,7 +90,7 @@ namespace boulder {
          b . . . . . . . . . . . . . . c
          c c c c c c c c c c c c c c c c
      `
-     let cursorIn = img`
+     const cursorIn = img`
          . . . . . . . . . . . . . . . .
          . . 1 1 1 1 1 1 1 1 1 1 1 1 . .
          . 1 1 . . . . . . . . . . 1 1 .
@@ -187,7 +108,7 @@ namespace boulder {
          . . 1 1 1 1 1 1 1 1 1 1 1 1 . .
          . . . . . . . . . . . . . . . .
      `
-     let cursorOut = img`
+     const cursorOut = img`
          . 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .
          1 1 . . . . . . . . . . . . 1 1
          1 . . . . . . . . . . . . . . 1
@@ -205,7 +126,9 @@ namespace boulder {
          1 1 . . . . . . . . . . . . 1 1
          . 1 1 1 1 1 1 1 1 1 1 1 1 1 1 .
      `
-     let negate = img`
+     // language sprites
+    
+     const negate = img`
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
@@ -223,7 +146,7 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-     let genericSprite = img`
+     const genericSprite = img`
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
@@ -241,7 +164,7 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-     let downArrow = img`
+     const downArrow = img`
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
@@ -259,7 +182,7 @@ namespace boulder {
          . . . . . . 9 9 9 6 . . . . . .
          . . . . . . . 9 6 . . . . . . .
      `
-     let upArrow = img`
+     const upArrow = img`
          . . . . . . . 9 6 . . . . . . .
          . . . . . . 9 9 9 6 . . . . . .
          . . . . . 9 9 9 9 9 6 . . . . .
@@ -277,7 +200,7 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-     let rightArrow = img`
+     const rightArrow = img`
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
@@ -295,7 +218,7 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-     let leftArrow = img`
+     const leftArrow = img`
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
@@ -313,7 +236,7 @@ namespace boulder {
          . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . .
      `
-     let editorMap = img`
+     const editorMap = img`
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
          . . . . . . . 4 4 4 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -366,30 +289,106 @@ namespace boulder {
          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
      `
 
-    class MapEditor {
-        // tilemap
-        // size
-        // default tile
-        //  
+     let spriteIndex = -1;
+
+     function closeMenu() {
+         if (instance) {
+             instance.dispose();
+             instance = undefined;
+             controller._setUserEventsEnabled(true);
+             game.popScene();
+         }
+     }
+
+     function buildOptionList(s: Sprite[]): MenuOption[] {
+         let options: MenuOption[] = [];
+         s.forEach((s: Sprite, index: number) => {
+             options.push(new MenuOption(s.image, () => s.data, () => { spriteIndex = index; closeMenu() }));
+         })
+         options.push(new MenuOption(scene.systemMenu.CLOSE_MENU_ICON, () => "CLOSE", () => { closeMenu() }));
+         return options;
+     }
+
+     function spriteTheme() {
+         let myTheme = scene.systemMenu.buildMenuTheme(16, 8)
+         myTheme.selectedCard = CARD_SELECTED_20;
+         myTheme.activeCard = CARD_ACTIVE_20;
+         myTheme.basicCard = CARD_NORMAL_20;
+         myTheme.headerText = "Toolbox";
+         return myTheme;
+     }
+
+     class SpriteMenu extends PauseMenu {
+         private myTheme: MenuTheme;
+         constructor(s: Sprite[]) {
+             super(() => buildOptionList(s), spriteTheme())
+         }
+         // get rid of floating animation
+         onUpdate() { }
+     }
+
+     let instance: SpriteMenu;
+
+     function showSpriteMenu(s: Sprite[]) {
+         if (instance) return;
+         game.pushScene();
+         instance = new SpriteMenu(s);
+         instance.show();
+     }
+
+    export class MapEditor {
+        private tileMap: Image;
+        private cursor: Sprite;
+        constructor(private allSprites: Sprite[]) {
+            let tileSprite = new Sprite(tile)
+            tileSprite.setKind(0)
+            tileSprite.data = "Transparent"
+            tileSprite.setFlag(SpriteFlag.Invisible, true)
+            this.allSprites.insertAt(0, tileSprite)
+
+            this.tileMap = image.create(30, 30)
+            scene.setTileMap(this.tileMap)
+            scene.setTile(0, tile)
+            this.allSprites.forEach(function (s: Sprite) {
+                scene.setTile(s.kind() + 1, s.image)
+            })
+
+            this.cursor = sprites.create(cursorIn, SpriteKind.Player)
+            this.cursor.x = 40
+            this.cursor.y = 56
+            scene.cameraFollowSprite(this.cursor)
+
+            controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
+                if ((this.cursor.x >> 4) > 0)
+                    this.cursor.x -= 16
+            })
+            controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
+                if ((this.cursor.x >> 4) < this.tileMap.width - 1)
+                    this.cursor.x += 16
+            })
+            controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
+                if ((this.cursor.y >> 4) > 0)
+                    this.cursor.y -= 16
+            })
+            controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
+                if ((this.cursor.y >> 4) < this.tileMap.height - 1)
+                    this.cursor.y += 16
+            })
+            controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
+                if (spriteIndex < 0)
+                    return;
+                let row = this.cursor.y >> 4
+                let col = this.cursor.x >> 4
+                if (row >= 0 && row < this.tileMap.height && col >= 0 && col < this.tileMap.width) {
+                    this.tileMap.setPixel(col, row, spriteIndex + 1)
+                }
+            })
+            controller.B.onEvent(ControllerButtonEvent.Pressed, () => {
+                showSpriteMenu(this.allSprites)
+            })
+        }
     } 
 
-    class Toolbox {
-        // show sprites, tiles, commands
-        // select current sprite/tile
-        constructor(private gameSprites: Sprite[]) {
-            
-        }
-
-        
-    }
-
-    // the "adventure"
-    // - you are in room with several sprites. Each sprite has a doorway next to it.
-
-    class Room {
-
-    }
-    
     class Editor {
         private currentMap: Image;
         constructor(private fixed: Sprite[], private movable: Sprite[]) {
@@ -403,24 +402,6 @@ namespace boulder {
                 }
                 this.currentMap.fill(0)
                 this.makeContext(3, 3)
-
-                let cursor: Sprite = sprites.create(cursorIn, SpriteKind.Player)
-                cursor.x = 40
-                cursor.y = 56
-                scene.cameraFollowSprite(cursor)
-                controller.left.onEvent(ControllerButtonEvent.Pressed, () => {
-                    cursor.x -= 16
-                })
-                controller.right.onEvent(ControllerButtonEvent.Pressed, () => {
-                    cursor.x += 16
-                })
-                controller.up.onEvent(ControllerButtonEvent.Pressed, () => {
-                    cursor.y -= 16
-                })
-                controller.down.onEvent(ControllerButtonEvent.Pressed, () => {
-                    cursor.y += 16
-                })
-                
             }
         private  makeContext(row: number, col: number) {
             for (let i = -2; i <= 2; i++) {
@@ -434,11 +415,11 @@ namespace boulder {
         }
     }
 
-     let editor = new Editor(boulder.fixedSprites, boulder.movableSprites)
+     //let editor = new Editor(boulder.fixedSprites, boulder.movableSprites)
      
-     sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
+     //sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite: Sprite, otherSprite: Sprite) {
          // add menu of sprites...
-     })
+     //})
 
      // todo:
      // cursor navigation
