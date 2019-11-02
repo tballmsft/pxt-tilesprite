@@ -352,7 +352,7 @@ namespace tileWorldEditor {
          return options;
      }
 
-     function spriteTheme() {
+     function toolboxTheme() {
          let myTheme = scene.systemMenu.buildMenuTheme(16, 8)
          myTheme.selectedCard = CARD_SELECTED_20;
          myTheme.activeCard = CARD_ACTIVE_20;
@@ -361,21 +361,21 @@ namespace tileWorldEditor {
          return myTheme;
      }
 
-     class SpriteMenu extends PauseMenu {
+     class ToolboxMenu extends PauseMenu {
          private myTheme: MenuTheme;
          constructor(s: Sprite[], c: Sprite[]) {
-             super(() => buildOptionList(s,c), spriteTheme())
+             super(() => buildOptionList(s, c), toolboxTheme())
          }
          // get rid of floating animation
          onUpdate() { }
      }
 
-     let instance: SpriteMenu;
+     let instance: ToolboxMenu;
 
      function showSpriteMenu(s: Sprite[], c: Sprite[]) {
          if (instance) return;
          game.pushScene();
-         instance = new SpriteMenu(s, c);
+         instance = new ToolboxMenu(s, c);
          instance.show();
      }
 

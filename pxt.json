@@ -9,7 +9,9 @@
         "README.md",
         "tileworld.ts",
         "editor.ts",
-        "main.ts"
+        "main.ts",
+        "bytecode.ts",
+        "vm.ts"
     ],
     "testFiles": [],
     "public": false,

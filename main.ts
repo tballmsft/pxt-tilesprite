@@ -19,13 +19,14 @@ namespace boulder {
         . . . . . f f . . f f . . . . .
     `
     let diamond = img`
+        . . . . . . . . . . . . . . . .
         . . . . 8 8 8 8 8 8 8 8 . . . .
-        . . . 8 8 9 9 9 9 9 9 1 1 . . .
+        . . . 8 8 8 8 9 9 9 1 1 . . . .
         . . 8 8 8 8 9 9 9 9 1 1 1 1 . .
         . 8 8 8 8 8 8 9 9 1 1 1 1 1 1 .
-        8 8 8 8 8 8 8 8 1 1 1 1 1 1 1 1
-        9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9
-        9 9 9 9 9 9 9 9 1 1 1 1 1 1 1 1
+        . 8 8 8 8 8 8 8 1 1 1 1 1 1 1 .
+        . 9 9 9 9 9 9 9 9 9 9 9 9 9 9 .
+        . 9 9 9 9 9 9 9 1 1 1 1 1 1 1 .
         . 9 9 9 9 9 9 9 1 1 1 1 1 1 1 .
         . . 9 9 9 9 9 9 1 1 1 1 1 1 . .
         . . . 9 9 9 9 9 1 1 1 1 1 . . .
@@ -33,7 +34,6 @@ namespace boulder {
         . . . . . 9 9 9 1 1 1 . . . . .
         . . . . . . 9 9 1 1 . . . . . .
         . . . . . . . 9 1 . . . . . . .
-        . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .
     `
     let boulder = img`
@@ -54,6 +54,24 @@ namespace boulder {
         . . . . . . c c b b b b c c . .
         . . . . . . . . c c c c . . . .
     `
+    let rock = img`
+        . . . . . . . . . . . . . . . .
+        . . . . 8 8 8 8 d d b . . . . .
+        . . . 8 8 8 8 9 d d d b b . . .
+        . . 8 8 8 8 9 9 d d d d d b . .
+        . 8 8 8 8 8 8 9 d d d d d b . .
+        8 8 8 8 8 8 8 8 d d d d d b . .
+        9 9 9 9 9 9 9 9 b d d d b b b .
+        9 9 9 9 9 9 9 9 b b b b b b d .
+        . 9 9 9 9 9 9 9 b b b d d b d .
+        . . 9 9 9 9 9 9 d d d b b b d .
+        . . . 9 9 9 9 9 b b b b d d c .
+        . . . . 9 9 9 9 b d d d b c c .
+        . . . . . 9 9 9 c c c c b b b .
+        . . . . . . 9 9 b b b b b . . .
+        . . . . . . . 9 b b b b . . . .
+        . . . . . . . . . . . . . . . .
+    `
     let enemy = img`
         . . . . . . . f f f f . . . . .
         . . . . . f f 1 1 1 1 f f . . .
@@ -72,7 +90,6 @@ namespace boulder {
         . f d f d f d f f f f f . . . .
         . . f . f . f . . . . . . . . .
     `
-
     let wall = img`
         d d d d d d d d d d d d d d d 8
         d 6 6 6 8 8 8 6 6 6 6 6 6 6 8 8
@@ -150,5 +167,5 @@ namespace boulder {
         fixedSprites.push(foo)
     })
 }
-let allSprites: Sprite[] = [].concat(boulder.movableSprites).concat(boulder.fixedSprites)
-let mapEditor = new tileWorldEditor.MapEditor(allSprites)
+//let allSprites: Sprite[] = [].concat(boulder.movableSprites).concat(boulder.fixedSprites)
+//let mapEditor = new tileWorldEditor.MapEditor(allSprites)
